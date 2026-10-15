@@ -880,7 +880,7 @@ function RuleDialog({
             取消
           </button>
           <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
-            保存{title}
+            保存
           </PendingButton>
         </div>
       </form>

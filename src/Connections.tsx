@@ -263,7 +263,7 @@ export default function ConnectionDialog({
                   busy={busy}
                   pendingLabel={account ? "正在保存" : "正在查询"}
                 >
-                  {account ? "保存实例设置" : "查询实例"}
+                  {account ? "保存" : "查询实例"}
                 </PendingButton>
               </div>
             )}
