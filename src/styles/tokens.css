@@ -1,0 +1,297 @@
+:root {
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Microsoft YaHei",
+    Arial,
+    sans-serif;
+  color: var(--text);
+  background: var(--canvas);
+  font-size: 14px;
+  font-synthesis: none;
+  line-height: 1.5;
+  scrollbar-gutter: stable;
+  --canvas: #fafafa;
+  --surface: #fff;
+  --subtle: #f5f5f5;
+  --surface-hover: #f0f0f0;
+  --text: #202020;
+  --muted: #737373;
+  --border: #e5e5e5;
+  --accent: #202020;
+  --accent-hover: #404040;
+  --accent-soft: #ededed;
+  --focus: #858585;
+  --chart-color: #525252;
+  --success: #16815d;
+  --success-soft: #e8f6ef;
+  --warning: #9a6818;
+  --warning-soft: #fff9eb;
+  --warning-border: #f3e7c8;
+  --danger: #c83f50;
+  --danger-soft: #fff1f2;
+  --danger-border: #f7d4d9;
+  --red: var(--danger);
+  --shadow: 0 8px 28px #00000012;
+  --mono: "Cascadia Code", Consolas, monospace;
+  --chart-fill: #5252520c;
+  --chart-secondary: #567b82;
+  --stat-size: 26px;
+}
+:root[data-theme="dark"] {
+  --canvas: #141414;
+  --surface: #1d1d1d;
+  --subtle: #252525;
+  --surface-hover: #303030;
+  --text: #ededed;
+  --muted: #a1a1a1;
+  --border: #383838;
+  --accent: #e5e5e5;
+  --accent-hover: #fff;
+  --accent-soft: #2e2e2e;
+  --focus: #a3a3a3;
+  --chart-color: #c9c9c9;
+  --success: #6dd5a6;
+  --success-soft: #19372e;
+  --warning: #e6bd72;
+  --warning-soft: #30291b;
+  --warning-border: #51432a;
+  --danger: #ff92a0;
+  --danger-soft: #3b2330;
+  --danger-border: #5d3443;
+  --shadow: 0 8px 28px #0005;
+  --chart-fill: #c9c9c910;
+  --chart-secondary: #88b8be;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--canvas);
+}
+button {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  color: inherit;
+  background: none;
+  border: 0;
+}
+input {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  outline: 0;
+  color: var(--text);
+}
+select {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  outline: 0;
+  color: var(--text);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 9px 12px;
+  width: 100%;
+  transition: border-color 0.12s;
+  appearance: auto;
+  min-height: 40px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+textarea {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  outline: 0;
+  color: var(--text);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 9px 12px;
+  width: 100%;
+  transition: border-color 0.12s;
+  resize: vertical;
+  min-height: 40px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+a {
+  -webkit-tap-highlight-color: transparent;
+  color: inherit;
+  text-decoration: none;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+svg {
+  flex-shrink: 0;
+  stroke-width: 1.65;
+}
+h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.5px;
+  line-height: 1.4;
+}
+h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.25px;
+}
+h3 {
+  margin: 0;
+}
+p {
+  margin: 0;
+  line-height: 1.65;
+}
+button:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 2px;
+}
+a:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 2px;
+}
+input:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 2px;
+}
+select:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 2px;
+}
+textarea:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 2px;
+}
+input:not([type="checkbox"]):not([type="radio"]) {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 9px 12px;
+  width: 100%;
+  transition: border-color 0.12s;
+  min-height: 40px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+input::placeholder {
+  color: var(--muted);
+}
+textarea::placeholder {
+  color: var(--muted);
+}
+input:not([type="checkbox"]):not([type="radio"]):focus {
+  border-color: var(--focus);
+  outline: 0;
+  box-shadow: none;
+}
+select:focus {
+  border-color: var(--focus);
+  outline: 0;
+  box-shadow: none;
+}
+textarea:focus {
+  border-color: var(--focus);
+  outline: 0;
+  box-shadow: none;
+}
+input[type="checkbox"],
+.square-choice {
+  appearance: none;
+  display: block;
+  vertical-align: middle;
+  margin: 0;
+  cursor: pointer;
+  border: 1px solid var(--muted);
+  border-radius: 3px;
+  background: var(--surface);
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+}
+input[type="checkbox"]:checked,
+.square-choice:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+input[type="checkbox"]:checked::after,
+.square-choice:checked::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 4px;
+  left: 2px;
+  top: 3px;
+  border-left: 1.5px solid var(--surface);
+  border-bottom: 1.5px solid var(--surface);
+  transform: rotate(-45deg);
+}
+input[type="checkbox"]:disabled,
+.square-choice:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.numeric,
+.amount-column {
+  font-variant-numeric: tabular-nums;
+}
+code {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 13px;
+}
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+input:disabled {
+  background: var(--subtle);
+  color: var(--muted);
+}
+select:disabled {
+  background: var(--subtle);
+  color: var(--muted);
+}
+textarea:disabled {
+  background: var(--subtle);
+  color: var(--muted);
+}
+input:read-only:not([type="checkbox"]):not([type="radio"]) {
+  background: var(--subtle);
+  color: var(--muted);
+}
+
+:root {
+  --font-xs: 12px;
+  --font-sm: 13px;
+  --font-md: 14px;
+  --font-body: 14px;
+  --font-section: 18px;
+  --font-title: 24px;
+  --font-stat: 26px;
+  --radius-control: 6px;
+  --radius-panel: 8px;
+  --control-height: 40px;
+  --control-compact: 32px;
+}
+h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+small {
+  font-size: 12px;
+  line-height: 1.65;
+}

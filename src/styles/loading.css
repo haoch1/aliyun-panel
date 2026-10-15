@@ -1,0 +1,224 @@
+.data-region {
+  position: relative;
+  min-width: 0;
+}
+.data-region-inline {
+  display: inline-block;
+  vertical-align: middle;
+}
+.data-region-inline > .data-region-content,
+.data-region-inline > .data-region-placeholder {
+  display: block;
+}
+.skeleton.skeleton-count {
+  width: 1.2em;
+}
+.instances-loading .loading-actions .skeleton {
+  width: 80px;
+  height: 40px;
+}
+.instances-loading .loading-actions .skeleton:last-child {
+  width: 110px;
+}
+.instances-loading .skeleton-search {
+  width: 270px;
+  height: 40px;
+}
+.instances-loading .instance-times .skeleton {
+  width: 170px;
+}
+.instances-loading .instance-times {
+  min-height: 18px;
+  align-items: center;
+}
+.instances-loading .skeleton-reset {
+  width: 330px;
+}
+.instances-loading .loading-table tbody tr {
+  height: 90px;
+}
+.instances-loading .loading-table .check-cell .table-placeholder {
+  width: 16px;
+  height: 16px;
+}
+.panel-connection-error h1 {
+  margin-bottom: 20px;
+}
+.usage-placeholder {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  min-height: 47px;
+}
+.data-region-content {
+  opacity: 1;
+  transition: opacity 220ms ease-out;
+}
+.data-region-placeholder {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+  transition:
+    opacity 180ms ease-out,
+    visibility 0s 180ms;
+}
+.data-region[aria-busy="true"] > .data-region-placeholder {
+  position: relative;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 180ms ease-out;
+}
+.data-region[aria-busy="true"] > .data-region-content {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+}
+.skeleton,
+.table-placeholder {
+  display: inline-block;
+  width: 7em;
+  max-width: 100%;
+  height: 0.95em;
+  border-radius: 4px;
+  background: var(--border);
+  opacity: 0.5;
+  vertical-align: middle;
+  animation: skeleton-breathe 1.8s ease-in-out infinite;
+}
+.skeleton-title {
+  width: 40%;
+  height: 16px;
+}
+.skeleton-meta {
+  width: 28%;
+  height: 12px;
+}
+.skeleton-page-title {
+  display: block;
+  width: 160px;
+  height: 28px;
+  margin-bottom: 24px;
+}
+.skeleton-label {
+  display: block;
+  width: 70px;
+  height: 13px;
+  margin-bottom: 10px;
+}
+.skeleton-input {
+  width: 100%;
+  height: 40px;
+}
+.loading-toolbar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.loading-toolbar .skeleton {
+  width: 180px;
+  height: 40px;
+}
+.loading-table tbody tr {
+  height: 62px;
+}
+.loading-logs {
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.loading-log {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  min-height: 154px;
+}
+.loading-log-columns {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 1.5fr 0.7fr 0.9fr;
+  gap: 24px;
+  margin: 24px 0;
+}
+.loading-log-columns .skeleton {
+  width: 100%;
+}
+.loading-form {
+  padding: 24px;
+}
+.loading-form > .skeleton {
+  margin-bottom: 24px;
+}
+.traffic-overview .skeleton-stat {
+  display: block;
+  width: 130px;
+  height: 39px;
+  margin-top: 8px;
+}
+.traffic-range .skeleton {
+  width: 320px;
+}
+.traffic-details .loading-table {
+  border: 0;
+}
+.chart-placeholder {
+  height: 194px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+}
+.chart-placeholder .skeleton {
+  flex: 1;
+  width: auto;
+  max-width: none;
+  height: 100%;
+  opacity: 0.3;
+}
+.chart-placeholder .skeleton:nth-child(3n + 1) {
+  height: 68%;
+}
+.chart-placeholder .skeleton:nth-child(3n + 2) {
+  height: 40%;
+}
+@keyframes skeleton-breathe {
+  0%,
+  100% {
+    opacity: 0.32;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .table-placeholder {
+    animation: none;
+  }
+  .data-region-content,
+  .data-region-placeholder {
+    transition: none;
+  }
+}
+@media (max-width: 760px) {
+  .instances-loading .skeleton-search {
+    width: 100%;
+  }
+  .instances-loading .loading-table tbody tr {
+    height: 390px;
+  }
+  .traffic-overview .skeleton-stat {
+    width: 80px;
+    height: 45px;
+  }
+  .chart-placeholder {
+    height: 180px;
+  }
+  .loading-log {
+    padding: 18px;
+  }
+  .loading-log-columns {
+    gap: 12px;
+  }
+}

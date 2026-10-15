@@ -1,0 +1,49 @@
+{
+  "name": "aliyun-panel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted Alibaba Cloud ECS management with keep-alive, traffic protection, schedules, billing and Telegram notifications",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/haoch1/aliyun-panel.git"
+  },
+  "type": "module",
+  "bin": {
+    "aliyun-panel": "bin/aliyun-panel.mjs"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.5.0"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "start": "node bin/aliyun-panel.mjs",
+    "build": "vite build",
+    "check": "tsc --noEmit",
+    "test": "node --test --test-force-exit --test-concurrency=1 --test-timeout=20000 tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@alicloud/bssopenapi20171214": "4.1.1",
+    "@alicloud/cdt20210813": "1.0.1",
+    "@alicloud/ecs20140526": "7.11.6",
+    "@alicloud/openapi-core": "^1.0.8",
+    "@alicloud/sts20150401": "1.2.0",
+    "@alicloud/vpc20160428": "7.3.2",
+    "@darabonba/typescript": "^1.0.0",
+    "express": "5.2.1",
+    "helmet": "8.3.0",
+    "lucide-react": "1.52.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "prettier": "3.9.9",
+    "typescript": "7.0.2",
+    "vite": "8.3.3"
+  }
+}

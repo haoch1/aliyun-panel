@@ -1,0 +1,140 @@
+name: CI and Docker
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ghcr.io/haoch1/aliyun-panel
+
+jobs:
+  check:
+    name: Typecheck, tests and frontend build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm test
+      - run: pnpm build
+
+  docker:
+    name: Container (${{ matrix.arch }})
+    needs: check
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate deployment configurations
+        run: |
+          docker compose config --quiet
+          docker compose -f compose.yaml -f compose.build.yaml config --quiet
+      - name: Build image
+        run: |
+          docker build --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --tag "${IMAGE_NAME}:sha-${GITHUB_SHA}-${{ matrix.arch }}" .
+      - name: Verify startup, authentication boundary and shutdown
+        run: |
+          docker run --detach --name panel-test --cap-drop ALL \
+            --security-opt no-new-privileges:true --publish 127.0.0.1:4182:4182 \
+            "${IMAGE_NAME}:sha-${GITHUB_SHA}-${{ matrix.arch }}"
+          curl --fail --silent --show-error --retry 20 --retry-delay 2 \
+            --retry-all-errors http://127.0.0.1:4182/api/health > health.json
+          python3 -c 'import json; assert json.load(open("health.json"))["ok"] is True'
+          curl --fail --silent http://127.0.0.1:4182/api/auth > auth.json
+          python3 -c 'import json; d=json.load(open("auth.json")); assert d["initialized"] is False and d["authenticated"] is False'
+          curl --fail --silent http://127.0.0.1:4182/ | grep -q 'id="root"'
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:4182/api/instances)" = 401
+          test "$(docker inspect --format '{{.Config.User}}' panel-test)" = node
+          test "$(docker inspect --format '{{json .Config.Cmd}}' panel-test)" = '["aliyun-panel"]'
+          test "$(docker inspect --format '{{.Path}}' panel-test)" = aliyun-panel
+          docker exec panel-test aliyun-panel --healthcheck
+          docker exec panel-test sh -ec '
+            test "$(cat /proc/1/comm)" = aliyun-panel
+            test "$(tr "\000" "\n" < /proc/1/cmdline | head -n 1)" = aliyun-panel
+            for attempt in $(seq 1 35); do
+              if [ "$(cat /proc/1/task/*/comm | sort -u)" = aliyun-panel ]; then exit 0; fi
+              sleep 1
+            done
+            exit 1
+          '
+          docker stop --time 25 panel-test
+          test "$(docker inspect --format '{{.State.ExitCode}}' panel-test)" = 0
+      - name: Show container diagnostics
+        if: always()
+        run: docker logs panel-test || true
+      - name: Authenticate to GHCR
+        if: github.event_name != 'pull_request'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Push verified architecture image
+        if: github.event_name != 'pull_request'
+        run: docker push "${IMAGE_NAME}:sha-${GITHUB_SHA}-${{ matrix.arch }}"
+
+  publish:
+    name: Publish multi-platform image
+    needs: docker
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Authenticate to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Publish and validate manifest
+        run: |
+          tags=(--tag "${IMAGE_NAME}:sha-${GITHUB_SHA}")
+          if [[ "$GITHUB_REF" == refs/heads/main ]]; then
+            tags+=(--tag "${IMAGE_NAME}:latest")
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            tags+=(--tag "${IMAGE_NAME}:${GITHUB_REF_NAME}" --tag "${IMAGE_NAME}:${version}")
+          fi
+          docker buildx imagetools create "${tags[@]}" \
+            --annotation "index:org.opencontainers.image.description=Self-hosted Alibaba Cloud ECS management with keep-alive, traffic protection, schedules, billing and Telegram notifications" \
+            "${IMAGE_NAME}:sha-${GITHUB_SHA}-amd64" \
+            "${IMAGE_NAME}:sha-${GITHUB_SHA}-arm64"
+          docker buildx imagetools inspect "${IMAGE_NAME}:sha-${GITHUB_SHA}" --raw > manifest.json
+          python3 -c 'import json; d=json.load(open("manifest.json")); assert {m["platform"]["architecture"] for m in d["manifests"]} == {"amd64", "arm64"}'
+      - name: Verify published image with Compose
+        env:
+          PANEL_IMAGE: ghcr.io/haoch1/aliyun-panel:sha-${{ github.sha }}
+          PANEL_PORT: "14182"
+        run: |
+          docker compose pull
+          docker compose up --detach --wait --wait-timeout 90
+          curl --fail --silent --show-error http://127.0.0.1:14182/api/health > health.json
+          python3 -c 'import json; assert json.load(open("health.json"))["ok"] is True'
+          docker compose down --volumes

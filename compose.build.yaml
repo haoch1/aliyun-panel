@@ -1,0 +1,4 @@
+services:
+  aliyun-panel:
+    image: aliyun-panel:local
+    build: .

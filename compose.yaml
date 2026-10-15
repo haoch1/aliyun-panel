@@ -1,0 +1,21 @@
+name: aliyun-panel
+services:
+  aliyun-panel:
+    image: ${PANEL_IMAGE:-ghcr.io/haoch1/aliyun-panel:latest}
+    container_name: aliyun-panel
+    hostname: aliyun-panel
+    restart: unless-stopped
+    ports:
+      - "${PANEL_BIND:-127.0.0.1}:${PANEL_PORT:-4182}:4182"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4182
+      DATA_DIR: /app/data
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
+    volumes:
+      - aliyun-panel-data:/app/data
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  aliyun-panel-data:
+    name: aliyun-panel-data

@@ -1,0 +1,363 @@
+/* Shared visual rhythm for the cloud panels. */
+:root {
+  --panel-sidebar-width: 224px;
+  --panel-content-gutter: 24px;
+  --instance-font: 14px;
+  --instance-secondary-font: 13px;
+}
+/* A single reading size for row data; only supporting text is one step smaller. */
+.instances-table table th {
+  font-size: var(--instance-secondary-font);
+}
+.instances-table td,
+.instances-table td[data-label="实例"] strong,
+.instances-table .mono,
+.instances-table .copy-text,
+.instances-table .usage,
+.instances-table .status,
+.instances-table .keep-column .row > span,
+.instances-table .fee-trigger,
+.instances-table .rule-chip,
+.instances-table .instance-menu-button {
+  font-size: var(--instance-font);
+  line-height: 1.5;
+}
+.instances-table td[data-label="实例"] strong {
+  font-weight: 500;
+}
+.instances-table .subline,
+.instances-table .usage small {
+  font-size: var(--instance-secondary-font);
+  line-height: 1.5;
+}
+.instances-table td {
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 761px) {
+  .sidebar {
+    width: var(--panel-sidebar-width);
+  }
+  .workspace {
+    margin-left: var(--panel-sidebar-width);
+    width: calc(100% - var(--panel-sidebar-width));
+  }
+  .workspace main {
+    padding: 28px var(--panel-content-gutter) 48px;
+  }
+  .topbar,
+  .demo-bar {
+    padding-left: var(--panel-content-gutter);
+    padding-right: var(--panel-content-gutter);
+  }
+}
+.brand {
+  flex-shrink: 0;
+}
+.brand strong {
+  white-space: nowrap;
+}
+.brand > svg,
+.nav-item > svg,
+.sidebar nav button > svg {
+  flex-shrink: 0;
+}
+.nav-item > svg,
+.sidebar nav button > svg {
+  width: 18px;
+  height: 18px;
+}
+.page-heading {
+  margin-bottom: 20px;
+}
+.page-heading h1 > svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.instances-heading {
+  margin-bottom: 14px;
+}
+.instances-overview {
+  padding-bottom: 14px;
+}
+.button > svg,
+.icon-button > svg,
+.select-trigger > svg {
+  display: block;
+  flex-shrink: 0;
+}
+.button:focus-visible,
+.icon-button:focus-visible,
+.nav-item:focus-visible,
+.sidebar nav button:focus-visible,
+.context-menu button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.table-wrap th {
+  height: 43px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+/* Bound identity columns so short names do not absorb the table's spare width. */
+@media (min-width: 1361px) {
+  .instances-table table {
+    table-layout: fixed;
+    min-width: 0;
+  }
+  .instances-table th:first-child,
+  .instances-table td:first-child {
+    width: 40px;
+  }
+  .instances-table th:nth-child(2) {
+    width: clamp(136px, 9vw, 180px);
+  }
+  .instances-table th:nth-child(3) {
+    width: clamp(96px, 6vw, 120px);
+  }
+  .instances-table th:nth-child(4) {
+    width: clamp(164px, 12vw, 224px);
+  }
+  .instances-table th:nth-child(5) {
+    width: clamp(210px, 16vw, 270px);
+  }
+  .instances-table th:nth-child(6) {
+    width: clamp(96px, 6vw, 120px);
+  }
+  .instances-table th:nth-child(7) {
+    width: clamp(144px, 10vw, 192px);
+    min-width: 0;
+  }
+  .instances-table th:nth-child(8) {
+    width: clamp(104px, 7vw, 144px);
+  }
+  .instances-table th:last-child,
+  .instances-table td:last-child {
+    width: 88px;
+    padding-right: 16px;
+  }
+  .instances-table td[data-label="实例"] {
+    min-width: 0;
+  }
+  .instances-table td[data-label="实例"] strong,
+  .instances-table td[data-label="实例"] .subline {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .instances-table .usage {
+    min-width: 0;
+  }
+  .instances-table .usage-trigger {
+    max-width: 248px;
+  }
+  .instances-table thead .selection-box {
+    height: 18px;
+  }
+}
+.instance-name,
+.instances-table td[data-label="实例"] strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.context-menu {
+  border-radius: 8px;
+}
+.modal-head {
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-right: 0;
+}
+.modal-head > div {
+  min-width: 0;
+}
+.modal-head > .icon-button {
+  flex: 0 0 32px;
+}
+.modal-head h2 {
+  font-weight: 600;
+}
+.resource-picker,
+.traffic-instance-picker {
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+}
+.traffic-instance-picker > span,
+.traffic-overview > div > span {
+  font-size: 13px;
+}
+.traffic-content .toolbar {
+  margin: 0 0 18px;
+}
+.traffic-overview strong {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+.traffic-overview strong > span {
+  color: inherit;
+  font-size: inherit;
+}
+.traffic-range {
+  margin: 14px 0 20px;
+  line-height: 1.7;
+}
+.daily-chart {
+  margin-bottom: 0;
+}
+.traffic-daily,
+.traffic-details {
+  margin-top: 14px;
+}
+.traffic-daily > summary,
+.traffic-details > summary {
+  padding: 6px 0;
+  margin: 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.traffic-daily[open] > .table-wrap,
+.traffic-details[open] > .table-wrap {
+  margin-top: 10px;
+  max-height: 320px;
+}
+.traffic-daily-table th:not(:first-child),
+.traffic-daily-table td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.traffic-daily-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+@media (max-width: 760px) {
+  .instance-table tbody tr,
+  .instances-table tbody tr {
+    padding: 14px;
+  }
+  .instances-table td:last-child {
+    text-align: right;
+  }
+  .page-heading {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .resource-picker .field {
+    flex-direction: row;
+    align-items: center;
+  }
+  .resource-picker .custom-select,
+  .traffic-instance-picker .custom-select {
+    flex: 1;
+    min-width: 0;
+  }
+  .resource-picker .select-value,
+  .traffic-instance-picker .select-value {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+  .traffic-instance-picker {
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+  }
+  .traffic-content .periods,
+  .traffic-periods {
+    display: flex;
+    width: auto;
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+  .traffic-content .periods .button,
+  .traffic-periods .button {
+    padding: 8px 10px;
+    min-height: 36px;
+    font-size: 13px;
+  }
+  .traffic-content .toolbar > .button {
+    min-height: 36px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .traffic-overview > div,
+  .embedded-view .traffic-overview > div {
+    padding: 14px 10px;
+  }
+  .traffic-overview strong {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    font-size: clamp(18px, 5vw, 24px);
+  }
+  .traffic-overview strong > .traffic-unit {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .table-wrap .traffic-daily-table,
+  .traffic-details .table-wrap .traffic-daily-table {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    white-space: normal;
+  }
+  .traffic-daily-table thead {
+    display: none;
+  }
+  .traffic-daily-table tbody {
+    display: block;
+  }
+  .traffic-daily-table tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .traffic-daily-table tr:last-child {
+    border-bottom: 0;
+  }
+  .table-wrap .traffic-daily-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+    font-size: 12px;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  .traffic-daily-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .traffic-daily-table td[data-label="日期"] {
+    grid-column: 1 / -1;
+    font-weight: 500;
+  }
+  .traffic-daily-table td[data-label="日期"]::before {
+    display: none;
+  }
+}
+@media (max-width: 360px) {
+  .traffic-content .periods .button,
+  .traffic-periods .button {
+    padding: 8px;
+    font-size: 12px;
+  }
+  .traffic-content .toolbar {
+    gap: 8px;
+  }
+}

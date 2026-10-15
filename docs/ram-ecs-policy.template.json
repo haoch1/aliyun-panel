@@ -1,0 +1,19 @@
+{
+  "Version": "1",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["ecs:DescribeInstances"],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecs:DescribeInstanceMonitorData",
+        "ecs:StartInstance",
+        "ecs:StopInstance"
+      ],
+      "Resource": ["acs:ecs:<REGION_ID>:<ACCOUNT_ID>:instance/<INSTANCE_ID>"]
+    }
+  ]
+}

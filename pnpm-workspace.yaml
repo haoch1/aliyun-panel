@@ -1,0 +1,4 @@
+allowBuilds:
+  "@alicloud/openapi-core": true
+minimumReleaseAgeExclude:
+  - nodemailer@10.1.1
