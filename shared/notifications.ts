@@ -1,4 +1,5 @@
 import { displayTrafficUnits } from "./presentation.ts";
+import { sortByName } from "./resource-order.ts";
 import { notificationType } from "./notification-preferences.ts";
 
 export interface NotificationMessage {
@@ -159,7 +160,7 @@ export function cycleSummary(items: any[]) {
 }
 export function cycleDetails(items: any[]) {
   const lines = [cycleSummary(items)];
-  for (const i of items.slice(0, 5)) {
+  for (const i of sortByName(items).slice(0, 5)) {
     const status =
       i.status === "Running"
         ? "运行"
@@ -175,19 +176,21 @@ export function cycleDetails(items: any[]) {
       i.billing?.amount != null
         ? ` · ${Number(i.billing.amount).toFixed(2)} ${i.billing.currency}${i.billing.stale ? "（缓存）" : ""}`
         : "";
-    lines.push(
-      `\n${regionFlag(i.region)} ${clip(i.name, 24)} · ${status}\n${flow}${fee}`.trim(),
-    );
+    const block = [
+      `${regionFlag(i.region)} ${clip(i.name, 24)} · ${status}`.trim(),
+      `${flow}${fee}`,
+    ];
     if (i.error)
-      lines.push("异常：" + clip(String(i.error).replace(/\s+/g, " "), 70));
+      block.push("异常：" + clip(String(i.error).replace(/\s+/g, " "), 70));
     else if (i.decision && i.decision !== "none")
-      lines.push(
+      block.push(
         "计划" + operationTitle(i.source, i.decision) + "（等待执行）",
       );
+    lines.push(block.join("\n"));
   }
   if (items.length > 5)
     lines.push("其余 " + (items.length - 5) + " 台请在面板查看");
-  return lines.join("\n");
+  return lines.join("\n\n");
 }
 export function dailySummary(
   items: any[],
@@ -221,7 +224,7 @@ export function dailySummary(
     )
       pools.set(key, i.usage);
   }
-  for (const i of items.slice(0, 5)) {
+  for (const i of sortByName(items).slice(0, 5)) {
     const usage = i.accountId ? pools.get(poolKey(i)) : i.usage;
     const used = usage?.used,
       total = usage?.total;
@@ -258,21 +261,22 @@ export function dailySummary(
       );
     }
     lines.push(
-      "\n" +
+      [
         (regionFlag(i.region) ? regionFlag(i.region) + " " : "") +
-        clip(i.name, 24) +
-        " · " +
-        (i.status === "Running"
-          ? "运行"
-          : i.status === "Stopped"
-            ? "停止"
-            : "状态待同步"),
-      details.join(" · "),
+          clip(i.name, 24) +
+          " · " +
+          (i.status === "Running"
+            ? "运行"
+            : i.status === "Stopped"
+              ? "停止"
+              : "状态待同步"),
+        details.join(" · "),
+      ].join("\n"),
     );
   }
   if (items.length > 5)
     lines.push("其余 " + (items.length - 5) + " 台请在面板查看");
-  return lines.join("\n");
+  return lines.join("\n\n");
 }
 const sampleItems = [
   {

@@ -107,32 +107,36 @@ summary:focus-visible {
 @media (min-width: 1361px) {
   .instances-table table {
     table-layout: fixed;
-    min-width: 0;
+    min-width: 1180px;
   }
   .instances-table th:first-child,
   .instances-table td:first-child {
     width: 40px;
   }
   .instances-table th:nth-child(2) {
-    width: clamp(136px, 9vw, 180px);
+    width: clamp(112px, 8vw, 160px);
   }
   .instances-table th:nth-child(3) {
     width: clamp(96px, 6vw, 120px);
   }
   .instances-table th:nth-child(4) {
-    width: clamp(164px, 12vw, 224px);
+    width: clamp(154px, 11vw, 210px);
   }
   .instances-table th:nth-child(5) {
-    width: clamp(210px, 16vw, 270px);
+    width: clamp(180px, 14vw, 248px);
   }
   .instances-table th:nth-child(6) {
     width: clamp(96px, 6vw, 120px);
   }
   .instances-table th:nth-child(7) {
-    width: clamp(144px, 10vw, 192px);
+    width: clamp(124px, 9vw, 152px);
     min-width: 0;
   }
   .instances-table th:nth-child(8) {
+    width: clamp(144px, 10vw, 164px);
+    min-width: 0;
+  }
+  .instances-table th:nth-child(9) {
     width: clamp(104px, 7vw, 144px);
   }
   .instances-table th:last-child,
@@ -158,6 +162,14 @@ summary:focus-visible {
   }
   .instances-table thead .selection-box {
     height: 18px;
+  }
+}
+.instances-table .automation-column {
+  min-width: 124px;
+}
+@media (max-width: 760px) {
+  .instances-table .automation-column {
+    min-width: 0;
   }
 }
 .instance-name,

@@ -4,6 +4,7 @@ import {
 } from "../shared/notification-preferences.ts";
 import { randomUUID } from "node:crypto";
 import { Store as BaseStore } from "./base-store.mjs";
+import { sortByName } from "../shared/resource-order.ts";
 export const resourceKey = ({ accountId, region, id }) =>
   JSON.stringify([accountId, region, id]);
 export const defaultRule = ({ accountId, region, id }) => ({
@@ -63,10 +64,15 @@ export class Store extends BaseStore {
   }
   put(kind, id, body) {
     this.db
-      .prepare("INSERT OR REPLACE INTO entities VALUES(?,?,?)")
+      .prepare(
+        "INSERT INTO entities VALUES(?,?,?) ON CONFLICT(kind,id) DO UPDATE SET body=excluded.body",
+      )
       .run(kind, id, JSON.stringify(body));
     this.emit(kind);
     return body;
+  }
+  accounts() {
+    return sortByName(super.accounts());
   }
   remove(kind, id) {
     this.db.prepare("DELETE FROM entities WHERE kind=? AND id=?").run(kind, id);

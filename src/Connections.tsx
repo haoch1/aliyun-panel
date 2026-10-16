@@ -4,6 +4,7 @@ import {
   type RegionOption,
 } from "../shared/regions";
 import { useEffect, useState } from "react";
+import { sortByName } from "../shared/resource-order";
 import type { Account, Instance } from "../shared/types";
 import { api, ErrorBox, Field, isDemo, target, usePanel } from "./lib";
 import Select from "./components/ui/Select";
@@ -326,7 +327,7 @@ export default function ConnectionDialog({
                       </tr>
                     </thead>
                     <tbody>
-                      {scan.items.map((i) => {
+                      {sortByName(scan.items).map((i) => {
                         const key = i.region + "|" + i.id;
                         return (
                           <tr key={key}>

@@ -1,4 +1,5 @@
 import { groupDataTimes } from "../shared/presentation";
+import { sortByName } from "../shared/resource-order";
 import { regionName } from "../shared/regions";
 import { ReceiptText } from "lucide-react";
 import { useState } from "react";
@@ -45,27 +46,29 @@ export default function Billing({
     true,
   );
   const bills: any[] = d.data?.items || [];
-  const rows = bills.flatMap((b) =>
-    (b.instances || [])
-      .filter((i: any) =>
-        instance
-          ? i.id === instance.id && i.region === instance.region
-          : region === "all" || i.region === region,
-      )
-      .map((i: any) => ({
-        ...i,
-        accountId: b.accountId,
-        currency: b.currency,
-        balance: number(b.balance?.availableAmount),
-        balanceCurrency: b.balance?.currency || b.currency,
-        balanceError: b.balanceError,
-        balanceAt: b.balanceAt,
-        billError: b.billError,
-        error: b.error,
-        at: b.at,
-        checkedAt: b.checkedAt,
-        stale: b.stale,
-      })),
+  const rows = sortByName(
+    bills.flatMap((b) =>
+      (b.instances || [])
+        .filter((i: any) =>
+          instance
+            ? i.id === instance.id && i.region === instance.region
+            : region === "all" || i.region === region,
+        )
+        .map((i: any) => ({
+          ...i,
+          accountId: b.accountId,
+          currency: b.currency,
+          balance: number(b.balance?.availableAmount),
+          balanceCurrency: b.balance?.currency || b.currency,
+          balanceError: b.balanceError,
+          balanceAt: b.balanceAt,
+          billError: b.billError,
+          error: b.error,
+          at: b.at,
+          checkedAt: b.checkedAt,
+          stale: b.stale,
+        })),
+    ),
   );
   const times = rows
     .flatMap((i) => [i.balanceAt, i.at])

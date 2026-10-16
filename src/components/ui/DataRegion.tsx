@@ -156,7 +156,8 @@ export function PageLoading({ page }: { page: string }) {
             "公网 IP",
             "本月流量",
             "保活",
-            "保护与定时",
+            "流量保护",
+            "定时关机",
             "本月费用",
             "操作",
           ]}

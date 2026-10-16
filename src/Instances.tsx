@@ -219,7 +219,8 @@ export default function Instances() {
                 <Activity size={14} />
                 保活
               </th>
-              <th className="automation-column">保护与定时</th>
+              <th className="automation-column">流量保护</th>
+              <th className="automation-column">定时关机</th>
               <th>本月费用</th>
               <th>操作</th>
             </tr>
@@ -318,9 +319,17 @@ export default function Instances() {
                     <span>{i.effectiveKeepAlive ? "开启" : "关闭"}</span>
                   </div>
                 </td>
-                <td data-label="保护与定时" className="automation-column">
+                <td data-label="流量保护" className="automation-column">
                   <ProtectionState
                     instance={i}
+                    kind="traffic"
+                    onEdit={(kind) => setEditing({ instance: i, kind })}
+                  />
+                </td>
+                <td data-label="定时关机" className="automation-column">
+                  <ProtectionState
+                    instance={i}
+                    kind="schedule"
                     onEdit={(kind) => setEditing({ instance: i, kind })}
                   />
                 </td>
@@ -889,9 +898,11 @@ function RuleDialog({
 }
 function ProtectionState({
   instance: i,
+  kind,
   onEdit,
 }: {
   instance: Instance;
+  kind: "traffic" | "schedule";
   onEdit: (kind: "traffic" | "schedule") => void;
 }) {
   const r = i.rule;
@@ -901,7 +912,7 @@ function ProtectionState({
       : r.thresholdPercent + "%";
   return (
     <div className="protection-state">
-      {r.thresholdEnabled && (
+      {kind === "traffic" && r.thresholdEnabled && (
         <button
           type="button"
           className="rule-chip"
@@ -921,7 +932,7 @@ function ProtectionState({
           </span>
         </button>
       )}
-      {r.scheduleEnabled && (
+      {kind === "schedule" && r.scheduleEnabled && (
         <button
           type="button"
           className="rule-chip"
@@ -947,7 +958,7 @@ function ProtectionState({
           </span>
         </button>
       )}
-      {!r.thresholdEnabled && !r.scheduleEnabled && (
+      {!(kind === "traffic" ? r.thresholdEnabled : r.scheduleEnabled) && (
         <span className="muted">—</span>
       )}
     </div>

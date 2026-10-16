@@ -1,6 +1,7 @@
 import { ThemeControl } from "./theme";
 import Select from "./components/ui/Select";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { sortByName } from "../shared/resource-order";
 import {
   ArrowUpRight,
   ArrowDownUp,
@@ -191,7 +192,15 @@ export default function App() {
     auth?.authenticated ? "/settings" : null,
     revision,
   );
-  const snapshot = data.data || empty;
+  const snapshot = useMemo(
+    () =>
+      data.data ? { ...data.data, items: sortByName(data.data.items) } : empty,
+    [data.data],
+  );
+  const orderedAccounts = useMemo(
+    () => sortByName(accounts.data?.items || []),
+    [accounts.data],
+  );
   const initialLoading =
     (!auth && !authError) ||
     data.initialLoading ||
@@ -216,7 +225,7 @@ export default function App() {
   return (
     <PanelContext.Provider
       value={{
-        accounts: accounts.data?.items || [],
+        accounts: orderedAccounts,
         snapshot,
         loading: data.loading,
         initialLoading,

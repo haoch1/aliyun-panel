@@ -1,4 +1,5 @@
 import { notificationChoices } from "../shared/notification-preferences";
+import { sortByName } from "../shared/resource-order";
 import { displayTrafficUnits, groupDataTimes } from "../shared/presentation";
 import {
   resourceLogSummary,
@@ -132,8 +133,10 @@ function LogDetails({
   context: any;
   selectedInstance: string;
 }) {
-  const resources = (c.resources || []).filter(
-    (r: any) => selectedInstance === "all" || r.id === selectedInstance,
+  const resources = sortByName<any>(
+    (c.resources || []).filter(
+      (r: any) => selectedInstance === "all" || r.id === selectedInstance,
+    ),
   );
   return (
     <div className="log-detail-view">
@@ -467,8 +470,10 @@ export default function Logs() {
                   ? undefined
                   : r.context?.instanceName ||
                     (r.context?.accountName ? undefined : r.target);
-              const resources = (r.context?.resources || []).filter(
-                (i: any) => instance === "all" || i.id === instance,
+              const resources = sortByName<any>(
+                (r.context?.resources || []).filter(
+                  (i: any) => instance === "all" || i.id === instance,
+                ),
               );
               const eventSummary = eventLogSummary(r.context || {});
               const hasDetails =

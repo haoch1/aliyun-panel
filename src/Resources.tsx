@@ -51,7 +51,9 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
     revision,
     true,
   );
-  const rows = d.data?.items || [],
+  const rows = [...(d.data?.items || [])].sort((a, b) =>
+      a.date.localeCompare(b.date),
+    ),
     totals = trafficTotals(rows);
   return (
     <div className={"traffic-content" + (supplied ? " embedded-view" : "")}>

@@ -8,6 +8,7 @@ import { resourceKey } from "./store.mjs";
 import { billKey, billingCycle, instanceAmount } from "./billing.mjs";
 import { nextSchedule } from "./policy.mjs";
 import { randomUUID } from "node:crypto";
+import { sortByName } from "../shared/resource-order.ts";
 export async function mapLimit(items, n, run) {
   const output = new Array(items.length);
   let index = 0;
@@ -160,7 +161,7 @@ export class ResourceService {
       }),
     );
     return {
-      items,
+      items: sortByName(items),
       at: Math.min(...scopes.map((s) => s.at || 0), Date.now()),
       errors: scopes
         .filter((s) => s.error)
