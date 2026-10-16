@@ -293,3 +293,30 @@ test("demo notification choices persist and filter unchecked automatic events", 
     await request("/settings", previous, "PUT");
   }
 });
+
+test("演示模式移除全部实例后不刷空检测日志，也不发送空汇总", async (t) => {
+  for (const i of (await request("/instances")).items)
+    await request("/monitors", i, "DELETE");
+  const settings = await request("/settings");
+  settings.notifications.telegramToken = "fixture-demo-token";
+  settings.notifications.telegramChatId = "fixture-demo-chat";
+  settings.notifications.events = ["daily", "cycle"];
+  settings.reportTime = "00:00";
+  settings.timezone = "Asia/Shanghai";
+  await request("/settings", settings, "PUT");
+  const logCount = (await request("/audit")).items.length;
+  const notificationCount = (await request("/notifications")).items.length;
+  t.mock.timers.enable({
+    apis: ["Date", "setInterval"],
+    now: Date.parse("2026-10-15T16:00:00Z"),
+  });
+  const stop = startDemoAutomation();
+  t.after(stop);
+  await request("/check", {});
+  t.mock.timers.tick(15 * 60000);
+  assert.equal((await request("/audit")).items.length, logCount);
+  assert.equal(
+    (await request("/notifications")).items.length,
+    notificationCount,
+  );
+});

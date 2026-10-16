@@ -85,8 +85,32 @@ export class Engine {
       this.cyclePromise = undefined;
     }
   }
+  hasTargets(filter = {}) {
+    return this.store
+      .accounts()
+      .some(
+        (a) =>
+          (!filter.accountId ||
+            filter.accountId === "all" ||
+            a.id === filter.accountId) &&
+          (!a.monitors ||
+            a.monitors.some(
+              (m) =>
+                !filter.region ||
+                filter.region === "all" ||
+                m.region === filter.region,
+            )),
+      );
+  }
   async runCycle(force = false, filter = {}) {
     if (this.policyRunning) return;
+    if (!this.hasTargets(filter)) {
+      if (!this.hasTargets()) {
+        this.lastCycle = 0;
+        this.lastMonth = "";
+      }
+      return;
+    }
     const month = zoned(new Date(), "Asia/Shanghai").month;
     const scheduledDue = this.store.list("rule").some((r) => {
       if (
@@ -355,6 +379,7 @@ export class Engine {
     }
   }
   async reportCycle() {
+    if (!this.hasTargets()) return;
     const startedAt = new Date();
     if (this.store.settings().billingEnabled) await this.billing.refresh();
     const settings = this.store.settings(),
@@ -370,6 +395,7 @@ export class Engine {
     )
       return;
     const items = this.service.instances().items;
+    if (!items.length) return;
     const message = dailySummary(
       items,
       this.billing.view().items,

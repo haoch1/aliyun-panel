@@ -186,6 +186,7 @@ test("每日汇总与每轮汇总分别勾选，日报持久去重并在取消�
   s.billingEnabled = false;
   r.store.saveSettings(s);
   select(r, ["daily"]);
+  await r.service.refresh();
   await r.engine.reports();
   await r.engine.reports();
   assert.equal(

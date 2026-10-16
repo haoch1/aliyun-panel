@@ -536,6 +536,7 @@ function policy(items = instances) {
 function checkRules(source: "manual" | "automatic", filter?: URLSearchParams) {
   const startedAt = now();
   const items = filter ? listInstances(filter).map(find) : instances;
+  if (!items.length) return;
   if (
     !filter ||
     ((!filter.get("accountId") || filter.get("accountId") === "all") &&
@@ -625,6 +626,7 @@ export function startDemoAutomation() {
       checkRules("automatic");
     const local = zoned(new Date(), settings.timezone);
     if (
+      instances.length > 0 &&
       notificationSelection(settings).includes("daily") &&
       !reportDates.has(local.date) &&
       clockDue(new Date(), settings.timezone, settings.reportTime)
