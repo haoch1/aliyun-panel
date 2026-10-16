@@ -5,6 +5,8 @@ import {
   ArrowUpRight,
   ArrowDownUp,
   Cloud,
+  CircleCheck,
+  CircleX,
   FlaskConical,
   LogOut,
   Menu,
@@ -335,6 +337,15 @@ export default function App() {
         <div className="notices" aria-live="polite">
           {notices.map((n) => (
             <div key={n.id} className={"notice " + (n.error ? "error" : "")}>
+              {n.error ? (
+                <CircleX className="notice-icon" size={19} aria-hidden="true" />
+              ) : (
+                <CircleCheck
+                  className="notice-icon"
+                  size={19}
+                  aria-hidden="true"
+                />
+              )}
               <span>{n.message}</span>
               <button
                 className="icon-button"

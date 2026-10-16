@@ -1362,6 +1362,24 @@ summary {
   margin: 0;
   padding: 12px 18px;
   border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.log-feed-footer .log-retention {
+  margin-right: auto;
+  font-size: var(--font-sm);
+}
+.log-feed-footer .custom-select {
+  width: 124px;
+}
+.log-feed-footer .select-trigger {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: var(--font-sm);
+}
+@media (max-width: 600px) {
+  .log-feed-footer .log-retention {
+    flex-basis: 100%;
+  }
 }
 .log-detail-summary {
   margin-bottom: 20px;

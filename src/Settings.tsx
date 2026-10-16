@@ -5,6 +5,7 @@ import {
 import type { NotificationType } from "../shared/notification-preferences";
 import {
   formatNotification,
+  notificationIcon,
   notificationExamples,
 } from "../shared/notifications";
 import { Settings as HeadingSettingsIcon } from "lucide-react";
@@ -388,6 +389,7 @@ export default function SettingsPage() {
                 <tr key={r.id}>
                   <td>{date(r.at)}</td>
                   <td>
+                    <span aria-hidden="true">{notificationIcon(r)}</span>{" "}
                     {r.title}
                     {r.error && (
                       <div className="subline danger-text">{r.error}</div>

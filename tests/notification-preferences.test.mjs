@@ -13,7 +13,55 @@ import {
   notificationType,
   wantsNotification,
 } from "../shared/notification-preferences.ts";
-import { notificationExamples } from "../shared/notifications.ts";
+import {
+  formatNotification,
+  notificationIcon,
+  notificationExamples,
+} from "../shared/notifications.ts";
+
+test("通知使用统一彩色语义图标，异常优先于动作和汇总", () => {
+  const icons = {
+    keepalive: "🟢",
+    threshold: "🟠",
+    traffic: "🟢",
+    "traffic-recovery": "🟢",
+    schedule: "🟢",
+    manual: "🟢",
+    "operation-error": "🔴",
+    status: "🟠",
+    error: "🔴",
+    recovery: "🟢",
+    billing: "🔴",
+    "billing-recovery": "🟢",
+    cycle: "🟢",
+    daily: "🟢",
+    test: "🟢",
+  };
+  for (const example of notificationExamples) {
+    const expected = icons[example.id];
+    assert.ok(expected, example.id);
+    assert.ok(["🟢", "🟠", "🔴"].includes(notificationIcon(example.item)));
+    assert.equal(notificationIcon(example.item), expected, example.id);
+    assert.ok(formatNotification(example.item).startsWith(expected + " "));
+    assert.ok(
+      formatNotification(example.item, true).startsWith("<b>" + expected + " "),
+    );
+  }
+  for (const title of ["定时关机", "手动关机", "保活开机", "检测恢复"]) {
+    assert.equal(notificationIcon({ title, level: "error" }), "🔴");
+  }
+  assert.equal(
+    notificationIcon({ title: "检测完成", kind: "cycle", level: "error" }),
+    "🔴",
+  );
+  assert.equal(notificationIcon({ title: "手动关机", type: "manual" }), "🟢");
+  assert.equal(notificationIcon({ title: "定时开机", type: "schedule" }), "🟢");
+  assert.equal(notificationIcon({ title: "检测恢复", level: "warning" }), "🟠");
+  assert.equal(
+    notificationIcon({ title: "操作结果", type: "operation-error" }),
+    "🔴",
+  );
+});
 
 function runtime(t) {
   const dir = mkdtempSync(join(tmpdir(), "aliyun-test-"));

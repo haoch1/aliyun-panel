@@ -1,4 +1,5 @@
 import { displayTrafficUnits } from "./presentation.ts";
+import { notificationType } from "./notification-preferences.ts";
 
 export interface NotificationMessage {
   title: string;
@@ -62,23 +63,24 @@ function notificationTime(value: number | string | undefined) {
   );
   return `🕒 ${parts.year}.${parts.month}.${parts.day} - ${parts.hour}:${parts.minute}:${parts.second}`;
 }
+export function notificationIcon(item: NotificationMessage): string {
+  const type = notificationType(item);
+  // Failures take precedence over the action or summary being reported
+  if (
+    item.level === "error" ||
+    type === "operation-error" ||
+    type === "error" ||
+    type === "billing"
+  )
+    return "🔴";
+  if (item.level === "warning" || type === "threshold") return "🟠";
+  if (type === "status" && !/测试/.test(item.title)) return "🟠";
+  return "🟢";
+}
 export function formatNotification(item: NotificationMessage, html = false) {
   const encode = (v: string) => (html ? escape(v) : v);
   const bold = (v: string) => (html ? "<b>" + encode(v) + "</b>" : v);
-  const icon =
-    item.level === "error"
-      ? "🔴"
-      : item.level === "warning"
-        ? "🟠"
-        : /测试/.test(item.title)
-          ? "🧪"
-          : item.kind === "report" || item.kind === "cycle"
-            ? "📊"
-            : /关机/.test(item.title)
-              ? "🔴"
-              : /开机|恢复/.test(item.title)
-                ? "🟢"
-                : "📋";
+  const icon = notificationIcon(item);
   const body: string[] = [];
   if (item.instance) {
     const flag = regionFlag(item.instance.region);

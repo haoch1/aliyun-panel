@@ -541,6 +541,13 @@ input[type="checkbox"] {
   color: var(--danger);
   border-color: var(--danger-border);
 }
+.notice-icon {
+  flex-shrink: 0;
+  color: var(--success);
+}
+.notice.error .notice-icon {
+  color: var(--danger);
+}
 .auth-page {
   min-height: 100vh;
   display: flex;

@@ -310,6 +310,17 @@ function LogDetails({
     </div>
   );
 }
+const pageSizes = [20, 50, 100];
+const pageSizeKey = "aliyun-panel:logs-page-size:v1";
+function savedPageSize() {
+  try {
+    const value = Number(localStorage.getItem(pageSizeKey));
+    if (pageSizes.includes(value)) return value;
+  } catch {
+    // Keep pagination usable when browser storage is unavailable
+  }
+  return 20;
+}
 export default function Logs() {
   const p = usePanel(),
     d = useData<{ items: any[]; at: number }>("/audit", p.revision);
@@ -318,6 +329,7 @@ export default function Logs() {
     [instance, setInstance] = useState("all"),
     [search, setSearch] = useState(""),
     [page, setPage] = useState(0),
+    [pageSize, setPageSize] = useState(savedPageSize),
     [detail, setDetail] = useState<any>();
   const all = d.data?.items || [];
   const rows = all.filter(
@@ -336,8 +348,12 @@ export default function Logs() {
           .toLowerCase()
           .includes(search.toLowerCase())),
   );
-  const pages = Math.max(1, Math.ceil(rows.length / 20)),
+  const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
     activePage = Math.min(page, pages - 1);
+  const visibleRows = rows.slice(
+    activePage * pageSize,
+    (activePage + 1) * pageSize,
+  );
   const scopeName =
     instance === "all"
       ? "系统日志"
@@ -443,7 +459,7 @@ export default function Logs() {
         </div>
         <DataRegion pending={d.initialLoading} placeholder={<LoadingLogs />}>
           <ol className="log-stream">
-            {rows.slice(activePage * 20, activePage * 20 + 20).map((r) => {
+            {visibleRows.map((r) => {
               const severity =
                 r.level || (r.status === "failed" ? "error" : "info");
               const name =
@@ -589,27 +605,47 @@ export default function Logs() {
                   : "暂无符合条件的日志"}
             </Empty>
           )}
-          {pages > 1 && (
-            <div className="log-feed-footer pagination">
-              <small className="muted">
-                第 {activePage + 1} / {pages} 页
-              </small>
-              <button
-                className="button"
-                disabled={!activePage}
-                onClick={() => setPage(activePage - 1)}
-              >
-                上一页
-              </button>
-              <button
-                className="button"
-                disabled={activePage === pages - 1}
-                onClick={() => setPage(activePage + 1)}
-              >
-                下一页
-              </button>
-            </div>
-          )}
+          <div className="log-feed-footer pagination">
+            <span className="log-retention muted">最多保留 5,000 条</span>
+            <Select
+              aria-label="每页日志条数"
+              menuMinWidth={160}
+              value={pageSize}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setPageSize(value);
+                setPage(0);
+                try {
+                  localStorage.setItem(pageSizeKey, String(value));
+                } catch {
+                  // The selection still applies for the current visit
+                }
+              }}
+            >
+              {pageSizes.map((size) => (
+                <option key={size} value={size}>
+                  {size} 条 / 页
+                </option>
+              ))}
+            </Select>
+            <small className="muted">
+              第 {activePage + 1} / {pages} 页
+            </small>
+            <button
+              className="button"
+              disabled={!activePage}
+              onClick={() => setPage(activePage - 1)}
+            >
+              上一页
+            </button>
+            <button
+              className="button"
+              disabled={activePage === pages - 1}
+              onClick={() => setPage(activePage + 1)}
+            >
+              下一页
+            </button>
+          </div>
         </DataRegion>
       </section>
       {detail && (
