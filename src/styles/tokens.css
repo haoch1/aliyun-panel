@@ -279,7 +279,7 @@ input:read-only:not([type="checkbox"]):not([type="radio"]) {
   --font-sm: 13px;
   --font-md: 14px;
   --font-body: 14px;
-  --font-section: 18px;
+  --font-section: 16px;
   --font-title: 24px;
   --font-stat: 26px;
   --radius-control: 6px;

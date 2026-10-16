@@ -437,7 +437,7 @@ summary {
     padding-right: 20px;
   }
 }
-@media (max-width: 1360px) {
+@media (max-width: 1479px) {
   .instances-table .usage {
     min-width: 0;
   }

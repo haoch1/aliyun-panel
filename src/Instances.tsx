@@ -613,7 +613,7 @@ export function Usage({
               : `${bytes(u?.used)} / ${bytes(u?.total)}`}
         </div>
         {ratio != null && (
-          <>
+          <div className="usage-meter">
             <div className="progress">
               <span
                 style={{ width: Math.min(100, ratio) + "%" }}
@@ -621,7 +621,7 @@ export function Usage({
               />
             </div>
             <small>{ratio.toFixed(1)}%</small>
-          </>
+          </div>
         )}
         {u?.error && <small className="danger-text">用量更新失败</small>}
         {!!u?.overflow && (

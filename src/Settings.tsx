@@ -100,7 +100,7 @@ export default function SettingsPage() {
   const setN = (key: string, value: string | boolean) =>
     setS({ ...s, notifications: { ...n, [key]: value } });
   return (
-    <>
+    <div className="settings-page">
       <div className="page-heading">
         <div>
           <h1>
@@ -411,6 +411,6 @@ export default function SettingsPage() {
           {!outbox.data?.items.length && <Empty>暂无 TG 通知</Empty>}
         </div>
       </DataRegion>
-    </>
+    </div>
   );
 }

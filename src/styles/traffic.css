@@ -89,7 +89,7 @@
 }
 .daily-bars {
   display: grid;
-  grid-template-columns: repeat(var(--days), minmax(26px, 1fr));
+  grid-template-columns: repeat(var(--days), minmax(34px, 1fr));
   gap: 6px;
   height: 194px;
   padding: 2px;
@@ -146,7 +146,7 @@
 }
 .daily-bar-date {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 16px;
   white-space: nowrap;
 }
@@ -170,7 +170,7 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: var(--shadow);
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 .daily-chart-tooltip strong {
@@ -217,7 +217,7 @@
     height: 180px;
   }
   .daily-bar-date {
-    font-size: 11px;
+    font-size: 13px;
   }
 }
 @media (max-width: 420px) {
@@ -249,7 +249,7 @@
     font-size: 17px;
   }
   .traffic-range {
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.7;
   }
 }

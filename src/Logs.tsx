@@ -529,7 +529,7 @@ export default function Logs() {
                                         </span>
                                       )}
                                     </th>
-                                    <td>
+                                    <td data-label="状态">
                                       <span
                                         className={
                                           "log-resource-status " +
@@ -541,11 +541,21 @@ export default function Logs() {
                                         {summary.status}
                                       </span>
                                     </td>
-                                    <td className="numeric">
+                                    <td
+                                      className="numeric"
+                                      data-label="本月流量"
+                                    >
                                       {summary.traffic}
                                     </td>
-                                    <td>{summary.keepAlive}</td>
-                                    <td className="numeric">{summary.cost}</td>
+                                    <td data-label="保活">
+                                      {summary.keepAlive}
+                                    </td>
+                                    <td
+                                      className="numeric"
+                                      data-label="本月费用"
+                                    >
+                                      {summary.cost}
+                                    </td>
                                   </tr>
                                   {summary.error && (
                                     <tr className="log-resource-error">
