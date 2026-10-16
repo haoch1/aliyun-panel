@@ -160,10 +160,8 @@ GitHub Actions 在每次推送、Pull Request 及手动触发时执行类型检�
 - [RAM 权限](docs/ram-permissions.md)
 - [Telegram 通知](docs/notifications.md)
 - [故障排查](docs/troubleshooting.md)
-- [参考实现与 API 对照](docs/reference-api-comparison.md)
+- [API 与查询机制](docs/api-implementation.md)
 
-## 许可证与参考实现
+## 许可证
 
-本项目采用 [MIT License](LICENSE)，界面组件基于 [LightSail Panel](https://github.com/haoch1/lightsail-panel) 调整，保留原始版权声明
-
-保活、流量保护及调度设计参考 [CDT-Monitor](https://github.com/wang4386/CDT-Monitor) 与 [aliyun-guard](https://github.com/Felix666-ship-It/aliyun-guard)，具体差异与源码位置见 API 对照文档
+本项目采用 [MIT License](LICENSE)
