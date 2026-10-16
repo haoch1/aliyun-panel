@@ -13,6 +13,7 @@ import {
   useEffect,
   useState,
   useId,
+  useSyncExternalStore,
   type ReactElement,
 } from "react";
 import type {
@@ -59,11 +60,20 @@ export async function api<T = any>(
   }
   return value;
 }
-export function useData<T>(path: string | null, revision = 0, cache = true) {
-  const cacheKey = (isDemo() ? "demo:" : "real:") + path;
+export function useData<T>(
+  path: string | null,
+  revision = 0,
+  cache = true,
+  scope = "",
+) {
+  const cacheKey = (isDemo() ? "demo:" : "real:") + path + scope;
   const epoch = queryCache.version;
+  const cached = useSyncExternalStore(
+    (listener) => queryCache.subscribe(cacheKey, listener),
+    () => (cache ? queryCache.get<T>(cacheKey) : undefined),
+  );
   const [state, setState] = useState(() => ({
-    path,
+    path: cacheKey,
     epoch,
     data: cache ? queryCache.get<T>(cacheKey) : undefined,
     error: "",
@@ -73,10 +83,10 @@ export function useData<T>(path: string | null, revision = 0, cache = true) {
     if (!path) return;
     let active = true;
     setState((old) => ({
-      path,
+      path: cacheKey,
       epoch,
       data:
-        old.path === path && old.epoch === epoch
+        old.path === cacheKey && old.epoch === epoch
           ? old.data
           : cache
             ? queryCache.get<T>(cacheKey)
@@ -90,7 +100,13 @@ export function useData<T>(path: string | null, revision = 0, cache = true) {
     request
       .then((d) => {
         if (active && epoch === queryCache.version) {
-          setState({ path, epoch, data: d, error: "", loading: false });
+          setState({
+            path: cacheKey,
+            epoch,
+            data: d,
+            error: "",
+            loading: false,
+          });
         }
       })
       .catch((e) => {
@@ -101,15 +117,18 @@ export function useData<T>(path: string | null, revision = 0, cache = true) {
       active = false;
     };
   }, [path, revision, cache, cacheKey, epoch]);
-  const matches = state.path === path && state.epoch === epoch;
+  const matches = state.path === cacheKey && state.epoch === epoch;
   const data = !path
     ? undefined
     : matches
-      ? state.data
+      ? (cached ?? state.data)
       : cache
         ? queryCache.get<T>(cacheKey)
         : undefined;
-  const error = path && matches ? state.error : "";
+  const error =
+    path && matches && (cached === undefined || cached === state.data)
+      ? state.error
+      : "";
   const loading = Boolean(path) && (!matches || state.loading);
   return {
     data,

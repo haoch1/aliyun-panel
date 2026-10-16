@@ -35,6 +35,11 @@ import { Modal } from "./components/ui/Modal";
 import { PendingButton } from "./components/ui/PendingButton";
 import { RefreshButton } from "./components/ui/RefreshButton";
 import { DataRegion, Skeleton } from "./components/ui/DataRegion";
+import { useTraffic } from "./traffic-data";
+import {
+  singleDirectionTraffic,
+  trafficRange,
+} from "../shared/traffic-presentation";
 
 const statuses: Record<string, string> = {
   Running: "运行中",
@@ -64,6 +69,7 @@ export default function Instances() {
   const [removing, setRemoving] = useState<Instance>();
   const [removeBusy, setRemoveBusy] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [trafficRevision, setTrafficRevision] = useState(0);
   const [detail, setDetail] = useState<{
     kind: "traffic" | "billing";
     instance: Instance;
@@ -89,6 +95,7 @@ export default function Instances() {
     setBusy(true);
     try {
       await api("/refresh", { check: true });
+      setTrafficRevision((v) => v + 1);
       p.refresh();
     } catch (e) {
       p.notice((e as Error).message, true);
@@ -300,14 +307,11 @@ export default function Instances() {
                   </DataRegion>
                 </td>
                 <td data-label="本月流量">
-                  <button
-                    className="usage-trigger"
-                    aria-label={i.name + " 流量详情"}
-                    title={"刷新时间 " + date(i.usage?.at)}
+                  <MonthlyTraffic
+                    instance={i}
+                    revision={trafficRevision}
                     onClick={() => setDetail({ kind: "traffic", instance: i })}
-                  >
-                    <Usage instance={i} />
-                  </button>
+                  />
                 </td>
                 <td data-label="保活" className="keep-column">
                   <div className="row">
@@ -537,13 +541,60 @@ export default function Instances() {
     </>
   );
 }
-export function Usage({ instance: i }: { instance: Instance }) {
+function MonthlyTraffic({
+  instance,
+  revision,
+  onClick,
+}: {
+  instance: Instance;
+  revision: number;
+  onClick: () => void;
+}) {
+  const d = useTraffic(instance, "month", revision);
+  const used = singleDirectionTraffic(d.data?.items || []);
+  const error = d.error || d.data?.errors.join("；");
+  return (
+    <button
+      className="usage-trigger"
+      aria-label={instance.name + " 流量详情"}
+      title={[
+        "本月单向流量：入站与出站累计值取较大值",
+        trafficRange(d.data?.start, d.data?.end),
+        "刷新时间 " + date(d.data?.checkedAt),
+        "额度为账号共享额度；流量保护按账号流量池用量判断",
+        error,
+      ]
+        .filter(Boolean)
+        .join("\n")}
+      onClick={onClick}
+    >
+      <Usage
+        instance={instance}
+        monitor={{ used, pending: d.initialLoading, error }}
+      />
+    </button>
+  );
+}
+
+export function Usage({
+  instance: i,
+  monitor,
+}: {
+  instance: Instance;
+  monitor?: {
+    used: number | null;
+    pending: boolean;
+    error?: string;
+  };
+}) {
   const p = usePanel();
-  const u = i.usage;
+  const u = monitor
+    ? { ...i.usage, used: monitor.used, error: monitor.error, overflow: null }
+    : i.usage;
   const ratio = u?.total && u.used != null ? (u.used / u.total) * 100 : null;
   return (
     <DataRegion
-      pending={!u && p.snapshot.refreshing}
+      pending={monitor ? monitor.pending : !u && p.snapshot.refreshing}
       placeholder={
         <div className="usage usage-placeholder">
           <Skeleton />
@@ -553,9 +604,13 @@ export function Usage({ instance: i }: { instance: Instance }) {
     >
       <div className="usage">
         <div>
-          {u?.quota === "none"
-            ? "无固定流量配额"
-            : `${bytes(u?.used)} / ${bytes(u?.total)}`}
+          {monitor
+            ? u?.used == null
+              ? "流量暂不可用"
+              : `${bytes(u.used)}${u.total != null && u.total > 0 ? " / " + bytes(u.total) : ""}`
+            : u?.quota === "none"
+              ? "无固定流量配额"
+              : `${bytes(u?.used)} / ${bytes(u?.total)}`}
         </div>
         {ratio != null && (
           <>

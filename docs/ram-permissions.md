@@ -9,7 +9,7 @@
 | `AliyunECSFullAccess`     | 实例信息、状态和固定公网 IP 监控查询，以及保活、流量保护、定时和手动开关机 |
 | `AliyunCDTReadOnlyAccess` | 月度共享流量、阈值判断和月初恢复判断                                       |
 | `AliyunBSSReadOnlyAccess` | 账单和余额                                                                 |
-| `AliyunEIPReadOnlyAccess` | 独立 EIP 的每日流量图表                                                    |
+| `AliyunEIPReadOnlyAccess` | 独立 EIP 的实例月流量及每日图表                                            |
 
 在目标 RAM 用户的「权限管理 → 新增授权」中添加所需系统策略，已有授权保留；不需要更换 AccessKey、修改面板代码或重启服务
 
@@ -28,7 +28,7 @@ Telegram 通知与本地日志不需要额外的阿里云权限，通知中的�
 | 操作                              | 功能                                       | 资源范围         |
 | --------------------------------- | ------------------------------------------ | ---------------- |
 | `ecs:DescribeInstances`           | 接入实例、状态与公网 IP 查询、动作结果核实 | 账号内实例，只读 |
-| `ecs:DescribeInstanceMonitorData` | 固定公网 IP 的每日流量图表                 | 指定实例         |
+| `ecs:DescribeInstanceMonitorData` | 固定公网 IP 的实例月流量及每日图表         | 指定实例         |
 | `ecs:StartInstance`               | 保活、定时开机、手动开机、流量保护恢复     | 指定实例         |
 | `ecs:StopInstance`                | 流量关机、定时关机、手动关机               | 指定实例         |
 
@@ -48,7 +48,7 @@ Telegram 通知与本地日志不需要额外的阿里云权限，通知中的�
 | ------------------------- | ------------------------------------ |
 | `AliyunCDTReadOnlyAccess` | 月度共享流量、阈值判断和月初恢复判断 |
 | `AliyunBSSReadOnlyAccess` | 账单和余额                           |
-| `AliyunEIPReadOnlyAccess` | 独立 EIP 的每日流量图表              |
+| `AliyunEIPReadOnlyAccess` | 独立 EIP 的实例月流量及每日图表      |
 
 EIP 图表也可以用仅允许 `vpc:DescribeEipMonitorData`、资源为指定 EIP ARN 的自定义策略替代系统只读策略；无需 VPC 或 EIP 全权限
 

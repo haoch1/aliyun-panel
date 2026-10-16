@@ -41,6 +41,14 @@ export function trafficTotals(rows: TrafficDay[]) {
   };
 }
 
+/** Single-direction monthly usage: compare the two range totals, not daily peaks. */
+export function singleDirectionTraffic(rows: TrafficDay[]) {
+  const { inbound, outbound } = trafficTotals(rows);
+  return inbound === null || outbound === null
+    ? null
+    : Math.max(inbound, outbound);
+}
+
 export function chartTooltipPosition(
   anchor: { x: number; y: number },
   size: { width: number; height: number },

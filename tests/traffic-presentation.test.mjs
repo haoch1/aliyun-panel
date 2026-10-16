@@ -5,7 +5,35 @@ import {
   trafficBars,
   trafficTotals,
   trafficRange,
+  singleDirectionTraffic,
 } from "../shared/traffic-presentation.ts";
+
+test("实例月流量取整月入出累计值较大者，不累加每日较大值或双向总量", () => {
+  const rows = [
+    { date: "2026-10-01", inBytes: 100, outBytes: 20 },
+    { date: "2026-10-02", inBytes: 10, outBytes: 200 },
+  ];
+  assert.equal(singleDirectionTraffic(rows), 220);
+  assert.equal(
+    singleDirectionTraffic(
+      rows.map((r) => ({ ...r, inBytes: r.outBytes, outBytes: r.inBytes })),
+    ),
+    220,
+  );
+  assert.equal(singleDirectionTraffic([]), null);
+  assert.equal(
+    singleDirectionTraffic([{ date: "2026-10-01", inBytes: 0, outBytes: 0 }]),
+    0,
+  );
+  for (const missing of [null, NaN, Infinity, -1]) {
+    assert.equal(
+      singleDirectionTraffic([
+        { date: "2026-10-01", inBytes: missing, outBytes: 200 },
+      ]),
+      null,
+    );
+  }
+});
 
 test("流量汇总使用所选范围的入出字节，柱状图按合计排序与缩放且不修改原数据", () => {
   const rows = [

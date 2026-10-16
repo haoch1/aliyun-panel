@@ -1,11 +1,7 @@
 import { ArrowDownUp } from "lucide-react";
 import { useState } from "react";
 import type { Instance } from "../shared/types";
-import {
-  trafficRange,
-  trafficTotals,
-  type TrafficDay,
-} from "../shared/traffic-presentation";
+import { trafficRange, trafficTotals } from "../shared/traffic-presentation";
 import DailyTrafficChart from "./components/DailyTrafficChart";
 import { RefreshButton } from "./components/ui/RefreshButton";
 import { DataRegion, Skeleton, LoadingTable } from "./components/ui/DataRegion";
@@ -17,10 +13,10 @@ import {
   InstanceSelect,
   key,
   target,
-  useData,
   useInstance,
   usePanel,
 } from "./lib";
+import { useTraffic } from "./traffic-data";
 function TrafficAmount({ value }: { value: number | null }) {
   const [amount, unit] = bytes(value).split(" ");
   return (
@@ -39,18 +35,7 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
   const [days, setDays] = useState("month"),
     [revision, setRevision] = useState(0);
   const t = instance ? target(instance) : undefined;
-  const d = useData<{
-    items: TrafficDay[];
-    errors: string[];
-    start: number;
-    end: number;
-    timezone: string;
-    checkedAt?: number;
-  }>(
-    t ? "/traffic?" + new URLSearchParams({ ...t, days }) : null,
-    revision,
-    true,
-  );
+  const d = useTraffic(instance, days, revision);
   const rows = [...(d.data?.items || [])].sort((a, b) =>
       a.date.localeCompare(b.date),
     ),

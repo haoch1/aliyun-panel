@@ -123,7 +123,7 @@ summary:focus-visible {
     width: clamp(154px, 11vw, 210px);
   }
   .instances-table th:nth-child(5) {
-    width: clamp(180px, 14vw, 248px);
+    width: clamp(180px, 12vw, 204px);
   }
   .instances-table th:nth-child(6) {
     width: clamp(96px, 6vw, 120px);
@@ -158,11 +158,18 @@ summary:focus-visible {
     min-width: 0;
   }
   .instances-table .usage-trigger {
-    max-width: 248px;
+    max-width: 180px;
   }
   .instances-table thead .selection-box {
     height: 18px;
   }
+}
+.instances-table .usage-trigger .usage {
+  min-width: 0;
+}
+.instances-table .usage-trigger .progress {
+  width: 180px;
+  max-width: 100%;
 }
 .instances-table .automation-column {
   min-width: 124px;

@@ -11,6 +11,33 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 
+test("列表与弹窗订阅同一缓存，成功刷新同步通知，失败和迟到响应不发布新值", async () => {
+  const cache = createResourceCache();
+  const values = [];
+  const unsubscribe = cache.subscribe("traffic", () =>
+    values.push(cache.get("traffic")),
+  );
+  const old = deferred();
+  const pending = cache.request("traffic", () => old.promise, 0);
+  await cache.request("traffic", async () => 220, 1);
+  old.resolve(100);
+  await pending;
+  assert.deepEqual(values, [220]);
+  await assert.rejects(
+    cache.request("traffic", async () => {
+      throw Error("offline");
+    }),
+  );
+  assert.deepEqual(values, [220]);
+  await cache.request("other-range", async () => 400);
+  assert.deepEqual(values, [220]);
+  cache.clear();
+  assert.deepEqual(values, [220, undefined]);
+  unsubscribe();
+  await cache.request("traffic", async () => 300);
+  assert.deepEqual(values, [220, undefined]);
+});
+
 test("同一页面的并发读取合并，后台刷新保留已有数据", async () => {
   const cache = createResourceCache();
   const first = deferred();
