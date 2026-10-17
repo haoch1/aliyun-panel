@@ -357,6 +357,9 @@ summary:focus-visible {
 .instances-toolbar .search {
   width: 280px;
 }
+.billing-toolbar .refresh-button {
+  margin-left: auto;
+}
 .instances-table .subline {
   margin-top: 4px;
 }

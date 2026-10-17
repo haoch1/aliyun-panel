@@ -7,7 +7,7 @@ import type { Instance } from "../shared/types";
 import Select from "./components/ui/Select";
 import { RefreshButton } from "./components/ui/RefreshButton";
 import { api, date, Empty, ErrorBox, useData, usePanel } from "./lib";
-import { DataRegion, LoadingTable, Skeleton } from "./components/ui/DataRegion";
+import { DataRegion, LoadingTable } from "./components/ui/DataRegion";
 export function money(value: number | null | undefined, currency: string) {
   if (value == null || !Number.isFinite(value)) return "待同步";
   try {
@@ -70,10 +70,6 @@ export default function Billing({
         })),
     ),
   );
-  const times = rows
-    .flatMap((i) => [i.balanceAt, i.at])
-    .filter((v): v is number => typeof v === "number" && v > 0);
-  const refreshedAt = times.length ? Math.min(...times) : undefined;
   const freshnessDetail = rows
     .map(
       (i) =>
@@ -102,7 +98,7 @@ export default function Billing({
       p.notice(
         result.items?.some((b: any) => b.error)
           ? "部分查询失败，已保留上次成功数据"
-          : "账单与余额已刷新",
+          : "账单与余额已同步",
         result.items?.some((b: any) => b.error),
       );
     } catch (e) {
@@ -139,23 +135,19 @@ export default function Billing({
             </option>
           ))}
         </Select>
-        <span className="muted billing-refresh-time" title={freshnessDetail}>
-          {d.initialLoading ? (
-            <Skeleton />
-          ) : (
-            <>
-              刷新时间 {date(refreshedAt)}
-              {rows.length > 0 && times.length < rows.length * 2
-                ? " · 部分数据待同步"
-                : ""}
-            </>
-          )}
-        </span>
-        <RefreshButton loading={busy || d.loading} onClick={refresh} />
+        <RefreshButton
+          text="同步账单"
+          title={
+            "立即查询阿里云账单与余额" +
+            (freshnessDetail ? "\n" + freshnessDetail : "")
+          }
+          loading={busy || d.loading}
+          onClick={refresh}
+        />
       </div>
 
       {p.settings && !p.settings.billingEnabled && (
-        <div className="info-box">自动查询已关闭，仍可手动刷新</div>
+        <div className="info-box">自动查询已关闭，仍可手动同步</div>
       )}
       <ErrorBox error={error || d.error} />
       <DataRegion
@@ -170,9 +162,7 @@ export default function Billing({
         {rows.length > 0 ? (
           <section className="billing-section">
             <div className="section-heading">
-              <h2>
-                实例明细 <span className="muted">({rows.length})</span>
-              </h2>
+              <h2>实例明细</h2>
             </div>
             <div className="table-wrap">
               <table className="compact-table">

@@ -26,7 +26,6 @@ import {
   ErrorBox,
   Field,
   key,
-  RefreshTime,
   Switch,
   target,
   usePanel,
@@ -84,10 +83,6 @@ export default function Instances() {
       ),
     [p.snapshot.items, search],
   );
-  const checks = items
-    .map((i) => Date.parse(i.rule.lastCheck || ""))
-    .filter(Number.isFinite);
-  const lastCheck = checks.length ? Math.min(...checks) : undefined;
   const selected = items.filter((i) => chosen.includes(key(i)));
   const running = items.filter((i) => i.status === "Running").length,
     alive = items.filter((i) => i.effectiveKeepAlive).length;
@@ -123,8 +118,11 @@ export default function Instances() {
         </div>
         <div className="row">
           <RefreshButton
-            text="刷新"
-            title="更新当前筛选实例的数据，并检查已启用的保活、流量保护和定时规则"
+            text="立即检测"
+            title={
+              "立即同步实例并执行已启用的保活、流量保护和定时规则；最近同步 " +
+              date(p.snapshot.at)
+            }
             onClick={refresh}
             loading={busy || p.loading || p.snapshot.refreshing}
           />
@@ -158,15 +156,6 @@ export default function Instances() {
             保活开启 <strong>{alive}</strong>
           </span>
         </div>
-        <div className="instance-times muted">
-          <RefreshTime
-            value={p.snapshot.at}
-            entries={[
-              { label: "实例数据", value: p.snapshot.at },
-              { label: "规则检查", value: lastCheck },
-            ]}
-          />
-        </div>
       </div>
       {p.snapshot.errors.length > 0 && (
         <ErrorBox error={p.snapshot.errors.join("；")} />
@@ -177,9 +166,6 @@ export default function Instances() {
           onChange={setSearch}
           placeholder="搜索名称、IP、地域…"
         />
-        <span className="instances-reset muted">
-          流量额度每月 1 日 00:00（北京时间）重置 · 距下次 {resetCountdown()}
-        </span>
         {selected.length > 0 && (
           <div className="row">
             <span className="muted">已选 {selected.length} 台</span>
@@ -453,7 +439,7 @@ export default function Instances() {
             ) : p.snapshot.refreshing ? (
               "正在发现各地域实例…"
             ) : (
-              "没有匹配的实例，可刷新或调整筛选条件"
+              "没有匹配的实例，可调整筛选条件或立即检测"
             )}
           </Empty>
         )}
@@ -1018,11 +1004,4 @@ function ProtectionState({
       )}
     </div>
   );
-}
-function resetCountdown() {
-  const local = new Date(Date.now() + 8 * 3600000);
-  const reset =
-    Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + 1, 1) - 8 * 3600000;
-  const hours = Math.max(1, Math.ceil((reset - Date.now()) / 3600000));
-  return Math.floor(hours / 24) + " 天 " + (hours % 24) + " 小时";
 }

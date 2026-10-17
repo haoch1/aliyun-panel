@@ -176,7 +176,7 @@ export default function ConnectionDialog({
               </div>
             )}
             <div className="form-grid">
-              <Field label="AccessKey ID" hint="填写账号的 AccessKey ID">
+              <Field label="AccessKey ID">
                 <input
                   required
                   autoComplete="off"
@@ -185,24 +185,18 @@ export default function ConnectionDialog({
                   onChange={(e) => set("accessKeyId", e.target.value)}
                 />
               </Field>
-              <Field
-                label="AccessKey Secret"
-                hint={
-                  account
-                    ? "留空保留已保存的 Secret"
-                    : "填写与 ID 配对的 Secret"
-                }
-              >
+              <Field label="AccessKey Secret">
                 <input
                   type="password"
                   required={!account}
                   autoComplete="off"
+                  placeholder={account ? "留空保留已保存的 Secret" : undefined}
                   value={form.accessKeySecret}
                   disabled={busy}
                   onChange={(e) => set("accessKeySecret", e.target.value)}
                 />
               </Field>
-              <Field label="账号所属站点" hint="按账号所属站点选择">
+              <Field label="账号所属站点">
                 <Select
                   value={form.site}
                   disabled={busy}
@@ -212,7 +206,7 @@ export default function ConnectionDialog({
                   <option value="international">国际站</option>
                 </Select>
               </Field>
-              <Field label="实例名称" hint="设置此实例的显示名称">
+              <Field label="实例名称">
                 <input
                   required
                   maxLength={80}
@@ -221,7 +215,7 @@ export default function ConnectionDialog({
                   onChange={(e) => set("name", e.target.value)}
                 />
               </Field>
-              <Field label="地域" hint="选择实例所在地域">
+              <Field label="地域">
                 <Select
                   aria-label="地域"
                   value={form.region}
@@ -236,7 +230,7 @@ export default function ConnectionDialog({
                   ))}
                 </Select>
               </Field>
-              <Field label="实例 ID" hint="从 ECS 控制台复制实例 ID">
+              <Field label="实例 ID">
                 <input
                   required
                   readOnly={!!account}
@@ -276,11 +270,6 @@ export default function ConnectionDialog({
                     已选 {selected.length} / {scan.items.length}
                   </span>
                 </div>
-                <small className="muted">
-                  {scan.items.length > 1
-                    ? "查询到多台实例，请勾选并分别确认名称；上方名称仅在选中一台时使用"
-                    : "确认名称后添加；名称仅用于面板显示"}
-                </small>
                 {!!scan.errors.length && (
                   <details className="discovery-warnings">
                     <summary>

@@ -29,7 +29,6 @@ import {
   DataRegion,
   LoadingTable,
   PageLoading,
-  Skeleton,
 } from "./components/ui/DataRegion";
 const notificationFields = [
   "telegramToken",
@@ -84,8 +83,6 @@ export default function SettingsPage() {
   const selected = notificationSelection(s);
   const dailyEnabled = selected.includes("daily");
   const preview = notificationExamples.find((v) => v.id === example)!;
-  const automaticPreview =
-    n.telegramEnabled && selected.includes(preview.id as NotificationType);
   const selectNotifications = (events: NotificationType[]) => {
     setS({
       ...s,
@@ -164,27 +161,25 @@ export default function SettingsPage() {
             />
           </div>
           <div className="form-grid">
-            <Field
-              label="Bot Token"
-              hint={
-                n.telegramConfigured ? "已配置，留空保留" : "在 BotFather 获取"
-              }
-            >
+            <Field label="Bot Token">
               <input
                 type="password"
                 autoComplete="off"
+                placeholder={
+                  n.telegramConfigured ? "已配置，留空保留" : "输入 Bot Token"
+                }
                 value={n.telegramToken}
                 onChange={(e) => setN("telegramToken", e.target.value)}
               />
             </Field>
-            <Field label="Chat ID" hint="先向机器人发送 /start">
+            <Field label="Chat ID">
               <input
                 value={n.telegramChatId}
                 onChange={(e) => setN("telegramChatId", e.target.value)}
               />
             </Field>
           </div>
-          <Field label="Telegram API 地址" hint="可填写自有 API 反代">
+          <Field label="Telegram API 地址">
             <input
               type="url"
               required
@@ -270,24 +265,6 @@ export default function SettingsPage() {
                 ))}
               </Select>
             </div>
-            <p className="notification-preview-description">
-              {preview.id === "test" ? (
-                "推送频率：手动点击「测试通知」时发送，使用已保存的配置"
-              ) : (
-                <>
-                  {automaticPreview
-                    ? "已勾选"
-                    : n.telegramEnabled
-                      ? "未勾选"
-                      : "Telegram 已关闭"}{" "}
-                  · 推送频率：{preview.hint}
-                  {preview.id === "cycle" &&
-                    "；当前检测间隔 " + s.checkInterval / 60 + " 分钟"}
-                  {preview.id === "daily" &&
-                    "；发送时间 " + s.reportTime + "（" + s.timezone + "）"}
-                </>
-              )}
-            </p>
             <div
               className="notification-example"
               dangerouslySetInnerHTML={{
@@ -362,13 +339,6 @@ export default function SettingsPage() {
       </section>
       <div className="section-heading">
         <h2>最近通知</h2>
-        <small className="muted">
-          {outbox.initialLoading ? (
-            <Skeleton />
-          ) : (
-            <>刷新时间 {date(outbox.data?.at)}</>
-          )}
-        </small>
       </div>
       <ErrorBox error={outbox.error} />
       <DataRegion

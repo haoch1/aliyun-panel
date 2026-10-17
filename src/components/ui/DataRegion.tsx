@@ -136,15 +136,9 @@ export function PageLoading({ page }: { page: string }) {
               </span>
             ))}
           </div>
-          <div className="instance-times">
-            <Skeleton className="skeleton-meta" />
-          </div>
         </div>
         <div className="toolbar instances-toolbar">
           <Skeleton className="skeleton-search" />
-          <span className="instances-reset">
-            <Skeleton className="skeleton-reset" />
-          </span>
         </div>
         <LoadingTable
           className="instances-table"

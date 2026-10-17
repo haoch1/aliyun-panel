@@ -3,7 +3,6 @@ import { useState } from "react";
 import type { Instance } from "../shared/types";
 import { trafficRange, trafficTotals } from "../shared/traffic-presentation";
 import DailyTrafficChart from "./components/DailyTrafficChart";
-import { RefreshButton } from "./components/ui/RefreshButton";
 import { DataRegion, Skeleton, LoadingTable } from "./components/ui/DataRegion";
 import {
   bytes,
@@ -32,10 +31,9 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
   const instance = supplied
     ? p.snapshot.items.find((i) => key(i) === key(supplied)) || supplied
     : selection.instance;
-  const [days, setDays] = useState("month"),
-    [revision, setRevision] = useState(0);
+  const [days, setDays] = useState("month");
   const t = instance ? target(instance) : undefined;
-  const d = useTraffic(instance, days, revision);
+  const d = useTraffic(instance, days);
   const rows = [...(d.data?.items || [])].sort((a, b) =>
       a.date.localeCompare(b.date),
     ),
@@ -79,11 +77,6 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
             </button>
           ))}
         </div>
-        <RefreshButton
-          loading={d.loading}
-          disabled={!t}
-          onClick={() => setRevision((v) => v + 1)}
-        />
       </div>
       <ErrorBox error={d.error || d.data?.errors.join("；")} />
       {instance && (

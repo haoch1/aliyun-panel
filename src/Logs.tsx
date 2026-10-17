@@ -8,14 +8,13 @@ import {
   logErrorText,
 } from "../shared/log-presentation";
 import { Modal } from "./components/ui/Modal";
-import { RefreshButton } from "./components/ui/RefreshButton";
 import { Fragment, useState } from "react";
 import { ChevronRight, ScrollText } from "lucide-react";
 import Select from "./components/ui/Select";
 import { SearchInput } from "./components/ui/SearchInput";
 import { actionLabel } from "../shared/actions";
 import { api, bytes, date, Empty, ErrorBox, useData, usePanel } from "./lib";
-import { DataRegion, LoadingLogs, Skeleton } from "./components/ui/DataRegion";
+import { DataRegion, LoadingLogs } from "./components/ui/DataRegion";
 const levels: Record<string, string> = {
   info: "信息",
   warning: "警告",
@@ -371,7 +370,6 @@ export default function Logs() {
           </h1>
         </div>
         <div className="row">
-          <RefreshButton loading={d.loading} onClick={p.refresh} />
           <button
             className="button"
             onClick={async () => {
@@ -450,15 +448,6 @@ export default function Logs() {
               </button>
             ))}
           </div>
-          <span className="muted">
-            {d.initialLoading ? (
-              <Skeleton />
-            ) : (
-              <>
-                {rows.length} 条 · 刷新时间 {date(d.data?.at)}
-              </>
-            )}
-          </span>
         </div>
         <DataRegion pending={d.initialLoading} placeholder={<LoadingLogs />}>
           <ol className="log-stream">
@@ -621,7 +610,6 @@ export default function Logs() {
             </Empty>
           )}
           <div className="log-feed-footer pagination">
-            <span className="log-retention muted">最多保留 5,000 条</span>
             <Select
               aria-label="每页日志条数"
               menuMinWidth={160}
