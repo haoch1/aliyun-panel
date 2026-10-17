@@ -1,3 +1,4 @@
+import { Input } from "./components/ui/Input";
 import {
   notificationChoices,
   notificationSelection,
@@ -138,7 +139,7 @@ export default function SettingsPage() {
             </Field>
           </div>
           <label className="check-row">
-            <input
+            <Input
               type="checkbox"
               checked={s.billingEnabled}
               onChange={(e) => setS({ ...s, billingEnabled: e.target.checked })}
@@ -162,7 +163,7 @@ export default function SettingsPage() {
           </div>
           <div className="form-grid">
             <Field label="Bot Token">
-              <input
+              <Input
                 type="password"
                 autoComplete="off"
                 placeholder={
@@ -173,14 +174,14 @@ export default function SettingsPage() {
               />
             </Field>
             <Field label="Chat ID">
-              <input
+              <Input
                 value={n.telegramChatId}
                 onChange={(e) => setN("telegramChatId", e.target.value)}
               />
             </Field>
           </div>
           <Field label="Telegram API 地址">
-            <input
+            <Input
               type="url"
               required
               value={n.apiBase}
@@ -219,7 +220,7 @@ export default function SettingsPage() {
             <div className="notification-type-grid">
               {notificationChoices.map((v) => (
                 <label key={v.value} className="check-row">
-                  <input
+                  <Input
                     type="checkbox"
                     checked={selected.includes(v.value)}
                     onChange={(e) =>

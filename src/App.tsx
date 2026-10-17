@@ -1,3 +1,4 @@
+import { Input } from "./components/ui/Input";
 import { ThemeControl } from "./theme";
 import Select from "./components/ui/Select";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -423,7 +424,7 @@ function Auth({
             label="管理员密码"
             hint={initialized ? undefined : "至少 12 位，无默认密码"}
           >
-            <input
+            <Input
               aria-label="管理员密码"
               type="password"
               minLength={initialized ? 1 : 12}
@@ -436,7 +437,7 @@ function Auth({
           </Field>
           {!initialized && (
             <Field label="确认密码">
-              <input
+              <Input
                 type="password"
                 minLength={12}
                 required

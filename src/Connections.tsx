@@ -1,3 +1,4 @@
+import { Input } from "./components/ui/Input";
 import {
   commonRegions,
   regionName,
@@ -177,7 +178,7 @@ export default function ConnectionDialog({
             )}
             <div className="form-grid">
               <Field label="AccessKey ID">
-                <input
+                <Input
                   required
                   autoComplete="off"
                   value={form.accessKeyId}
@@ -186,7 +187,7 @@ export default function ConnectionDialog({
                 />
               </Field>
               <Field label="AccessKey Secret">
-                <input
+                <Input
                   type="password"
                   required={!account}
                   autoComplete="off"
@@ -207,7 +208,7 @@ export default function ConnectionDialog({
                 </Select>
               </Field>
               <Field label="实例名称">
-                <input
+                <Input
                   required
                   maxLength={80}
                   value={form.name}
@@ -231,7 +232,7 @@ export default function ConnectionDialog({
                 </Select>
               </Field>
               <Field label="实例 ID">
-                <input
+                <Input
                   required
                   readOnly={!!account}
                   placeholder="i-…"
@@ -293,7 +294,7 @@ export default function ConnectionDialog({
                     <thead>
                       <tr>
                         <th>
-                          <input
+                          <Input
                             aria-label="选择全部发现实例"
                             type="checkbox"
                             checked={
@@ -321,7 +322,7 @@ export default function ConnectionDialog({
                         return (
                           <tr key={key}>
                             <td>
-                              <input
+                              <Input
                                 aria-label={"选择 " + i.name}
                                 type="checkbox"
                                 checked={selected.includes(key)}
@@ -335,7 +336,7 @@ export default function ConnectionDialog({
                               />
                             </td>
                             <td className="discovery-name">
-                              <input
+                              <Input
                                 aria-label={i.name + " 实例名称"}
                                 value={displayName(i)}
                                 maxLength={80}

@@ -1,3 +1,4 @@
+import { Input } from "./Input";
 import { Search, X } from "lucide-react";
 export function SearchInput({
   value,
@@ -11,7 +12,7 @@ export function SearchInput({
   return (
     <div className="search">
       <Search size={15} />
-      <input
+      <Input
         aria-label="搜索资源"
         placeholder={placeholder}
         value={value}

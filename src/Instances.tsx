@@ -1,3 +1,4 @@
+import { Input } from "./components/ui/Input";
 import { regionName } from "../shared/regions";
 import { SearchInput } from "./components/ui/SearchInput";
 import { ActionMenu } from "./components/ui/ActionMenu";
@@ -191,7 +192,7 @@ export default function Instances() {
             <tr>
               <th>
                 <label className="selection-box">
-                  <input
+                  <Input
                     type="checkbox"
                     aria-label="选择全部实例"
                     checked={
@@ -223,7 +224,7 @@ export default function Instances() {
               <tr key={key(i)}>
                 <td>
                   <label className="selection-box">
-                    <input
+                    <Input
                       type="checkbox"
                       aria-label={"选择 " + i.name}
                       checked={chosen.includes(key(i))}
@@ -796,7 +797,7 @@ function RuleDialog({
               流量池，包含其他实例及云产品用量
             </small>
             <label className="check-row">
-              <input
+              <Input
                 type="checkbox"
                 checked={r.thresholdEnabled}
                 onChange={(e) => set({ thresholdEnabled: e.target.checked })}
@@ -821,7 +822,7 @@ function RuleDialog({
               <Field
                 label={r.thresholdUnit === "gib" ? "阈值（GB）" : "阈值（%）"}
               >
-                <input
+                <Input
                   type="number"
                   min="0.1"
                   step="0.1"
@@ -863,7 +864,7 @@ function RuleDialog({
               />
             </div>
             <label className="check-row">
-              <input
+              <Input
                 type="checkbox"
                 disabled={!r.thresholdEnabled}
                 checked={!!r.autoRecover}
@@ -880,7 +881,7 @@ function RuleDialog({
         ) : (
           <>
             <label className="check-row">
-              <input
+              <Input
                 type="checkbox"
                 checked={r.scheduleEnabled}
                 onChange={(e) => set({ scheduleEnabled: e.target.checked })}
