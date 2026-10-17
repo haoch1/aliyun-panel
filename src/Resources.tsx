@@ -35,7 +35,7 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
   const t = instance ? target(instance) : undefined;
   const d = useTraffic(instance, days);
   const rows = [...(d.data?.items || [])].sort((a, b) =>
-      a.date.localeCompare(b.date),
+      b.date.localeCompare(a.date),
     ),
     totals = trafficTotals(rows);
   return (
