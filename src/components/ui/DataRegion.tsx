@@ -130,11 +130,13 @@ export function PageLoading({ page }: { page: string }) {
           </div>
         </div>
         <div className="instances-overview">
-          <div className="instance-counts">
+          <div className="instance-counts" aria-label="实例概况">
             {["实例", "运行中", "保活开启"].map((label) => (
               <span key={label}>
                 {label}
-                <Skeleton className="skeleton-count" />
+                <strong>
+                  <Skeleton className="skeleton-count" />
+                </strong>
               </span>
             ))}
           </div>

@@ -9,7 +9,7 @@
 .page-heading h1 {
   font-size: var(--font-title);
   line-height: 32px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .section-heading h2,
 .form-panel h2,
@@ -343,17 +343,32 @@ summary:focus-visible {
   font-weight: 500;
 }
 .instance-counts {
-  gap: 24px;
+  gap: 12px 24px;
 }
 .instance-counts > span {
-  align-items: baseline;
-  font-size: var(--font-md);
+  align-items: center;
+  font-size: var(--font-sm);
   line-height: 24px;
 }
 .instance-counts strong {
-  font-size: var(--font-md);
+  display: inline-flex;
+  align-items: center;
+  min-width: 1ch;
+  min-height: 24px;
+  font-size: 17px;
   font-weight: 600;
-  line-height: inherit;
+  line-height: 24px;
+}
+.instance-counts .data-region-inline {
+  display: block;
+}
+.instance-counts .data-region-placeholder {
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+.instance-counts .skeleton.skeleton-count {
+  width: 1ch;
 }
 .instances-overview {
   padding-bottom: 16px;

@@ -134,7 +134,7 @@ export default function Instances() {
         </div>
       </div>
       <div className="instances-overview">
-        <div className="instance-counts">
+        <div className="instance-counts" aria-label="实例概况">
           <span>
             实例 <strong>{items.length}</strong>
           </span>
