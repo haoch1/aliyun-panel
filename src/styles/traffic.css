@@ -194,7 +194,7 @@
 .embedded-view .traffic-overview > div {
   padding: 16px;
 }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .traffic-instance-picker {
     padding-bottom: 16px;
     margin-bottom: 18px;

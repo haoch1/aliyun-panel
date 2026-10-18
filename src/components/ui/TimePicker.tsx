@@ -1,5 +1,12 @@
 import { ChevronDown, Clock3 } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import Select from "./Select";
 
 export default function TimePicker({
@@ -16,13 +23,47 @@ export default function TimePicker({
   "aria-describedby"?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [above, setAbove] = useState(false);
+  const [position, setPosition] = useState<CSSProperties>();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const popup = useId();
   useEffect(() => {
     if (disabled) setOpen(false);
   }, [disabled]);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const rect = trigger.current?.getBoundingClientRect();
+      if (!rect) return;
+      if (rect.bottom <= 0 || rect.top >= innerHeight) return setOpen(false);
+      const below = Math.max(0, innerHeight - rect.bottom - 12);
+      const above = Math.max(0, rect.top - 12);
+      const upward = below < 220 && above > below;
+      const width = Math.min(280, document.documentElement.clientWidth - 24);
+      setPosition({
+        position: "fixed",
+        left: Math.max(
+          12,
+          Math.min(
+            rect.left,
+            document.documentElement.clientWidth - width - 12,
+          ),
+        ),
+        top: upward ? undefined : rect.bottom + 6,
+        bottom: upward ? innerHeight - rect.top + 6 : undefined,
+        width,
+        maxHeight: Math.max(0, upward ? above : below),
+        zIndex: 110,
+      });
+    };
+    place();
+    window.addEventListener("resize", place);
+    document.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      document.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     const outside = (event: PointerEvent) => {
@@ -37,6 +78,9 @@ export default function TimePicker({
     <div
       ref={root}
       className="time-picker"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
       onKeyDown={(e) => {
         if (e.key === "Escape" && open) {
           e.preventDefault();
@@ -56,8 +100,6 @@ export default function TimePicker({
         aria-controls={open ? popup : undefined}
         disabled={disabled}
         onClick={() => {
-          const rect = trigger.current?.getBoundingClientRect();
-          setAbove(!!rect && innerHeight - rect.bottom < 210 && rect.top > 210);
           setOpen(!open);
         }}
       >
@@ -66,7 +108,13 @@ export default function TimePicker({
         <ChevronDown size={14} className="select-arrow" />
       </button>
       {open && !disabled && (
-        <div id={popup} className={"time-popover" + (above ? " above" : "")}>
+        <div
+          id={popup}
+          className="time-popover"
+          style={position}
+          role="group"
+          aria-label="选择时间"
+        >
           <div className="time-picker-parts">
             <label>
               <span>小时</span>

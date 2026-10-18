@@ -90,7 +90,7 @@ export default function App() {
   useEffect(() => {
     if (!mobile) return;
     const closeAtDesktop = () => {
-      if (window.matchMedia("(min-width: 761px)").matches) setMobile(false);
+      if (window.matchMedia("(min-width: 901px)").matches) setMobile(false);
     };
     closeAtDesktop();
     window.addEventListener("resize", closeAtDesktop);
@@ -472,7 +472,7 @@ function Auth({
             type="submit"
             className="button primary full"
             busy={busy}
-            pendingLabel="正在登录"
+            pendingLabel={initialized ? "正在登录" : "正在初始化"}
           >
             {initialized ? "登录" : "初始化面板"}
           </PendingButton>

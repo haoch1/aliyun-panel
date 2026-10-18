@@ -1,4 +1,5 @@
 import Select from "./components/ui/Select";
+import { CircleAlert } from "lucide-react";
 import { createResourceCache } from "./resource-cache";
 import {
   formatDate,
@@ -214,7 +215,8 @@ export const usePanel = () => useContext(PanelContext);
 export function ErrorBox({ error }: { error?: string }) {
   return error ? (
     <div className="error-box" role="alert">
-      {error}
+      <CircleAlert size={16} aria-hidden="true" />
+      <span>{error}</span>
     </div>
   ) : null;
 }

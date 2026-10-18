@@ -35,7 +35,7 @@
   width: 330px;
 }
 .instances-loading .loading-table tbody tr {
-  height: 90px;
+  height: 84px;
 }
 .instances-loading .loading-table .check-cell .table-placeholder {
   width: 16px;
@@ -145,7 +145,7 @@
   width: 100%;
 }
 .loading-form {
-  padding: 24px;
+  padding: 0;
 }
 .loading-form > .skeleton {
   margin-bottom: 24px;
@@ -201,12 +201,17 @@
     transition: none;
   }
 }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .instances-loading .skeleton-search {
     width: 100%;
   }
   .instances-loading .loading-table tbody tr {
-    height: 390px;
+    height: auto;
+    min-height: 380px;
+  }
+  .loading-table .billing-table tbody tr,
+  .loading-table .notification-table tbody tr {
+    height: auto;
   }
   .traffic-overview .skeleton-stat {
     width: 80px;
@@ -220,5 +225,11 @@
   }
   .loading-log-columns {
     gap: 12px;
+  }
+}
+@media (min-width: 901px) and (max-width: 1419px) {
+  .instances-loading .loading-table tbody tr {
+    height: auto;
+    min-height: 240px;
   }
 }

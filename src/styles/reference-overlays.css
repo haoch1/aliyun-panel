@@ -80,7 +80,7 @@
   padding: 24px;
   z-index: 80;
   animation: modal-in 160ms ease-out;
-  background: #0008;
+  background: #0006;
   backdrop-filter: blur(2px);
 }
 .modal {
@@ -94,8 +94,8 @@
   padding: 24px;
   width: 560px;
   border-color: var(--border);
-  border-radius: 10px;
-  box-shadow: 0 24px 80px #0005;
+  border-radius: 12px;
+  box-shadow: var(--modal-shadow);
   overscroll-behavior: contain;
 }
 .modal.wide {

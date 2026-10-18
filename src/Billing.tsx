@@ -154,6 +154,7 @@ export default function Billing({
         pending={d.initialLoading}
         placeholder={
           <LoadingTable
+            tableClassName="billing-table"
             columns={["实例", "地域", "可用余额", "税前金额", "查询状态"]}
             rows={Math.min(6, Math.max(1, p.snapshot.items.length))}
           />
@@ -165,7 +166,7 @@ export default function Billing({
               <h2>实例明细</h2>
             </div>
             <div className="table-wrap">
-              <table className="compact-table">
+              <table className="compact-table billing-table">
                 <thead>
                   <tr>
                     <th>实例</th>
@@ -180,9 +181,11 @@ export default function Billing({
                 <tbody>
                   {rows.slice(activePage * 6, activePage * 6 + 6).map((i) => (
                     <tr key={i.accountId + i.region + i.id}>
-                      <td title={i.id}>{i.name}</td>
-                      <td>{regionName(i.region)}</td>
-                      <td className="amount-cell">
+                      <td title={i.id} data-label="实例">
+                        {i.name}
+                      </td>
+                      <td data-label="地域">{regionName(i.region)}</td>
+                      <td className="amount-cell" data-label="可用余额">
                         {money(i.balance, i.balanceCurrency)}
                         {i.balanceError && i.balance != null && (
                           <div className="subline danger-text">
@@ -190,7 +193,7 @@ export default function Billing({
                           </div>
                         )}
                       </td>
-                      <td className="amount-cell">
+                      <td className="amount-cell" data-label="税前金额">
                         {money(i.amount, i.currency)}
                         {i.billError && i.amount != null && (
                           <div className="subline danger-text">
@@ -198,7 +201,7 @@ export default function Billing({
                           </div>
                         )}
                       </td>
-                      <td>
+                      <td data-label="查询状态">
                         <span className={"badge " + (i.error ? "warn" : "")}>
                           {i.error
                             ? "部分失败"

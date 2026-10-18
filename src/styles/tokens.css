@@ -4,6 +4,8 @@
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
+    "PingFang SC",
+    "Microsoft YaHei UI",
     "Microsoft YaHei",
     Arial,
     sans-serif;
@@ -18,12 +20,15 @@
   --subtle: #f5f5f5;
   --surface-hover: #f0f0f0;
   --text: #202020;
-  --muted: #737373;
+  --muted: #686868;
   --border: #e5e5e5;
+  --control-border: #d4d4d4;
+  --check-border: #929292;
+  --focus-soft: #20202012;
   --accent: #202020;
   --accent-hover: #404040;
   --accent-soft: #ededed;
-  --focus: #858585;
+  --focus: #525252;
   --chart-color: #525252;
   --success: #16815d;
   --success-soft: #e8f6ef;
@@ -34,7 +39,8 @@
   --danger-soft: #fff1f2;
   --danger-border: #f7d4d9;
   --red: var(--danger);
-  --shadow: 0 8px 28px #00000012;
+  --shadow: 0 1px 3px #0000000a, 0 8px 24px #00000014;
+  --modal-shadow: 0 4px 12px #00000012, 0 24px 64px #00000024;
   --mono: "Cascadia Code", Consolas, monospace;
   --chart-fill: #5252520c;
   --chart-secondary: #567b82;
@@ -48,6 +54,9 @@
   --text: #ededed;
   --muted: #a1a1a1;
   --border: #383838;
+  --control-border: #4a4a4a;
+  --check-border: #808080;
+  --focus-soft: #ffffff18;
   --accent: #e5e5e5;
   --accent-hover: #fff;
   --accent-soft: #2e2e2e;
@@ -61,7 +70,8 @@
   --danger: #ff92a0;
   --danger-soft: #3b2330;
   --danger-border: #5d3443;
-  --shadow: 0 8px 28px #0005;
+  --shadow: 0 1px 3px #0004, 0 8px 24px #0006;
+  --modal-shadow: 0 4px 12px #0004, 0 24px 64px #0008;
   --chart-fill: #c9c9c910;
   --chart-secondary: #88b8be;
 }
@@ -116,7 +126,7 @@ textarea {
   min-height: 40px;
   border-radius: 6px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 20px;
 }
 a {
   -webkit-tap-highlight-color: transparent;
@@ -172,7 +182,7 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 input:not([type="checkbox"]):not([type="radio"]) {
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   background: var(--surface);
   padding: 9px 12px;
   width: 100%;
@@ -180,7 +190,7 @@ input:not([type="checkbox"]):not([type="radio"]) {
   min-height: 40px;
   border-radius: 6px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 20px;
 }
 input::placeholder {
   color: var(--muted);
@@ -191,7 +201,7 @@ textarea::placeholder {
 input:not([type="checkbox"]):not([type="radio"]):focus {
   border-color: var(--focus);
   outline: 0;
-  box-shadow: none;
+  box-shadow: 0 0 0 3px var(--focus-soft);
 }
 select:focus {
   border-color: var(--focus);
@@ -210,15 +220,15 @@ input[type="checkbox"],
   vertical-align: middle;
   margin: 0;
   cursor: pointer;
-  border: 1px solid var(--muted);
+  border: 1px solid var(--check-border);
   border-radius: 3px;
   background: var(--surface);
-  width: 14px;
-  height: 14px;
-  min-width: 14px;
-  min-height: 14px;
-  max-width: 14px;
-  max-height: 14px;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  max-width: 16px;
+  max-height: 16px;
   padding: 0;
   flex-shrink: 0;
   position: relative;
@@ -234,8 +244,8 @@ input[type="checkbox"]:checked::after,
   position: absolute;
   width: 7px;
   height: 4px;
-  left: 2px;
-  top: 3px;
+  left: 3px;
+  top: 4px;
   border-left: 1.5px solid var(--surface);
   border-bottom: 1.5px solid var(--surface);
   transform: rotate(-45deg);
@@ -285,7 +295,7 @@ input:read-only:not([type="checkbox"]):not([type="radio"]) {
   --radius-control: 6px;
   --radius-panel: 8px;
   --control-height: 40px;
-  --control-compact: 32px;
+  --control-compact: 34px;
 }
 h3 {
   font-size: 14px;

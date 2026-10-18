@@ -15,6 +15,7 @@ import { SearchInput } from "./components/ui/SearchInput";
 import { actionLabel } from "../shared/actions";
 import { api, bytes, date, Empty, ErrorBox, useData, usePanel } from "./lib";
 import { DataRegion, LoadingLogs } from "./components/ui/DataRegion";
+import { PendingButton } from "./components/ui/PendingButton";
 const levels: Record<string, string> = {
   info: "信息",
   warning: "警告",
@@ -333,6 +334,8 @@ export default function Logs() {
     [page, setPage] = useState(0),
     [pageSize, setPageSize] = useState(savedPageSize),
     [detail, setDetail] = useState<any>();
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const all = d.data?.items || [];
   const rows = all.filter(
     (r) =>
@@ -370,18 +373,7 @@ export default function Logs() {
           </h1>
         </div>
         <div className="row">
-          <button
-            className="button"
-            onClick={async () => {
-              if (!confirm("清空全部日志？")) return;
-              try {
-                await api("/audit", undefined, "DELETE");
-                p.refresh();
-              } catch (e) {
-                p.notice((e as Error).message, true);
-              }
-            }}
-          >
+          <button className="button" onClick={() => setClearOpen(true)}>
             清空日志
           </button>
         </div>
@@ -651,6 +643,46 @@ export default function Logs() {
           </div>
         </DataRegion>
       </section>
+      {clearOpen && (
+        <Modal
+          title="清空日志"
+          onClose={() => setClearOpen(false)}
+          busy={clearing}
+        >
+          <div className="form-stack">
+            <p>将删除全部系统日志和检测记录，此操作无法撤销。</p>
+            <div className="form-actions">
+              <button
+                className="button"
+                disabled={clearing}
+                onClick={() => setClearOpen(false)}
+              >
+                取消
+              </button>
+              <PendingButton
+                className="button danger"
+                busy={clearing}
+                pendingLabel="正在清空"
+                onClick={async () => {
+                  setClearing(true);
+                  try {
+                    await api("/audit", undefined, "DELETE");
+                    setClearOpen(false);
+                    p.refresh();
+                    p.notice("日志已清空");
+                  } catch (e) {
+                    p.notice((e as Error).message, true);
+                  } finally {
+                    setClearing(false);
+                  }
+                }}
+              >
+                清空日志
+              </PendingButton>
+            </div>
+          </div>
+        </Modal>
+      )}
       {detail && (
         <Modal
           title={actionLabel(detail.action)}

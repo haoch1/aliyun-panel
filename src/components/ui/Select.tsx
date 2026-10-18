@@ -153,13 +153,22 @@ export default function Select({
       }
       const below = Math.max(0, innerHeight - rect.bottom - 12),
         above = Math.max(0, rect.top - 12);
-      const height = Math.min(
-        320,
-        Math.max(below, above),
-        options.length * 40 +
-          16 +
-          new Set(options.map((o) => o.group).filter(Boolean)).size * 28,
-      );
+      // Measure the rendered items, including wrapped labels and menu borders.
+      // Re-measure after assigning the final width so short lists do not scroll.
+      const style = menu.current && getComputedStyle(menu.current);
+      const chrome = style
+        ? parseFloat(style.paddingTop) +
+          parseFloat(style.paddingBottom) +
+          parseFloat(style.borderTopWidth) +
+          parseFloat(style.borderBottomWidth)
+        : 14;
+      const contentHeight = menu.current
+        ? Array.from(menu.current.children).reduce(
+            (sum, child) => sum + child.getBoundingClientRect().height,
+            chrome,
+          )
+        : options.length * 36 + chrome;
+      const height = Math.min(320, Math.max(below, above), contentHeight);
       const upward = placement === "auto" && below < height && above > below;
       const viewportWidth = document.documentElement.clientWidth || innerWidth;
       const width = Math.min(
@@ -184,7 +193,7 @@ export default function Select({
       window.removeEventListener("resize", update);
       document.removeEventListener("scroll", onScroll, true);
     };
-  }, [open, options.length, placement, menuMinWidth]);
+  }, [open, options.length, placement, menuMinWidth, position.width]);
   useEffect(() => {
     if (!open) return;
     const outside = (event: PointerEvent) => {
@@ -290,7 +299,7 @@ export default function Select({
         aria-required={required}
         disabled={disabled}
         data-pending={(pending && !unavailable) || undefined}
-        title={selected?.text}
+        title={props.title || selected?.text}
         onClick={() => (open ? setOpen(false) : show())}
         onKeyDown={keyboard}
       >

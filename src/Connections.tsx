@@ -288,7 +288,7 @@ export default function ConnectionDialog({
                   className="table-wrap discovery-table"
                   tabIndex={0}
                   role="region"
-                  aria-label="发现结果，可横向滚动"
+                  aria-label="发现的实例"
                 >
                   <table>
                     <thead>
@@ -347,15 +347,19 @@ export default function ConnectionDialog({
                               />
                               <div className="subline mono">{i.id}</div>
                             </td>
-                            <td title={i.region}>{regionName(i.region)}</td>
-                            <td>
+                            <td data-label="地域" title={i.region}>
+                              {regionName(i.region)}
+                            </td>
+                            <td data-label="状态">
                               {i.status === "Running"
                                 ? "运行中"
                                 : i.status === "Stopped"
                                   ? "已停止"
                                   : i.status}
                             </td>
-                            <td>{i.ip.join(", ") || "—"}</td>
+                            <td data-label="公网 IP">
+                              {i.ip.join(", ") || "—"}
+                            </td>
                           </tr>
                         );
                       })}

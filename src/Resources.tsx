@@ -1,4 +1,4 @@
-import { ArrowDownUp } from "lucide-react";
+import { ArrowDownUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import type { Instance } from "../shared/types";
 import { trafficRange, trafficTotals } from "../shared/traffic-presentation";
@@ -134,7 +134,10 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
             loading={d.initialLoading}
           />
           <details className="traffic-details" open>
-            <summary>每日明细</summary>
+            <summary>
+              <ChevronDown size={16} aria-hidden="true" />
+              每日明细
+            </summary>
             <DataRegion
               pending={d.initialLoading}
               placeholder={

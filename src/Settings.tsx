@@ -344,10 +344,15 @@ export default function SettingsPage() {
       <ErrorBox error={outbox.error} />
       <DataRegion
         pending={outbox.initialLoading}
-        placeholder={<LoadingTable columns={["时间", "通知", "投递状态"]} />}
+        placeholder={
+          <LoadingTable
+            tableClassName="notification-table"
+            columns={["时间", "通知", "投递状态"]}
+          />
+        }
       >
         <div className="table-wrap">
-          <table>
+          <table className="notification-table">
             <thead>
               <tr>
                 <th>时间</th>
@@ -358,15 +363,15 @@ export default function SettingsPage() {
             <tbody>
               {outbox.data?.items.slice(0, 5).map((r) => (
                 <tr key={r.id}>
-                  <td>{date(r.at)}</td>
-                  <td>
+                  <td data-label="时间">{date(r.at)}</td>
+                  <td data-label="通知">
                     <span aria-hidden="true">{notificationIcon(r)}</span>{" "}
                     {r.title}
                     {r.error && (
                       <div className="subline danger-text">{r.error}</div>
                     )}
                   </td>
-                  <td>
+                  <td data-label="投递状态">
                     {r.status === "sent"
                       ? "已发送"
                       : r.status === "failed"

@@ -12,9 +12,9 @@
   gap: 8px;
   white-space: nowrap;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 20px;
   min-height: 40px;
   font-size: 14px;
   padding: 9px 14px;
@@ -54,8 +54,8 @@
 }
 .button.small {
   gap: 5px;
-  min-height: 32px;
-  font-size: 12px;
+  min-height: 34px;
+  font-size: 13px;
   padding: 6px 10px;
 }
 .button.full {
@@ -68,9 +68,9 @@
   justify-content: center;
   color: var(--muted);
   padding: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 5px;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
   transition: opacity 160ms ease-out;
 }
 .icon-button:hover {
@@ -101,7 +101,7 @@
 .search {
   display: flex;
   align-items: center;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   gap: 7px;
   padding: 0 10px;
   color: var(--muted);
@@ -120,8 +120,9 @@
   font-size: 13px;
 }
 .search .icon-button {
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
+  margin-right: -4px;
 }
 .tabs {
   display: inline-flex;
@@ -184,6 +185,7 @@
 }
 .search:focus-within {
   border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-soft);
 }
 .search input:not([type="checkbox"]):focus {
   box-shadow: none;
@@ -206,13 +208,16 @@
   min-height: 40px;
   padding: 9px 14px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   color: var(--text);
   text-align: left;
   font-size: 14px;
-  line-height: 1.5;
-  transition: border-color 0.15s;
+  line-height: 20px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
 }
 .month-trigger {
   display: flex;
@@ -238,7 +243,8 @@
   border-color: var(--focus);
 }
 .select-trigger:focus-visible {
-  outline: none;
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
   border-color: var(--focus);
 }
 .month-trigger:focus-visible {
@@ -247,6 +253,7 @@
 }
 .select-trigger[aria-expanded="true"] {
   border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-soft);
 }
 .month-trigger[aria-expanded="true"] {
   border-color: var(--focus);
@@ -254,6 +261,8 @@
 .select-trigger:disabled {
   background: var(--subtle);
   color: var(--muted);
+  opacity: 0.65;
+  box-shadow: none;
 }
 /* A request locks editable controls without changing their rendered appearance. */
 .select-trigger[data-pending="true"],
@@ -304,9 +313,9 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 .select-menu {
   position: fixed;
   z-index: 110;
-  padding: 5px;
+  padding: 6px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow);
@@ -323,9 +332,9 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   min-height: 36px;
   padding: 8px 10px;
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 20px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 .select-option > span {
   min-width: 0;
@@ -345,7 +354,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   background: var(--subtle);
 }
 .select-option[aria-selected="true"] {
-  background: var(--subtle);
+  background: var(--accent-soft);
   font-weight: 500;
 }
 .select-option.disabled {
@@ -353,7 +362,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   cursor: default;
 }
 .select-group {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   padding: 11px 10px 5px;
 }

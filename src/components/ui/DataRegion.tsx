@@ -51,14 +51,16 @@ export function LoadingTable({
   columns,
   rows = 3,
   className = "",
+  tableClassName = "",
 }: {
   columns: string[];
   rows?: number;
   className?: string;
+  tableClassName?: string;
 }) {
   return (
     <div className={"table-wrap loading-table " + className}>
-      <table>
+      <table className={tableClassName || undefined}>
         <thead>
           <tr>
             {columns.map((v, i) => (
@@ -196,6 +198,7 @@ export function PageLoading({ page }: { page: string }) {
         </div>
       ) : (
         <LoadingTable
+          tableClassName={page === "billing" ? "billing-table" : ""}
           columns={
             page === "billing"
               ? ["实例", "地域", "可用余额", "税前金额", "查询状态"]
