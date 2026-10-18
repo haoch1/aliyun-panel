@@ -1,5 +1,6 @@
 import { Input } from "./components/ui/Input";
 import { regionName } from "../shared/regions";
+import { matchesInstanceSearch } from "../shared/instance-search";
 import { SearchInput } from "./components/ui/SearchInput";
 import { ActionMenu } from "./components/ui/ActionMenu";
 import { CopyText } from "./components/ui/CopyText";
@@ -75,13 +76,7 @@ export default function Instances() {
     instance: Instance;
   }>();
   const items = useMemo(
-    () =>
-      p.snapshot.items.filter((i) =>
-        [i.name, i.id, i.region, ...i.ip]
-          .join(" ")
-          .toLowerCase()
-          .includes(search.toLowerCase()),
-      ),
+    () => p.snapshot.items.filter((i) => matchesInstanceSearch(i, search)),
     [p.snapshot.items, search],
   );
   const selected = items.filter((i) => chosen.includes(key(i)));
