@@ -4,6 +4,7 @@ import {
   wantsNotification,
 } from "../../shared/notification-preferences.ts";
 import { commonRegions } from "../../shared/regions.ts";
+import { defaultLogRetention } from "../../shared/log-retention.ts";
 import type {
   Account,
   Instance,
@@ -80,6 +81,7 @@ let settings: Settings = {
   billingEnabled: true,
   checkInterval: 60,
   billingInterval: 3600,
+  logRetentionLimit: defaultLogRetention,
   dailyReport: true,
   reportTime: "00:00",
   timezone: "Asia/Shanghai",
@@ -360,6 +362,7 @@ function audit(
     level: "info",
     ...structuredClone(options),
   });
+  logs.length = Math.min(logs.length, settings.logRetentionLimit);
 }
 function notify(
   title: string,
@@ -999,6 +1002,7 @@ export async function demoApi(
         },
       };
       settings.dailyReport = notificationSelection(settings).includes("daily");
+      logs = logs.slice(0, settings.logRetentionLimit);
       audit("settings-update", "面板", "演示设置已更新");
       changed();
     }

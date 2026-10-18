@@ -25,6 +25,7 @@ import {
 } from "./lib";
 import { useState } from "react";
 import type { Settings } from "../shared/types";
+import { logRetentionOptions } from "../shared/log-retention";
 import { PendingButton } from "./components/ui/PendingButton";
 import {
   DataRegion,
@@ -149,6 +150,31 @@ export default function SettingsPage() {
           <div className="form-actions">
             <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
               保存监控设置
+            </PendingButton>
+          </div>
+        </section>
+        <section className="form-panel form-stack">
+          <h2>日志设置</h2>
+          <div className="log-settings-row">
+            <Field
+              label="最多保留日志条数"
+              hint="各类型共用上限；调低后立即删除最早的超额记录。"
+            >
+              <Select
+                value={s.logRetentionLimit}
+                onChange={(e) =>
+                  setS({ ...s, logRetentionLimit: +e.target.value })
+                }
+              >
+                {logRetentionOptions.map((v) => (
+                  <option key={v} value={v}>
+                    {v.toLocaleString("zh-CN")} 条
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
+              保存
             </PendingButton>
           </div>
         </section>

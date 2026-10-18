@@ -5,6 +5,7 @@ import {
 import { randomUUID } from "node:crypto";
 import { Store as BaseStore } from "./base-store.mjs";
 import { sortByName } from "../shared/resource-order.ts";
+import { defaultLogRetention } from "../shared/log-retention.ts";
 export const resourceKey = ({ accountId, region, id }) =>
   JSON.stringify([accountId, region, id]);
 export const defaultRule = ({ accountId, region, id }) => ({
@@ -31,6 +32,7 @@ export const defaultSettings = () => ({
   billingEnabled: true,
   checkInterval: 60,
   billingInterval: 3600,
+  logRetentionLimit: defaultLogRetention,
   dailyReport: true,
   reportTime: "00:00",
   timezone: "Asia/Shanghai",
@@ -137,8 +139,27 @@ export class Store extends BaseStore {
           events: notificationSelection(value),
         },
       };
-    this.config("settings", this.encrypt({ ...value, keepAliveDefault: true }));
+    this.config(
+      "settings",
+      this.encrypt({
+        ...value,
+        logRetentionLimit: value.logRetentionLimit ?? this.logLimit(),
+        keepAliveDefault: true,
+      }),
+    );
+    if (this.pruneLogs()) this.emit("audit");
     this.emit("settings");
+  }
+  logLimit() {
+    return this.settings().logRetentionLimit;
+  }
+  pruneLogs() {
+    const deleted = super.pruneLogs();
+    if (deleted)
+      this.db.exec(
+        "DELETE FROM entities WHERE kind='log-detail' AND id NOT IN (SELECT id FROM audit)",
+      );
+    return deleted;
   }
   redact(value) {
     const secrets = this.accounts()
@@ -177,9 +198,6 @@ export class Store extends BaseStore {
       level: safe.level || (safe.status === "failed" ? "error" : "info"),
       context: safe.context || {},
     });
-    this.db.exec(
-      "DELETE FROM entities WHERE kind='log-detail' AND id NOT IN (SELECT id FROM audit)",
-    );
     return id;
   }
   updateAudit(id, entry) {
@@ -203,8 +221,8 @@ export class Store extends BaseStore {
   }
   logs() {
     return this.db
-      .prepare("SELECT * FROM audit ORDER BY at DESC LIMIT 5000")
-      .all()
+      .prepare("SELECT * FROM audit ORDER BY at DESC, rowid DESC LIMIT ?")
+      .all(this.logLimit())
       .map((r) => ({ ...r, ...this.get("log-detail", r.id) }));
   }
   clearLogs() {

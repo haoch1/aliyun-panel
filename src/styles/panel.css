@@ -68,6 +68,22 @@
 .form-grid {
   gap: 20px 24px;
 }
+.log-settings-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px 24px;
+}
+.log-settings-row .field {
+  flex: 1;
+  min-width: 0;
+}
+.log-settings-row .custom-select {
+  width: 240px;
+  max-width: 100%;
+}
+.log-settings-row > .button {
+  margin-top: 28px;
+}
 .field {
   gap: 8px;
 }
@@ -326,7 +342,14 @@ summary:focus-visible {
   line-height: 20px;
 }
 .instances-table .status {
-  padding: 4px 10px;
+  padding: 3px 9px;
+  gap: 5px;
+}
+.status::before,
+.log-resource-status::before {
+  width: 4px;
+  height: 4px;
+  flex: 0 0 4px;
 }
 .instances-table .rule-chip {
   height: 30px;
@@ -766,17 +789,19 @@ summary:focus-visible {
 .billing-table {
   table-layout: fixed;
 }
-.billing-table th:nth-child(2) {
-  width: 20%;
+.billing-table th {
+  width: 23%;
 }
-.billing-table th:nth-child(3),
-.billing-table th:nth-child(4) {
-  width: 22%;
+.billing-table th:first-child {
+  width: 26%;
 }
-.billing-table th,
-.billing-table td {
-  padding-left: 16px;
-  padding-right: 16px;
+.billing-table th:nth-child(2),
+.billing-table th:last-child {
+  width: 14%;
+}
+.billing-table th:nth-child(2),
+.billing-table td:nth-child(2) {
+  text-align: left;
 }
 .billing-table th:nth-child(3),
 .billing-table th:nth-child(4),
@@ -784,12 +809,14 @@ summary:focus-visible {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+.billing-table th,
+.billing-table td {
+  padding-left: 16px;
+  padding-right: 16px;
+}
 .billing-table th:last-child,
 .billing-table td:last-child {
   text-align: right;
-}
-.billing-table th:last-child {
-  width: 128px;
 }
 .billing-table td:first-child {
   font-weight: 500;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logRetentionOptions } from "../shared/log-retention.ts";
 const clock = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "时间格式须为 HH:mm");
@@ -69,6 +70,9 @@ export const settingsInput = z
     }),
     checkInterval: z.number().int().min(60).max(3600).default(60),
     billingInterval: z.number().int().min(300).max(86400).default(3600),
+    logRetentionLimit: z
+      .union(logRetentionOptions.map((v) => z.literal(v)))
+      .optional(),
     notifications: z
       .object({
         telegramToken: z.string().max(256),

@@ -216,11 +216,21 @@ export class Store {
         status,
         (detail || auditDefaultDetail(action, status)).slice(0, 4000),
       );
-    this.db.exec(
-      "DELETE FROM audit WHERE id IN (SELECT id FROM audit ORDER BY at DESC LIMIT -1 OFFSET 5000)",
-    );
+    this.pruneLogs();
     this.emit("audit");
     return id;
+  }
+  logLimit() {
+    return 5000;
+  }
+  pruneLogs() {
+    return Number(
+      this.db
+        .prepare(
+          "DELETE FROM audit WHERE id IN (SELECT id FROM audit ORDER BY at DESC, rowid DESC LIMIT -1 OFFSET ?)",
+        )
+        .run(this.logLimit()).changes,
+    );
   }
   updateAudit(id, { status, detail }) {
     const text = (detail || auditDefaultDetail("", status)).slice(0, 4000);

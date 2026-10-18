@@ -374,11 +374,12 @@ export function createApp(
     store.saveSettings(v);
     store.audit({
       action: "settings-update",
-      detail: "监控和通知设置已保存",
+      detail: "面板设置已保存",
       context: {
         checkInterval: v.checkInterval,
         billingEnabled: v.billingEnabled,
         billingInterval: v.billingInterval,
+        logRetentionLimit: store.logLimit(),
         telegramEnabled: n.telegramEnabled,
         events: store.publicSettings().notifications.events,
         dailyReport: store.settings().dailyReport,

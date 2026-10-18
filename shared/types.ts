@@ -117,6 +117,7 @@ export interface Settings {
   timezone: string;
   checkInterval: number;
   billingInterval: number;
+  logRetentionLimit: number;
   notifications: {
     telegramToken: string;
     telegramChatId: string;
