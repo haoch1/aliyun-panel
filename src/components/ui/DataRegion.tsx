@@ -1,6 +1,15 @@
 import type { ReactNode } from "react";
 import { TableLoading } from "./TableLoading";
-import { Cloud } from "lucide-react";
+import {
+  ArrowDownUp,
+  Cloud,
+  Receipt,
+  ScrollText,
+  Settings,
+} from "lucide-react";
+import { PageHeader } from "./PageHeader";
+import { TablePanel } from "./Table";
+import { Card } from "./Card";
 
 export function Skeleton({ className = "" }: { className?: string }) {
   return <span className={"skeleton " + className} aria-hidden="true" />;
@@ -119,56 +128,81 @@ export function PageLoading({ page }: { page: string }) {
   if (page === "instances")
     return (
       <div className="page-loading instances-loading">
-        <div className="page-heading instances-heading">
-          <h1>
-            <Cloud size={22} />
-            Aliyun 实例
-          </h1>
-          <div className="row loading-actions">
-            <Skeleton />
-            <Skeleton />
+        <PageHeader
+          title="Aliyun 实例"
+          icon={Cloud}
+          actions={
+            <div className="row loading-actions">
+              <Skeleton />
+              <Skeleton />
+            </div>
+          }
+        >
+          <div className="instances-overview">
+            <div className="instance-counts" aria-label="实例概况">
+              {["实例", "运行中", "保活开启"].map((label) => (
+                <span key={label}>
+                  <span>{label}</span>
+                  <strong>
+                    <Skeleton className="skeleton-count" />
+                  </strong>
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="instances-overview">
-          <div className="instance-counts" aria-label="实例概况">
-            {["实例", "运行中", "保活开启"].map((label) => (
-              <span key={label}>
-                {label}
-                <strong>
-                  <Skeleton className="skeleton-count" />
-                </strong>
-              </span>
-            ))}
+        </PageHeader>
+        <TablePanel>
+          <div className="toolbar table-toolbar instances-toolbar">
+            <Skeleton className="skeleton-search" />
+            <Skeleton className="skeleton-filter" />
           </div>
-        </div>
-        <div className="toolbar instances-toolbar">
-          <Skeleton className="skeleton-search" />
-        </div>
-        <LoadingTable
-          className="instances-table"
-          rows={1}
-          columns={[
-            "",
-            "实例",
-            "状态",
-            "公网 IP",
-            "本月流量",
-            "保活",
-            "流量保护",
-            "定时关机",
-            "本月费用",
-            "操作",
-          ]}
-        />
+          <LoadingTable
+            className="instances-table"
+            rows={1}
+            columns={[
+              "",
+              "实例",
+              "状态",
+              "公网 IP",
+              "本月流量",
+              "保活",
+              "流量保护",
+              "定时关机",
+              "本月费用",
+              "操作",
+            ]}
+          />
+        </TablePanel>
       </div>
     );
   return (
     <div className="page-loading">
-      <Skeleton className="skeleton-page-title" />
-      <div className="loading-toolbar">
-        <Skeleton />
-        <Skeleton />
-      </div>
+      <PageHeader
+        title={
+          page === "traffic"
+            ? "流量统计"
+            : page === "audit"
+              ? "日志"
+              : page === "settings"
+                ? "设置"
+                : "账单与余额"
+        }
+        icon={
+          page === "traffic"
+            ? ArrowDownUp
+            : page === "audit"
+              ? ScrollText
+              : page === "settings"
+                ? Settings
+                : Receipt
+        }
+      />
+      {page !== "settings" && (
+        <div className="loading-toolbar">
+          <Skeleton />
+          <Skeleton />
+        </div>
+      )}
       {page === "traffic" ? (
         <>
           <div className="traffic-overview">
@@ -194,9 +228,19 @@ export function PageLoading({ page }: { page: string }) {
       ) : page === "audit" ? (
         <LoadingLogs />
       ) : page === "settings" ? (
-        <div className="form-panel">
-          <Skeleton className="skeleton-title" />
-          <LoadingForm />
+        <div className="settings-page">
+          <div className="settings-overview">
+            <Card title="监控设置">
+              <LoadingForm />
+            </Card>
+            <Card title="日志设置">
+              <Skeleton className="skeleton-label" />
+              <Skeleton className="skeleton-input" />
+            </Card>
+          </div>
+          <Card title="Telegram 通知">
+            <LoadingForm />
+          </Card>
         </div>
       ) : (
         <LoadingTable

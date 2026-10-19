@@ -1,4 +1,8 @@
 import { Input } from "./components/ui/Input";
+import { Checkbox } from "./components/ui/Checkbox";
+import { PageHeader } from "./components/ui/PageHeader";
+import { Table, TablePanel } from "./components/ui/Table";
+import { Button } from "./components/ui/Button";
 import { regionName } from "../shared/regions";
 import { matchesInstanceSearch } from "../shared/instance-search";
 import { SearchInput } from "./components/ui/SearchInput";
@@ -56,6 +60,7 @@ const statuses: Record<string, string> = {
 export default function Instances() {
   const p = usePanel();
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
   const [chosen, setChosen] = useState<string[]>([]);
   const [editing, setEditing] = useState<{
     instance: Instance;
@@ -76,8 +81,13 @@ export default function Instances() {
     instance: Instance;
   }>();
   const items = useMemo(
-    () => p.snapshot.items.filter((i) => matchesInstanceSearch(i, search)),
-    [p.snapshot.items, search],
+    () =>
+      p.snapshot.items.filter(
+        (i) =>
+          matchesInstanceSearch(i, search) &&
+          (status === "all" || i.status === status),
+      ),
+    [p.snapshot.items, search, status],
   );
   const selected = items.filter((i) => chosen.includes(key(i)));
   const running = items.filter((i) => i.status === "Running").length,
@@ -105,341 +115,381 @@ export default function Instances() {
   };
   return (
     <>
-      <div className="page-heading instances-heading">
-        <div>
-          <h1>
-            <Cloud size={22} />
-            Aliyun 实例
-          </h1>
+      <PageHeader
+        title="Aliyun 实例"
+        icon={Cloud}
+        actions={
+          <>
+            <RefreshButton
+              text="立即检测"
+              title={
+                "立即同步实例并执行已启用的保活、流量保护和定时规则；最近同步 " +
+                date(p.snapshot.at)
+              }
+              onClick={refresh}
+              loading={busy || p.loading || p.snapshot.refreshing}
+            />
+            <Button variant="primary" onClick={() => setAdding(true)}>
+              <Plus size={16} />
+              添加实例
+            </Button>
+          </>
+        }
+      >
+        <div className="instances-overview">
+          <div className="instance-counts" aria-label="实例概况">
+            <span>
+              <span>实例</span>
+              <strong>{items.length}</strong>
+            </span>
+            <span>
+              <span>运行中</span>
+              <strong>
+                <DataRegion
+                  inline
+                  pending={
+                    p.snapshot.refreshing &&
+                    items.some((i) => i.status === "Unknown")
+                  }
+                  placeholder={<Skeleton className="skeleton-count" />}
+                >
+                  {running}
+                </DataRegion>
+              </strong>
+            </span>
+            <span>
+              <span>保活开启</span>
+              <strong>{alive}</strong>
+            </span>
+          </div>
         </div>
-        <div className="row">
-          <RefreshButton
-            text="立即检测"
-            title={
-              "立即同步实例并执行已启用的保活、流量保护和定时规则；最近同步 " +
-              date(p.snapshot.at)
-            }
-            onClick={refresh}
-            loading={busy || p.loading || p.snapshot.refreshing}
-          />
-          <button className="button primary" onClick={() => setAdding(true)}>
-            <Plus size={16} />
-            添加实例
-          </button>
-        </div>
-      </div>
-      <div className="instances-overview">
-        <div className="instance-counts" aria-label="实例概况">
-          <span>
-            实例 <strong>{items.length}</strong>
-          </span>
-          <span>
-            运行中{" "}
-            <strong>
-              <DataRegion
-                inline
-                pending={
-                  p.snapshot.refreshing &&
-                  items.some((i) => i.status === "Unknown")
-                }
-                placeholder={<Skeleton className="skeleton-count" />}
-              >
-                {running}
-              </DataRegion>
-            </strong>
-          </span>
-          <span>
-            保活开启 <strong>{alive}</strong>
-          </span>
-        </div>
-      </div>
+      </PageHeader>
       {p.snapshot.errors.length > 0 && (
         <ErrorBox error={p.snapshot.errors.join("；")} />
       )}
-      <div className="toolbar instances-toolbar">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="搜索名称、IP、地域…"
-        />
-        {selected.length > 0 && (
-          <div className="row">
-            <span className="muted">已选 {selected.length} 台</span>
-            {["start", "stop"].map((action) => (
-              <button
-                className="button small"
-                key={action}
-                onClick={() => setOperation({ items: selected, action })}
-              >
-                {action === "start"
-                  ? "批量开机"
-                  : action === "stop"
-                    ? "批量关机"
-                    : "批量重启"}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="table-wrap instances-table">
-        <table>
-          <thead>
-            <tr>
-              <th>
-                <label className="selection-box">
-                  <Input
-                    type="checkbox"
-                    aria-label="选择全部实例"
-                    checked={
-                      items.length > 0 &&
-                      items.every((i) => chosen.includes(key(i)))
-                    }
-                    onChange={(e) =>
-                      setChosen(e.target.checked ? items.map(key) : [])
-                    }
-                  />
-                </label>
-              </th>
-              <th>实例</th>
-              <th>状态</th>
-              <th>公网 IP</th>
-              <th>本月流量</th>
-              <th className="keep-column">
-                <Activity size={14} />
-                保活
-              </th>
-              <th className="automation-column">流量保护</th>
-              <th className="automation-column">定时关机</th>
-              <th>本月费用</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((i) => (
-              <tr key={key(i)}>
-                <td>
+      <TablePanel>
+        <div className="toolbar instances-toolbar table-toolbar">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="搜索名称、IP、地域…"
+          />
+          <Select
+            aria-label="实例状态"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="all">全部状态</option>
+            <option value="Running">运行中</option>
+            <option value="Stopped">已停止</option>
+            <option value="Starting">启动中</option>
+            <option value="Stopping">停止中</option>
+          </Select>
+          {(search || status !== "all") && (
+            <Button
+              variant="ghost"
+              size="small"
+              onClick={() => {
+                setSearch("");
+                setStatus("all");
+              }}
+            >
+              重置筛选
+            </Button>
+          )}
+          {selected.length > 0 && (
+            <div className="row selection-actions">
+              <span className="muted">已选 {selected.length} 台</span>
+              {["start", "stop"].map((action) => (
+                <button
+                  className="button small"
+                  key={action}
+                  onClick={() => setOperation({ items: selected, action })}
+                >
+                  {action === "start"
+                    ? "批量开机"
+                    : action === "stop"
+                      ? "批量关机"
+                      : "批量重启"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div
+          className="table-wrap instances-table"
+          role="region"
+          aria-label="实例列表"
+          tabIndex={0}
+        >
+          <Table aria-label="Aliyun 实例">
+            <thead>
+              <tr>
+                <th>
                   <label className="selection-box">
-                    <Input
-                      type="checkbox"
-                      aria-label={"选择 " + i.name}
-                      checked={chosen.includes(key(i))}
+                    <Checkbox
+                      indeterminate={
+                        selected.length > 0 && selected.length < items.length
+                      }
+                      aria-label="选择全部实例"
+                      checked={
+                        items.length > 0 &&
+                        items.every((i) => chosen.includes(key(i)))
+                      }
                       onChange={(e) =>
-                        setChosen((v) =>
-                          e.target.checked
-                            ? [...v, key(i)]
-                            : v.filter((x) => x !== key(i)),
-                        )
+                        setChosen(e.target.checked ? items.map(key) : [])
                       }
                     />
                   </label>
-                </td>
-                <td data-label="实例">
-                  <strong title={i.name}>{i.name}</strong>
-                  <div className="subline" title={i.region}>
-                    {regionName(i.region)}
-                  </div>
-                </td>
-                <td data-label="状态">
-                  <DataRegion
-                    inline
-                    pending={p.snapshot.refreshing && i.status === "Unknown"}
-                    placeholder={<Skeleton />}
-                  >
-                    <span
-                      className={
-                        "status " +
-                        (i.status === "Running"
-                          ? "running"
-                          : i.status === "Stopped"
-                            ? "stopped"
-                            : "")
-                      }
-                    >
-                      {statuses[i.status] || i.status}
-                    </span>
-                  </DataRegion>
-                  {i.job && (
-                    <div className="subline">
-                      {i.job.status === "attention" ? "需核对" : "操作处理中"}
+                </th>
+                <th>实例</th>
+                <th>状态</th>
+                <th>公网 IP</th>
+                <th>本月流量</th>
+                <th className="keep-column">
+                  <Activity size={14} />
+                  保活
+                </th>
+                <th className="automation-column">流量保护</th>
+                <th className="automation-column">定时关机</th>
+                <th>本月费用</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((i) => (
+                <tr
+                  key={key(i)}
+                  data-selected={chosen.includes(key(i)) || undefined}
+                >
+                  <td>
+                    <label className="selection-box">
+                      <Input
+                        type="checkbox"
+                        aria-label={"选择 " + i.name}
+                        checked={chosen.includes(key(i))}
+                        onChange={(e) =>
+                          setChosen((v) =>
+                            e.target.checked
+                              ? [...v, key(i)]
+                              : v.filter((x) => x !== key(i)),
+                          )
+                        }
+                      />
+                    </label>
+                  </td>
+                  <td data-label="实例">
+                    <strong title={i.name}>{i.name}</strong>
+                    <div className="subline" title={i.region}>
+                      {regionName(i.region)}
                     </div>
-                  )}
-                </td>
-                <td data-label="公网 IP" className="mono">
-                  <DataRegion
-                    inline
-                    pending={
-                      p.snapshot.refreshing &&
-                      i.status === "Unknown" &&
-                      !i.ip.length
-                    }
-                    placeholder={<Skeleton />}
-                  >
-                    {i.ip.length
-                      ? i.ip.map((ip) => (
-                          <div key={ip}>
-                            <CopyText
-                              text={ip}
-                              toast={(message, type) =>
-                                p.notice(message, type === "error")
-                              }
-                            />
-                          </div>
-                        ))
-                      : "—"}
-                  </DataRegion>
-                </td>
-                <td data-label="本月流量">
-                  <MonthlyTraffic
-                    instance={i}
-                    revision={trafficRevision}
-                    onClick={() => setDetail({ kind: "traffic", instance: i })}
-                  />
-                </td>
-                <td data-label="保活" className="keep-column">
-                  <div className="row">
-                    <Switch
-                      checked={i.effectiveKeepAlive}
-                      onChange={(v) => toggle(i, v)}
-                      label={i.name + " 保活"}
-                    />
-                    <span>{i.effectiveKeepAlive ? "开启" : "关闭"}</span>
-                  </div>
-                </td>
-                <td data-label="流量保护" className="automation-column">
-                  <ProtectionState
-                    instance={i}
-                    kind="traffic"
-                    onEdit={(kind) => setEditing({ instance: i, kind })}
-                  />
-                </td>
-                <td data-label="定时关机" className="automation-column">
-                  <ProtectionState
-                    instance={i}
-                    kind="schedule"
-                    onEdit={(kind) => setEditing({ instance: i, kind })}
-                  />
-                </td>
-                <td data-label="本月费用" className="instance-fee">
-                  <button
-                    className="fee-trigger"
-                    aria-label={i.name + " 账单与余额"}
-                    onClick={() => setDetail({ kind: "billing", instance: i })}
-                  >
+                  </td>
+                  <td data-label="状态">
                     <DataRegion
                       inline
-                      pending={!i.billing && p.snapshot.refreshing}
+                      pending={p.snapshot.refreshing && i.status === "Unknown"}
                       placeholder={<Skeleton />}
                     >
-                      {money(
-                        i.billing?.amount,
-                        i.billing?.currency ||
-                          (p.accounts.find((a) => a.id === i.accountId)
-                            ?.site === "international"
-                            ? "USD"
-                            : "CNY"),
-                      )}
+                      <span
+                        className={
+                          "status " +
+                          (i.status === "Running"
+                            ? "running"
+                            : i.status === "Stopped"
+                              ? "stopped"
+                              : "")
+                        }
+                      >
+                        {statuses[i.status] || i.status}
+                      </span>
                     </DataRegion>
-                  </button>
-                  {i.billing?.stale && <div className="subline">待刷新</div>}
-                </td>
-                <td data-label="操作">
-                  <ActionMenu label={i.name}>
-                    <div className="menu-power-actions">
-                      <button
-                        role="menuitem"
-                        disabled={!!i.job || i.status !== "Stopped"}
-                        onClick={() =>
-                          setOperation({ items: [i], action: "start" })
-                        }
-                      >
-                        <Play />
-                        <span>启动</span>
-                      </button>
-                      <button
-                        role="menuitem"
-                        disabled={!!i.job || i.status !== "Running"}
-                        onClick={() =>
-                          setOperation({ items: [i], action: "stop" })
-                        }
-                      >
-                        <Square />
-                        <span>停止</span>
-                      </button>
-                    </div>
-                    <hr />
-                    <button
-                      role="menuitem"
-                      onClick={() =>
-                        setEditing({ instance: i, kind: "traffic" })
-                      }
-                    >
-                      <ShieldCheck />
-                      <span>流量保护</span>
-                    </button>
-                    <button
-                      role="menuitem"
-                      onClick={() =>
-                        setEditing({ instance: i, kind: "schedule" })
-                      }
-                    >
-                      <Clock3 />
-                      <span>定时关机</span>
-                    </button>
-                    <button role="menuitem" onClick={() => setConnection(i)}>
-                      <Pencil />
-                      <span>编辑实例</span>
-                    </button>
-                    {i.job?.status === "attention" && (
-                      <button
-                        role="menuitem"
-                        onClick={async () => {
-                          try {
-                            await api("/jobs/" + i.job!.id + "/recheck", {});
-                            p.refresh();
-                            p.notice("已重新核对状态");
-                          } catch (e) {
-                            p.notice((e as Error).message, true);
-                          }
-                        }}
-                      >
-                        <RefreshCw />
-                        <span>核对操作状态</span>
-                      </button>
+                    {i.job && (
+                      <div className="subline">
+                        {i.job.status === "attention" ? "需核对" : "操作处理中"}
+                      </div>
                     )}
-                    <hr />
-                    <button
-                      role="menuitem"
-                      className="danger-text"
-                      disabled={!!i.job}
-                      onClick={() => setRemoving(i)}
+                  </td>
+                  <td data-label="公网 IP" className="mono">
+                    <DataRegion
+                      inline
+                      pending={
+                        p.snapshot.refreshing &&
+                        i.status === "Unknown" &&
+                        !i.ip.length
+                      }
+                      placeholder={<Skeleton />}
                     >
-                      <Trash2 />
-                      <span>移除监控</span>
+                      {i.ip.length
+                        ? i.ip.map((ip) => (
+                            <div key={ip}>
+                              <CopyText
+                                text={ip}
+                                toast={(message, type) =>
+                                  p.notice(message, type === "error")
+                                }
+                              />
+                            </div>
+                          ))
+                        : "—"}
+                    </DataRegion>
+                  </td>
+                  <td data-label="本月流量">
+                    <MonthlyTraffic
+                      instance={i}
+                      revision={trafficRevision}
+                      onClick={() =>
+                        setDetail({ kind: "traffic", instance: i })
+                      }
+                    />
+                  </td>
+                  <td data-label="保活" className="keep-column">
+                    <div className="row">
+                      <Switch
+                        checked={i.effectiveKeepAlive}
+                        onChange={(v) => toggle(i, v)}
+                        label={i.name + " 保活"}
+                      />
+                      <span>{i.effectiveKeepAlive ? "开启" : "关闭"}</span>
+                    </div>
+                  </td>
+                  <td data-label="流量保护" className="automation-column">
+                    <ProtectionState
+                      instance={i}
+                      kind="traffic"
+                      onEdit={(kind) => setEditing({ instance: i, kind })}
+                    />
+                  </td>
+                  <td data-label="定时关机" className="automation-column">
+                    <ProtectionState
+                      instance={i}
+                      kind="schedule"
+                      onEdit={(kind) => setEditing({ instance: i, kind })}
+                    />
+                  </td>
+                  <td data-label="本月费用" className="instance-fee">
+                    <button
+                      className="fee-trigger"
+                      aria-label={i.name + " 账单与余额"}
+                      onClick={() =>
+                        setDetail({ kind: "billing", instance: i })
+                      }
+                    >
+                      <DataRegion
+                        inline
+                        pending={!i.billing && p.snapshot.refreshing}
+                        placeholder={<Skeleton />}
+                      >
+                        {money(
+                          i.billing?.amount,
+                          i.billing?.currency ||
+                            (p.accounts.find((a) => a.id === i.accountId)
+                              ?.site === "international"
+                              ? "USD"
+                              : "CNY"),
+                        )}
+                      </DataRegion>
                     </button>
-                  </ActionMenu>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!items.length && (
-          <Empty>
-            {!p.accounts.length ? (
-              <>
-                <h2>还没有添加实例</h2>
-                <p>使用 AccessKey ID 和 Secret 发现并选择已有 ECS 实例</p>
-                <button className="button" onClick={() => setAdding(true)}>
-                  添加实例
-                </button>
-              </>
-            ) : p.snapshot.refreshing ? (
-              "正在发现各地域实例…"
-            ) : (
-              "没有匹配的实例，可调整筛选条件或立即检测"
-            )}
-          </Empty>
-        )}
-      </div>
+                    {i.billing?.stale && <div className="subline">待刷新</div>}
+                  </td>
+                  <td data-label="操作">
+                    <ActionMenu label={i.name}>
+                      <div className="menu-power-actions">
+                        <button
+                          role="menuitem"
+                          disabled={!!i.job || i.status !== "Stopped"}
+                          onClick={() =>
+                            setOperation({ items: [i], action: "start" })
+                          }
+                        >
+                          <Play />
+                          <span>启动</span>
+                        </button>
+                        <button
+                          role="menuitem"
+                          disabled={!!i.job || i.status !== "Running"}
+                          onClick={() =>
+                            setOperation({ items: [i], action: "stop" })
+                          }
+                        >
+                          <Square />
+                          <span>停止</span>
+                        </button>
+                      </div>
+                      <hr />
+                      <button
+                        role="menuitem"
+                        onClick={() =>
+                          setEditing({ instance: i, kind: "traffic" })
+                        }
+                      >
+                        <ShieldCheck />
+                        <span>流量保护</span>
+                      </button>
+                      <button
+                        role="menuitem"
+                        onClick={() =>
+                          setEditing({ instance: i, kind: "schedule" })
+                        }
+                      >
+                        <Clock3 />
+                        <span>定时关机</span>
+                      </button>
+                      <button role="menuitem" onClick={() => setConnection(i)}>
+                        <Pencil />
+                        <span>编辑实例</span>
+                      </button>
+                      {i.job?.status === "attention" && (
+                        <button
+                          role="menuitem"
+                          onClick={async () => {
+                            try {
+                              await api("/jobs/" + i.job!.id + "/recheck", {});
+                              p.refresh();
+                              p.notice("已重新核对状态");
+                            } catch (e) {
+                              p.notice((e as Error).message, true);
+                            }
+                          }}
+                        >
+                          <RefreshCw />
+                          <span>核对操作状态</span>
+                        </button>
+                      )}
+                      <hr />
+                      <button
+                        role="menuitem"
+                        className="danger-text"
+                        disabled={!!i.job}
+                        onClick={() => setRemoving(i)}
+                      >
+                        <Trash2 />
+                        <span>移除监控</span>
+                      </button>
+                    </ActionMenu>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          {!items.length && (
+            <Empty>
+              {!p.accounts.length ? (
+                <>
+                  <h2>还没有添加实例</h2>
+                  <p>使用 AccessKey ID 和 Secret 发现并选择已有 ECS 实例</p>
+                  <button className="button" onClick={() => setAdding(true)}>
+                    添加实例
+                  </button>
+                </>
+              ) : p.snapshot.refreshing ? (
+                "正在发现各地域实例…"
+              ) : (
+                "没有匹配的实例，可调整筛选条件或立即检测"
+              )}
+            </Empty>
+          )}
+        </div>
+      </TablePanel>
       {editing && (
         <RuleDialog {...editing} onClose={() => setEditing(undefined)} />
       )}

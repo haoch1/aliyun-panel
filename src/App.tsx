@@ -12,6 +12,7 @@ import {
   FlaskConical,
   LogOut,
   Menu,
+  ChevronRight,
   ScrollText,
   Settings as SettingsIcon,
   ShieldCheck,
@@ -35,6 +36,7 @@ import { ReceiptText } from "lucide-react";
 import SettingsPage from "./Settings";
 import { PendingButton } from "./components/ui/PendingButton";
 import Logs from "./Logs";
+import { Tooltip } from "./components/ui/Tooltip";
 import { DataRegion, PageLoading } from "./components/ui/DataRegion";
 const nav = [
   ["instances", "Aliyun 实例", Cloud],
@@ -287,28 +289,39 @@ export default function App() {
               >
                 <Menu />
               </button>
+              <div className="breadcrumb" aria-label="当前位置">
+                <span>控制台</span>
+                <ChevronRight size={13} />
+                <strong>{nav.find((n) => n[0] === page)?.[1]}</strong>
+              </div>
             </div>
-            <div className="row">
+            <div className="topbar-actions">
+              {isDemo() && (
+                <>
+                  <Tooltip content="所有数据和操作均为本地示例">
+                    <span className="demo-indicator" tabIndex={0}>
+                      演示模式
+                    </span>
+                  </Tooltip>
+                  <a className="demo-exit" href="/">
+                    退出演示
+                    <ArrowUpRight size={13} />
+                  </a>
+                </>
+              )}
               {auth?.authenticated && (
-                <button
-                  className="icon-button"
-                  aria-label="退出登录"
-                  onClick={logout}
-                >
-                  <LogOut size={18} />
-                </button>
+                <Tooltip content="退出登录">
+                  <button
+                    className="icon-button"
+                    aria-label="退出登录"
+                    onClick={logout}
+                  >
+                    <LogOut size={18} />
+                  </button>
+                </Tooltip>
               )}
             </div>
           </header>
-          {isDemo() && (
-            <div className="demo-bar">
-              <FlaskConical size={14} />
-              <span>演示模式 · 所有数据和操作均为本地示例</span>
-              <a href="/">
-                退出演示，添加真实实例 <ArrowUpRight size={13} />
-              </a>
-            </div>
-          )}
           <main>
             {auth?.testMode && !isDemo() && (
               <div className="test-banner">

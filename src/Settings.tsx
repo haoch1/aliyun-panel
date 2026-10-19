@@ -27,6 +27,9 @@ import { useState } from "react";
 import type { Settings } from "../shared/types";
 import { logRetentionOptions } from "../shared/log-retention";
 import { PendingButton } from "./components/ui/PendingButton";
+import { PageHeader } from "./components/ui/PageHeader";
+import { Card } from "./components/ui/Card";
+import { Table } from "./components/ui/Table";
 import {
   DataRegion,
   LoadingTable,
@@ -100,235 +103,243 @@ export default function SettingsPage() {
     setS({ ...s, notifications: { ...n, [key]: value } });
   return (
     <div className="settings-page">
-      <div className="page-heading">
-        <div>
-          <h1>
-            <HeadingSettingsIcon size={22} />
-            设置
-          </h1>
-        </div>
-      </div>
+      <PageHeader title="设置" icon={HeadingSettingsIcon} />
       <form id="panel-settings" className="form-stack" onSubmit={save}>
-        <section className="form-panel form-stack">
-          <h2>监控设置</h2>
-          <div className="form-grid">
-            <Field label="检测间隔">
-              <Select
-                value={s.checkInterval}
-                onChange={(e) => setS({ ...s, checkInterval: +e.target.value })}
-              >
-                {[60, 300, 900, 1800, 3600].map((v) => (
-                  <option key={v} value={v}>
-                    {v / 60} 分钟
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="账单刷新间隔">
-              <Select
-                value={s.billingInterval}
+        <div className="settings-overview">
+          <Card
+            title="监控设置"
+            footer={
+              <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
+                保存
+              </PendingButton>
+            }
+          >
+            <div className="form-grid">
+              <Field label="检测间隔">
+                <Select
+                  value={s.checkInterval}
+                  onChange={(e) =>
+                    setS({ ...s, checkInterval: +e.target.value })
+                  }
+                >
+                  {[60, 300, 900, 1800, 3600].map((v) => (
+                    <option key={v} value={v}>
+                      {v / 60} 分钟
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="账单刷新间隔">
+                <Select
+                  value={s.billingInterval}
+                  onChange={(e) =>
+                    setS({ ...s, billingInterval: +e.target.value })
+                  }
+                >
+                  {[300, 900, 3600, 21600, 86400].map((v) => (
+                    <option key={v} value={v}>
+                      {v < 3600 ? v / 60 + " 分钟" : v / 3600 + " 小时"}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <label className="check-row">
+              <Input
+                type="checkbox"
+                checked={s.billingEnabled}
                 onChange={(e) =>
-                  setS({ ...s, billingInterval: +e.target.value })
+                  setS({ ...s, billingEnabled: e.target.checked })
                 }
+              />
+              读取账单和余额
+            </label>
+          </Card>
+          <Card
+            title="日志设置"
+            footer={
+              <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
+                保存
+              </PendingButton>
+            }
+          >
+            <div className="log-settings-row">
+              <Field
+                label="最多保留日志条数"
+                hint="各类型共用上限；调低后立即删除最早的超额记录。"
               >
-                {[300, 900, 3600, 21600, 86400].map((v) => (
-                  <option key={v} value={v}>
-                    {v < 3600 ? v / 60 + " 分钟" : v / 3600 + " 小时"}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-          <label className="check-row">
-            <Input
-              type="checkbox"
-              checked={s.billingEnabled}
-              onChange={(e) => setS({ ...s, billingEnabled: e.target.checked })}
-            />
-            读取账单和余额
-          </label>
-          <div className="form-actions">
-            <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
-              保存监控设置
-            </PendingButton>
-          </div>
-        </section>
-        <section className="form-panel form-stack">
-          <h2>日志设置</h2>
-          <div className="log-settings-row">
-            <Field
-              label="最多保留日志条数"
-              hint="各类型共用上限；调低后立即删除最早的超额记录。"
-            >
-              <Select
-                value={s.logRetentionLimit}
-                onChange={(e) =>
-                  setS({ ...s, logRetentionLimit: +e.target.value })
-                }
-              >
-                {logRetentionOptions.map((v) => (
-                  <option key={v} value={v}>
-                    {v.toLocaleString("zh-CN")} 条
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
-              保存
-            </PendingButton>
-          </div>
-        </section>
-        <section className="form-panel form-stack">
-          <div className="section-heading">
-            <h2>Telegram 通知</h2>
+                <Select
+                  value={s.logRetentionLimit}
+                  onChange={(e) =>
+                    setS({ ...s, logRetentionLimit: +e.target.value })
+                  }
+                >
+                  {logRetentionOptions.map((v) => (
+                    <option key={v} value={v}>
+                      {v.toLocaleString("zh-CN")} 条
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+          </Card>
+        </div>
+        <Card
+          title="Telegram 通知"
+          className="notification-settings"
+          action={
             <Switch
               checked={n.telegramEnabled}
               onChange={(v) => setN("telegramEnabled", v)}
               label="启用 Telegram"
             />
-          </div>
-          <div className="form-grid">
-            <Field label="Bot Token">
-              <Input
-                type="password"
-                autoComplete="off"
-                placeholder={
-                  n.telegramConfigured ? "已配置，留空保留" : "输入 Bot Token"
-                }
-                value={n.telegramToken}
-                onChange={(e) => setN("telegramToken", e.target.value)}
-              />
-            </Field>
-            <Field label="Chat ID">
-              <Input
-                value={n.telegramChatId}
-                onChange={(e) => setN("telegramChatId", e.target.value)}
-              />
-            </Field>
-          </div>
-          <Field label="Telegram API 地址">
-            <Input
-              type="url"
-              required
-              value={n.apiBase}
-              onChange={(e) => setN("apiBase", e.target.value)}
-            />
-          </Field>
-          <fieldset
-            className="notification-types"
-            aria-labelledby="notification-types-title"
-          >
-            <legend>
-              <span id="notification-types-title">通知类型</span>
-              <span className="notification-selection-actions">
-                <button
-                  type="button"
-                  className="button small"
-                  disabled={
-                    busy || selected.length === notificationChoices.length
+          }
+        >
+          <div className="form-stack">
+            <div className="form-grid">
+              <Field label="Bot Token">
+                <Input
+                  type="password"
+                  autoComplete="off"
+                  placeholder={
+                    n.telegramConfigured ? "已配置，留空保留" : "输入 Bot Token"
                   }
-                  onClick={() =>
-                    selectNotifications(notificationChoices.map((v) => v.value))
-                  }
-                >
-                  全选
-                </button>
-                <button
-                  type="button"
-                  className="button small"
-                  disabled={busy || selected.length === 0}
-                  onClick={() => selectNotifications([])}
-                >
-                  取消全选
-                </button>
-              </span>
-            </legend>
-            <div className="notification-type-grid">
-              {notificationChoices.map((v) => (
-                <label key={v.value} className="check-row">
-                  <Input
-                    type="checkbox"
-                    checked={selected.includes(v.value)}
-                    onChange={(e) =>
-                      toggleNotification(v.value, e.target.checked)
-                    }
-                  />
-                  <span>{v.label}</span>
-                </label>
-              ))}
+                  value={n.telegramToken}
+                  onChange={(e) => setN("telegramToken", e.target.value)}
+                />
+              </Field>
+              <Field label="Chat ID">
+                <Input
+                  value={n.telegramChatId}
+                  onChange={(e) => setN("telegramChatId", e.target.value)}
+                />
+              </Field>
             </div>
-          </fieldset>
-          <div
-            className="form-grid notification-report-settings"
-            data-enabled={dailyEnabled}
-          >
-            <Field label="日报时间">
-              <TimePicker
-                disabled={!dailyEnabled}
-                value={s.reportTime}
-                onChange={(value) => setS({ ...s, reportTime: value })}
+            <Field label="Telegram API 地址">
+              <Input
+                type="url"
+                required
+                value={n.apiBase}
+                onChange={(e) => setN("apiBase", e.target.value)}
               />
             </Field>
-            <Field label="日报时区">
-              <TimezoneSelect
-                disabled={!dailyEnabled}
-                value={s.timezone}
-                onChange={(value) => setS({ ...s, timezone: value })}
-              />
-            </Field>
-          </div>
-          <section className="notification-preview">
-            <div className="section-heading">
-              <h2>通知示例</h2>
-              <Select
-                aria-label="消息类型"
-                value={example}
-                onChange={(e) => setExample(e.target.value)}
-              >
-                {notificationExamples.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div
-              className="notification-example"
-              dangerouslySetInnerHTML={{
-                __html: formatNotification(preview.item, true),
-              }}
-            />
-          </section>
-          <ErrorBox error={error} />
-          <div className="form-actions">
-            <button
-              type="button"
-              className="button"
-              disabled={busy}
-              onClick={async () => {
-                try {
-                  const r = await api("/notifications/test", {});
-                  p.notice(
-                    r.channels.length
-                      ? "TG 测试消息已入队"
-                      : "请先保存 Token、Chat ID 并启用 TG",
-                  );
-                  p.refresh();
-                } catch (e) {
-                  p.notice((e as Error).message, true);
-                }
-              }}
+            <fieldset
+              className="notification-types"
+              aria-labelledby="notification-types-title"
             >
-              测试通知
-            </button>
-            <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
-              保存设置
-            </PendingButton>
+              <legend>
+                <span id="notification-types-title">通知类型</span>
+                <span className="notification-selection-actions">
+                  <button
+                    type="button"
+                    className="button small"
+                    disabled={
+                      busy || selected.length === notificationChoices.length
+                    }
+                    onClick={() =>
+                      selectNotifications(
+                        notificationChoices.map((v) => v.value),
+                      )
+                    }
+                  >
+                    全选
+                  </button>
+                  <button
+                    type="button"
+                    className="button small"
+                    disabled={busy || selected.length === 0}
+                    onClick={() => selectNotifications([])}
+                  >
+                    取消全选
+                  </button>
+                </span>
+              </legend>
+              <div className="notification-type-grid">
+                {notificationChoices.map((v) => (
+                  <label key={v.value} className="check-row">
+                    <Input
+                      type="checkbox"
+                      checked={selected.includes(v.value)}
+                      onChange={(e) =>
+                        toggleNotification(v.value, e.target.checked)
+                      }
+                    />
+                    <span>{v.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <div
+              className="form-grid notification-report-settings"
+              data-enabled={dailyEnabled}
+            >
+              <Field label="日报时间">
+                <TimePicker
+                  disabled={!dailyEnabled}
+                  value={s.reportTime}
+                  onChange={(value) => setS({ ...s, reportTime: value })}
+                />
+              </Field>
+              <Field label="日报时区">
+                <TimezoneSelect
+                  disabled={!dailyEnabled}
+                  value={s.timezone}
+                  onChange={(value) => setS({ ...s, timezone: value })}
+                />
+              </Field>
+            </div>
+            <section className="notification-preview">
+              <div className="section-heading">
+                <h2>通知示例</h2>
+                <Select
+                  aria-label="消息类型"
+                  value={example}
+                  onChange={(e) => setExample(e.target.value)}
+                >
+                  {notificationExamples.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div
+                className="notification-example"
+                dangerouslySetInnerHTML={{
+                  __html: formatNotification(preview.item, true),
+                }}
+              />
+            </section>
+            <ErrorBox error={error} />
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button"
+                disabled={busy}
+                onClick={async () => {
+                  try {
+                    const r = await api("/notifications/test", {});
+                    p.notice(
+                      r.channels.length
+                        ? "TG 测试消息已入队"
+                        : "请先保存 Token、Chat ID 并启用 TG",
+                    );
+                    p.refresh();
+                  } catch (e) {
+                    p.notice((e as Error).message, true);
+                  }
+                }}
+              >
+                测试通知
+              </button>
+              <PendingButton type="submit" busy={busy} pendingLabel="正在保存">
+                保存
+              </PendingButton>
+            </div>
           </div>
-        </section>
+        </Card>
       </form>
-      <section className="form-panel form-stack">
-        <h2>登录有效期</h2>
+      <Card title="登录有效期">
         <div className="form-stack">
           <div className="row session-row">
             <Select
@@ -363,56 +374,55 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
-      </section>
-      <div className="section-heading">
-        <h2>最近通知</h2>
-      </div>
-      <ErrorBox error={outbox.error} />
-      <DataRegion
-        pending={outbox.initialLoading}
-        placeholder={
-          <LoadingTable
-            tableClassName="notification-table"
-            columns={["时间", "通知", "投递状态"]}
-          />
-        }
-      >
-        <div className="table-wrap">
-          <table className="notification-table">
-            <thead>
-              <tr>
-                <th>时间</th>
-                <th>通知</th>
-                <th>投递状态</th>
-              </tr>
-            </thead>
-            <tbody>
-              {outbox.data?.items.slice(0, 5).map((r) => (
-                <tr key={r.id}>
-                  <td data-label="时间">{date(r.at)}</td>
-                  <td data-label="通知">
-                    <span aria-hidden="true">{notificationIcon(r)}</span>{" "}
-                    {r.title}
-                    {r.error && (
-                      <div className="subline danger-text">{r.error}</div>
-                    )}
-                  </td>
-                  <td data-label="投递状态">
-                    {r.status === "sent"
-                      ? "已发送"
-                      : r.status === "failed"
-                        ? "失败"
-                        : r.status === "skipped"
-                          ? "已跳过"
-                          : "等待发送"}
-                  </td>
+      </Card>
+      <Card title="最近通知">
+        <ErrorBox error={outbox.error} />
+        <DataRegion
+          pending={outbox.initialLoading}
+          placeholder={
+            <LoadingTable
+              tableClassName="notification-table"
+              columns={["时间", "通知", "投递状态"]}
+            />
+          }
+        >
+          <div className="table-wrap">
+            <Table className="notification-table" aria-label="最近通知记录">
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>通知</th>
+                  <th>投递状态</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {!outbox.data?.items.length && <Empty>暂无 TG 通知</Empty>}
-        </div>
-      </DataRegion>
+              </thead>
+              <tbody>
+                {outbox.data?.items.slice(0, 5).map((r) => (
+                  <tr key={r.id}>
+                    <td data-label="时间">{date(r.at)}</td>
+                    <td data-label="通知">
+                      <span aria-hidden="true">{notificationIcon(r)}</span>{" "}
+                      {r.title}
+                      {r.error && (
+                        <div className="subline danger-text">{r.error}</div>
+                      )}
+                    </td>
+                    <td data-label="投递状态">
+                      {r.status === "sent"
+                        ? "已发送"
+                        : r.status === "failed"
+                          ? "失败"
+                          : r.status === "skipped"
+                            ? "已跳过"
+                            : "等待发送"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            {!outbox.data?.items.length && <Empty>暂无 TG 通知</Empty>}
+          </div>
+        </DataRegion>
+      </Card>
     </div>
   );
 }

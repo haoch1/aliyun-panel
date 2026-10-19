@@ -282,6 +282,7 @@ export function InstanceSelect({
   return (
     <Select
       aria-label="选择实例"
+      searchable
       value={value}
       onChange={(e) => onChange(e.target.value)}
     >

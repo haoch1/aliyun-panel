@@ -8,6 +8,9 @@ import Select from "./components/ui/Select";
 import { RefreshButton } from "./components/ui/RefreshButton";
 import { api, date, Empty, ErrorBox, useData, usePanel } from "./lib";
 import { DataRegion, LoadingTable } from "./components/ui/DataRegion";
+import { PageHeader } from "./components/ui/PageHeader";
+import { Table, TablePanel } from "./components/ui/Table";
+import { Pagination } from "./components/ui/Pagination";
 export function money(value: number | null | undefined, currency: string) {
   if (value == null || !Number.isFinite(value)) return "待同步";
   try {
@@ -109,32 +112,25 @@ export default function Billing({
   };
   return (
     <div className={"billing-view " + (instance ? "embedded-view" : "")}>
-      {!instance && (
-        <div className="page-heading">
-          <div>
-            <h1>
-              <ReceiptText size={22} />
-              账单与余额
-            </h1>
-          </div>
-        </div>
-      )}
+      {!instance && <PageHeader title="账单与余额" icon={ReceiptText} />}
       <div className="toolbar billing-toolbar">
-        <span className="muted">账期</span>
-        <Select
-          aria-label="账期"
-          value={cycle}
-          onChange={(e) => {
-            setCycle(e.target.value);
-            setPage(0);
-          }}
-        >
-          {months.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </Select>
+        <div className="billing-filter">
+          <span className="muted">账期</span>
+          <Select
+            aria-label="账期"
+            value={cycle}
+            onChange={(e) => {
+              setCycle(e.target.value);
+              setPage(0);
+            }}
+          >
+            {months.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </Select>
+        </div>
         <RefreshButton
           text="同步账单"
           title={
@@ -165,88 +161,80 @@ export default function Billing({
             <div className="section-heading">
               <h2>实例明细</h2>
             </div>
-            <div className="table-wrap">
-              <table className="compact-table billing-table">
-                <thead>
-                  <tr>
-                    <th>实例</th>
-                    <th>地域</th>
-                    <th title="同一凭据归属的实例共用余额，不能逐行相加">
-                      可用余额
-                    </th>
-                    <th>税前金额</th>
-                    <th>查询状态</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.slice(activePage * 6, activePage * 6 + 6).map((i) => (
-                    <tr key={i.accountId + i.region + i.id}>
-                      <td title={i.id} data-label="实例">
-                        {i.name}
-                      </td>
-                      <td data-label="地域">{regionName(i.region)}</td>
-                      <td className="amount-cell" data-label="可用余额">
-                        {money(i.balance, i.balanceCurrency)}
-                        {i.balanceError && i.balance != null && (
-                          <div className="subline danger-text">
-                            上次成功数据
-                          </div>
-                        )}
-                      </td>
-                      <td className="amount-cell" data-label="税前金额">
-                        {money(i.amount, i.currency)}
-                        {i.billError && i.amount != null && (
-                          <div className="subline danger-text">
-                            上次成功数据
-                          </div>
-                        )}
-                      </td>
-                      <td data-label="查询状态">
-                        <span className={"badge " + (i.error ? "warn" : "")}>
-                          {i.error
-                            ? "部分失败"
-                            : !i.at && !i.balanceAt
-                              ? "待同步"
-                              : i.stale
-                                ? "待刷新"
-                                : "已同步"}
-                        </span>
-                        {i.error && (
-                          <details className="billing-error">
-                            <summary>查看原因</summary>
-                            <div>{i.error}</div>
-                            <small>
-                              保留上次成功数据；最近尝试 {date(i.checkedAt)}
-                            </small>
-                          </details>
-                        )}
-                      </td>
+            <TablePanel>
+              <div className="table-wrap">
+                <Table
+                  className="compact-table billing-table"
+                  aria-label="实例账单明细"
+                >
+                  <thead>
+                    <tr>
+                      <th>实例</th>
+                      <th>地域</th>
+                      <th title="同一凭据归属的实例共用余额，不能逐行相加">
+                        可用余额
+                      </th>
+                      <th>税前金额</th>
+                      <th>查询状态</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {pages > 1 && (
-              <div className="pagination">
-                <small className="muted">
-                  第 {activePage + 1} / {pages} 页
-                </small>
-                <button
-                  className="button"
-                  disabled={!activePage}
-                  onClick={() => setPage(activePage - 1)}
-                >
-                  上一页
-                </button>
-                <button
-                  className="button"
-                  disabled={activePage === pages - 1}
-                  onClick={() => setPage(activePage + 1)}
-                >
-                  下一页
-                </button>
+                  </thead>
+                  <tbody>
+                    {rows.slice(activePage * 6, activePage * 6 + 6).map((i) => (
+                      <tr key={i.accountId + i.region + i.id}>
+                        <td title={i.id} data-label="实例">
+                          {i.name}
+                        </td>
+                        <td data-label="地域">{regionName(i.region)}</td>
+                        <td className="amount-cell" data-label="可用余额">
+                          {money(i.balance, i.balanceCurrency)}
+                          {i.balanceError && i.balance != null && (
+                            <div className="subline danger-text">
+                              上次成功数据
+                            </div>
+                          )}
+                        </td>
+                        <td className="amount-cell" data-label="税前金额">
+                          {money(i.amount, i.currency)}
+                          {i.billError && i.amount != null && (
+                            <div className="subline danger-text">
+                              上次成功数据
+                            </div>
+                          )}
+                        </td>
+                        <td data-label="查询状态">
+                          <span className={"badge " + (i.error ? "warn" : "")}>
+                            {i.error
+                              ? "部分失败"
+                              : !i.at && !i.balanceAt
+                                ? "待同步"
+                                : i.stale
+                                  ? "待刷新"
+                                  : "已同步"}
+                          </span>
+                          {i.error && (
+                            <details className="billing-error">
+                              <summary>查看原因</summary>
+                              <div>{i.error}</div>
+                              <small>
+                                保留上次成功数据；最近尝试 {date(i.checkedAt)}
+                              </small>
+                            </details>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
               </div>
-            )}
+              {pages > 1 && (
+                <Pagination
+                  page={activePage}
+                  pages={pages}
+                  onChange={setPage}
+                  total={rows.length}
+                />
+              )}
+            </TablePanel>
           </section>
         ) : (
           <Empty>

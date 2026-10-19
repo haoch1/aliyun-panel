@@ -36,6 +36,8 @@ export default function TimezoneSelect({
   return (
     <Select
       id={id}
+      aria-label="时区"
+      searchable
       aria-describedby={description}
       value={value}
       disabled={disabled}

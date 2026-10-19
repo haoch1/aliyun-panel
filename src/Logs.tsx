@@ -16,6 +16,10 @@ import { actionLabel } from "../shared/actions";
 import { api, bytes, date, Empty, ErrorBox, useData, usePanel } from "./lib";
 import { DataRegion, LoadingLogs } from "./components/ui/DataRegion";
 import { PendingButton } from "./components/ui/PendingButton";
+import { PageHeader } from "./components/ui/PageHeader";
+import { SegmentedControl } from "./components/ui/SegmentedControl";
+import { Pagination } from "./components/ui/Pagination";
+import { Button } from "./components/ui/Button";
 const levels: Record<string, string> = {
   info: "信息",
   warning: "警告",
@@ -365,81 +369,70 @@ export default function Logs() {
       : p.snapshot.items.find((i) => i.id === instance)?.name || "实例日志";
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <h1>
-            <ScrollText size={22} />
-            日志
-          </h1>
-        </div>
-        <div className="row">
-          <button className="button" onClick={() => setClearOpen(true)}>
-            清空日志
-          </button>
-        </div>
-      </div>
-      <div className="toolbar log-stream-filters">
-        <Select
-          aria-label="日志来源"
-          value={instance}
-          onChange={(e) => {
-            setInstance(e.target.value);
-            setPage(0);
-          }}
-        >
-          <option value="all">系统日志</option>
-          {p.snapshot.items.map((i) => (
-            <option key={i.accountId + i.region + i.id} value={i.id}>
-              {i.name}
-            </option>
-          ))}
-        </Select>
-        <Select
-          aria-label="日志级别"
-          value={level}
-          onChange={(e) => {
-            setLevel(e.target.value);
-            setPage(0);
-          }}
-        >
-          <option value="all">全部级别</option>
-          {Object.entries(levels).map(([v, label]) => (
-            <option key={v} value={v}>
-              {label}
-            </option>
-          ))}
-        </Select>
-        <SearchInput
-          value={search}
-          onChange={(v) => {
-            setSearch(v);
-            setPage(0);
-          }}
-          placeholder="搜索实例、原因或请求 ID…"
-        />
-      </div>
+      <PageHeader
+        title="日志"
+        icon={ScrollText}
+        actions={<Button onClick={() => setClearOpen(true)}>清空日志</Button>}
+      />
       <ErrorBox error={d.error} />
       <section className="log-feed" aria-label="运行日志">
+        <div className="toolbar log-stream-filters table-toolbar">
+          <Select
+            aria-label="日志来源"
+            value={instance}
+            onChange={(e) => {
+              setInstance(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="all">系统日志</option>
+            {p.snapshot.items.map((i) => (
+              <option key={i.accountId + i.region + i.id} value={i.id}>
+                {i.name}
+              </option>
+            ))}
+          </Select>
+          <Select
+            aria-label="日志级别"
+            value={level}
+            onChange={(e) => {
+              setLevel(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="all">全部级别</option>
+            {Object.entries(levels).map(([v, label]) => (
+              <option key={v} value={v}>
+                {label}
+              </option>
+            ))}
+          </Select>
+          <SearchInput
+            value={search}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(0);
+            }}
+            placeholder="搜索实例、原因或请求 ID…"
+          />
+        </div>
         <div className="log-feed-head">
-          <div className="log-tabs" role="group" aria-label="日志类型">
-            {[
+          <SegmentedControl
+            label="日志类型"
+            value={view}
+            onChange={(v) => {
+              setView(v);
+              setPage(0);
+            }}
+            options={[
               ["all", "全部"],
               ["events", "事件"],
               ["checks", "检测"],
-            ].map(([v, label]) => (
-              <button
-                key={v}
-                type="button"
-                aria-pressed={view === v}
-                onClick={() => {
-                  setView(v);
-                  setPage(0);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+            ]}
+          />
+          <span className="muted">
+            {rows.length.toLocaleString("zh-CN")} 条
+          </span>
         </div>
         <DataRegion pending={d.initialLoading} placeholder={<LoadingLogs />}>
           <ol className="log-stream">
@@ -601,7 +594,12 @@ export default function Logs() {
                   : "暂无符合条件的日志"}
             </Empty>
           )}
-          <div className="log-feed-footer pagination">
+          <Pagination
+            page={activePage}
+            pages={pages}
+            onChange={setPage}
+            total={rows.length}
+          >
             <Select
               aria-label="每页日志条数"
               menuMinWidth={160}
@@ -623,24 +621,7 @@ export default function Logs() {
                 </option>
               ))}
             </Select>
-            <small className="muted">
-              第 {activePage + 1} / {pages} 页
-            </small>
-            <button
-              className="button"
-              disabled={!activePage}
-              onClick={() => setPage(activePage - 1)}
-            >
-              上一页
-            </button>
-            <button
-              className="button"
-              disabled={activePage === pages - 1}
-              onClick={() => setPage(activePage + 1)}
-            >
-              下一页
-            </button>
-          </div>
+          </Pagination>
         </DataRegion>
       </section>
       {clearOpen && (

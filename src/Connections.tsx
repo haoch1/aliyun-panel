@@ -1,4 +1,5 @@
 import { Input } from "./components/ui/Input";
+import { Table } from "./components/ui/Table";
 import {
   commonRegions,
   regionName,
@@ -219,6 +220,7 @@ export default function ConnectionDialog({
               <Field label="地域">
                 <Select
                   aria-label="地域"
+                  searchable
                   value={form.region}
                   disabled={busy}
                   onChange={(e) => set("region", e.target.value)}
@@ -290,7 +292,7 @@ export default function ConnectionDialog({
                   role="region"
                   aria-label="发现的实例"
                 >
-                  <table>
+                  <Table aria-label="发现的实例明细">
                     <thead>
                       <tr>
                         <th>
@@ -364,7 +366,7 @@ export default function ConnectionDialog({
                         );
                       })}
                     </tbody>
-                  </table>
+                  </Table>
                   {!scan.items.length && (
                     <p className="empty">没有发现可添加的实例</p>
                   )}

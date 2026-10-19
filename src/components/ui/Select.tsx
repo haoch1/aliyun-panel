@@ -1,4 +1,5 @@
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Search } from "lucide-react";
+import { Input } from "./Input";
 import type {
   ChangeEvent,
   KeyboardEvent,
@@ -32,6 +33,7 @@ type Props = SelectHTMLAttributes<HTMLSelectElement> & {
   renderValue?: (value: string) => ReactNode;
   menuClassName?: string;
   menuMinWidth?: number;
+  searchable?: boolean;
 };
 function plain(node: ReactNode): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
@@ -78,6 +80,7 @@ export default function Select({
   renderValue,
   menuClassName = "",
   menuMinWidth = 0,
+  searchable = false,
   id,
   required,
   disabled: unavailable,
@@ -91,6 +94,8 @@ export default function Select({
   const root = useRef<HTMLDivElement>(null),
     trigger = useRef<HTMLButtonElement>(null),
     menu = useRef<HTMLDivElement>(null),
+    list = useRef<HTMLDivElement>(null),
+    queryInput = useRef<HTMLInputElement>(null),
     native = useRef<HTMLSelectElement>(null);
   const [open, setOpen] = useState(false),
     [active, setActive] = useState(0),
@@ -108,12 +113,18 @@ export default function Select({
     maxHeight: 300,
   });
   const search = useRef({ text: "", at: 0 });
+  const [query, setQuery] = useState("");
   const options = optionsOf(children);
   const current = String(value ?? internal);
   const selected = options.find((o) => o.value === current) || options[0];
-  const available = options
+  const visible = options
     .map((o, index) => ({ ...o, index }))
-    .filter((o) => !o.disabled);
+    .filter(
+      (o) =>
+        !searchable ||
+        o.text.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+    );
+  const available = visible.filter((o) => !o.disabled);
   const change = (option: Option) => {
     if (option.disabled || disabled) return;
     setInternal(option.value);
@@ -129,6 +140,7 @@ export default function Select({
   };
   function show(initial?: number) {
     if (disabled) return;
+    setQuery("");
     const selectedIndex = options.findIndex(
       (o) => o.value === current && !o.disabled,
     );
@@ -142,6 +154,10 @@ export default function Select({
     );
     setOpen(true);
   }
+  useLayoutEffect(() => {
+    if (open && searchable && position.width)
+      queryInput.current?.focus({ preventScroll: true });
+  }, [open, searchable, position.width]);
   useLayoutEffect(() => {
     if (!open) return;
     const update = () => {
@@ -162,12 +178,10 @@ export default function Select({
           parseFloat(style.borderTopWidth) +
           parseFloat(style.borderBottomWidth)
         : 14;
-      const contentHeight = menu.current
-        ? Array.from(menu.current.children).reduce(
-            (sum, child) => sum + child.getBoundingClientRect().height,
-            chrome,
-          )
-        : options.length * 36 + chrome;
+      const contentHeight =
+        (list.current?.scrollHeight || visible.length * 36) +
+        chrome +
+        (searchable ? 50 : 0);
       const height = Math.min(320, Math.max(below, above), contentHeight);
       const upward = placement === "auto" && below < height && above > below;
       const viewportWidth = document.documentElement.clientWidth || innerWidth;
@@ -193,7 +207,15 @@ export default function Select({
       window.removeEventListener("resize", update);
       document.removeEventListener("scroll", onScroll, true);
     };
-  }, [open, options.length, placement, menuMinWidth, position.width]);
+  }, [
+    open,
+    options.length,
+    placement,
+    menuMinWidth,
+    position.width,
+    query,
+    searchable,
+  ]);
   useEffect(() => {
     if (!open) return;
     const outside = (event: PointerEvent) => {
@@ -208,31 +230,44 @@ export default function Select({
   }, [open]);
   useLayoutEffect(() => {
     if (!open || !position.width) return;
-    const option = menu.current?.querySelector<HTMLElement>(
+    const option = list.current?.querySelector<HTMLElement>(
       '[data-active="true"]',
     );
-    if (option && menu.current) {
-      const top = option.offsetTop,
+    if (option && list.current) {
+      const top =
+          option.getBoundingClientRect().top -
+          list.current.getBoundingClientRect().top +
+          list.current.scrollTop,
         bottom = top + option.offsetHeight;
-      if (active === 0) menu.current.scrollTop = 0;
-      else if (top < menu.current.scrollTop) menu.current.scrollTop = top;
-      else if (bottom > menu.current.scrollTop + menu.current.clientHeight)
-        menu.current.scrollTop = bottom - menu.current.clientHeight;
+      if (active === 0) list.current.scrollTop = 0;
+      else if (top < list.current.scrollTop) list.current.scrollTop = top;
+      else if (bottom > list.current.scrollTop + list.current.clientHeight)
+        list.current.scrollTop = bottom - list.current.clientHeight;
     }
   }, [open, active, position.width, position.maxHeight]);
-  function keyboard(event: KeyboardEvent<HTMLButtonElement>) {
+  function keyboard(event: KeyboardEvent<HTMLElement>) {
+    if (event.nativeEvent.isComposing) return;
     if (event.key === "Escape" && open) {
       event.preventDefault();
       event.stopPropagation();
       setOpen(false);
+      trigger.current?.focus({ preventScroll: true });
       return;
     }
     if (event.key === "Tab") {
+      if (open && searchable) trigger.current?.focus({ preventScroll: true });
       setOpen(false);
       return;
     }
     if (
-      ["ArrowDown", "ArrowUp", "Home", "End", "Enter", " "].includes(event.key)
+      [
+        "ArrowDown",
+        "ArrowUp",
+        "Enter",
+        ...(!searchable || event.currentTarget === trigger.current
+          ? ["Home", "End", " "]
+          : []),
+      ].includes(event.key)
     ) {
       event.preventDefault();
       if (!open) {
@@ -246,7 +281,8 @@ export default function Select({
         return;
       }
       if (event.key === "Enter" || event.key === " ") {
-        if (options[active]) change(options[active]);
+        const option = available.find((o) => o.index === active);
+        if (option) change(option);
         return;
       }
       const index = available.findIndex((o) => o.index === active);
@@ -263,7 +299,7 @@ export default function Select({
                 ),
               );
       setActive(available[next]?.index || 0);
-    } else if (event.key.length === 1) {
+    } else if (!searchable && event.key.length === 1) {
       const now = Date.now();
       search.current = {
         text:
@@ -288,14 +324,16 @@ export default function Select({
         id={id}
         type="button"
         className="select-trigger"
-        role="combobox"
+        role={searchable ? undefined : "combobox"}
         aria-label={props["aria-label"]}
         aria-labelledby={props["aria-labelledby"]}
         aria-describedby={props["aria-describedby"]}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={open ? listId : undefined}
-        aria-activedescendant={open ? listId + "-" + active : undefined}
+        aria-activedescendant={
+          open && !searchable ? listId + "-" + active : undefined
+        }
         aria-required={required}
         disabled={disabled}
         data-pending={(pending && !unavailable) || undefined}
@@ -333,40 +371,96 @@ export default function Select({
         createPortal(
           <div
             ref={menu}
-            id={listId}
-            role="listbox"
-            aria-label={props["aria-label"] || "选项"}
-            className={"select-menu " + menuClassName}
+            className={
+              "select-menu " +
+              (searchable ? "searchable-select " : "") +
+              menuClassName
+            }
             style={{
               ...position,
               visibility: position.width ? "visible" : "hidden",
             }}
           >
-            {options.map((option, index) => {
-              const heading = option.group !== priorGroup && option.group;
-              priorGroup = option.group;
-              return (
-                <div key={option.value + index}>
-                  {heading && <div className="select-group">{heading}</div>}
-                  <div
-                    id={listId + "-" + index}
-                    role="option"
-                    aria-selected={option.value === current}
-                    aria-disabled={option.disabled || undefined}
-                    data-active={index === active}
-                    className={
-                      "select-option " + (option.disabled ? "disabled" : "")
-                    }
-                    onPointerMove={() => !option.disabled && setActive(index)}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => change(option)}
-                  >
-                    <span>{renderOption?.(option.value) || option.label}</span>
-                    {option.value === current && <Check size={14} />}
+            {searchable && (
+              <div className="select-search">
+                <Search size={15} />
+                <Input
+                  ref={queryInput}
+                  role="combobox"
+                  aria-label={"搜索" + (props["aria-label"] || "选项")}
+                  aria-expanded="true"
+                  aria-controls={listId}
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    available.some((o) => o.index === active)
+                      ? listId + "-" + active
+                      : undefined
+                  }
+                  value={query}
+                  onKeyDown={keyboard}
+                  onChange={(e) => {
+                    const q = e.target.value;
+                    setQuery(q);
+                    setActive(
+                      options.findIndex(
+                        (o) =>
+                          !o.disabled &&
+                          o.text
+                            .toLocaleLowerCase()
+                            .includes(q.trim().toLocaleLowerCase()),
+                      ),
+                    );
+                  }}
+                />
+              </div>
+            )}
+            <div
+              ref={list}
+              id={listId}
+              role="listbox"
+              aria-label={props["aria-label"] || "选项"}
+              className="select-options"
+              style={{
+                maxHeight: Math.max(
+                  40,
+                  position.maxHeight - (searchable ? 62 : 14),
+                ),
+              }}
+            >
+              {visible.map((option) => {
+                const index = option.index;
+                const heading = option.group !== priorGroup && option.group;
+                priorGroup = option.group;
+                return (
+                  <div key={option.value + index}>
+                    {heading && <div className="select-group">{heading}</div>}
+                    <div
+                      id={listId + "-" + index}
+                      role="option"
+                      aria-selected={option.value === current}
+                      aria-disabled={option.disabled || undefined}
+                      data-active={index === active}
+                      className={
+                        "select-option " + (option.disabled ? "disabled" : "")
+                      }
+                      onPointerMove={() => !option.disabled && setActive(index)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => change(option)}
+                    >
+                      <span>
+                        {renderOption?.(option.value) || option.label}
+                      </span>
+                      {option.value === current && <Check size={14} />}
+                    </div>
                   </div>
+                );
+              })}
+              {!visible.length && (
+                <div className="select-empty" role="status">
+                  没有匹配的选项
                 </div>
-              );
-            })}
+              )}
+            </div>
           </div>,
           document.body,
         )}

@@ -31,6 +31,8 @@
     "@alicloud/sts20150401": "1.2.0",
     "@alicloud/vpc20160428": "7.3.2",
     "@darabonba/typescript": "^1.0.0",
+    "@radix-ui/react-toggle-group": "^1.2.1",
+    "@radix-ui/react-tooltip": "^1.4.1",
     "express": "5.2.1",
     "helmet": "8.3.0",
     "lucide-react": "1.52.0",

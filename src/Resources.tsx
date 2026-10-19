@@ -16,6 +16,9 @@ import {
   usePanel,
 } from "./lib";
 import { useTraffic } from "./traffic-data";
+import { PageHeader } from "./components/ui/PageHeader";
+import { SegmentedControl } from "./components/ui/SegmentedControl";
+import { Table } from "./components/ui/Table";
 function TrafficAmount({ value }: { value: number | null }) {
   const [amount, unit] = bytes(value).split(" ");
   return (
@@ -40,16 +43,7 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
     totals = trafficTotals(rows);
   return (
     <div className={"traffic-content" + (supplied ? " embedded-view" : "")}>
-      {!supplied && (
-        <div className="page-heading">
-          <div>
-            <h1>
-              <ArrowDownUp size={22} />
-              流量统计
-            </h1>
-          </div>
-        </div>
-      )}
+      {!supplied && <PageHeader title="流量统计" icon={ArrowDownUp} />}
       {!supplied && (
         <div className="traffic-instance-picker">
           <span>实例</span>
@@ -60,23 +54,17 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
         </div>
       )}
       <div className="toolbar traffic-toolbar">
-        <div className="traffic-periods" role="group" aria-label="统计范围">
-          {[
+        <SegmentedControl
+          label="统计范围"
+          value={days}
+          onChange={setDays}
+          disabled={!t}
+          options={[
             ["month", "本月"],
             ["7", "近 7 天"],
             ["30", "近 30 天"],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              className={"button" + (days === value ? " primary" : "")}
-              aria-pressed={days === value}
-              disabled={!t}
-              onClick={() => setDays(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+          ]}
+        />
       </div>
       <ErrorBox error={d.error || d.data?.errors.join("；")} />
       {instance && (
@@ -141,11 +129,17 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
             <DataRegion
               pending={d.initialLoading}
               placeholder={
-                <LoadingTable columns={["日期", "入站", "出站", "合计"]} />
+                <LoadingTable
+                  tableClassName="traffic-daily-table"
+                  columns={["日期", "入站", "出站", "合计"]}
+                />
               }
             >
               <div className="table-wrap">
-                <table className="compact-table traffic-daily-table">
+                <Table
+                  className="compact-table traffic-daily-table"
+                  aria-label="每日流量明细"
+                >
                   <thead>
                     <tr>
                       <th>日期</th>
@@ -170,7 +164,7 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </Table>
               </div>
             </DataRegion>
           </details>

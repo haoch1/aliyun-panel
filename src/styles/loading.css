@@ -21,18 +21,12 @@
   width: 110px;
 }
 .instances-loading .skeleton-search {
-  width: 270px;
+  width: 280px;
   height: 40px;
 }
-.instances-loading .instance-times .skeleton {
-  width: 170px;
-}
-.instances-loading .instance-times {
-  min-height: 18px;
-  align-items: center;
-}
-.instances-loading .skeleton-reset {
-  width: 330px;
+.instances-loading .skeleton-filter {
+  width: 150px;
+  height: 40px;
 }
 .instances-loading .loading-table tbody tr {
   height: 84px;
@@ -201,13 +195,13 @@
     transition: none;
   }
 }
-@media (max-width: 900px) {
+@media (max-width: 600px) {
   .instances-loading .skeleton-search {
     width: 100%;
   }
   .instances-loading .loading-table tbody tr {
     height: auto;
-    min-height: 380px;
+    min-height: 330px;
   }
   .loading-table .billing-table tbody tr,
   .loading-table .notification-table tbody tr {
@@ -225,11 +219,5 @@
   }
   .loading-log-columns {
     gap: 12px;
-  }
-}
-@media (min-width: 901px) and (max-width: 1419px) {
-  .instances-loading .loading-table tbody tr {
-    height: auto;
-    min-height: 240px;
   }
 }
