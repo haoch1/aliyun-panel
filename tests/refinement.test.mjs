@@ -88,7 +88,7 @@ test("详细日志保留上下文，并隐藏凭证与通知秘密", (t) => {
 test("账单和余额独立记录成功时间，余额失败只通知一次，恢复后通知恢复", async (t) => {
   const r = runtime(t),
     s = r.store.settings();
-  s.notifications.events.push("billing-recovery");
+  s.notifications.events.push("billing", "billing-recovery");
   Object.assign(s.notifications, {
     telegramToken: "fake-token",
     telegramChatId: "fake-chat",
