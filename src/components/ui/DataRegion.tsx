@@ -140,7 +140,7 @@ export function PageLoading({ page }: { page: string }) {
         >
           <div className="instances-overview">
             <div className="instance-counts" aria-label="实例概况">
-              {["实例", "运行中", "保活开启"].map((label) => (
+              {["实例", "运行中", "已停止", "保活开启"].map((label) => (
                 <span key={label}>
                   <span>{label}</span>
                   <strong>

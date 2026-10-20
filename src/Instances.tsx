@@ -91,7 +91,10 @@ export default function Instances() {
   );
   const selected = items.filter((i) => chosen.includes(key(i)));
   const running = items.filter((i) => i.status === "Running").length,
+    stopped = items.filter((i) => i.status === "Stopped").length,
     alive = items.filter((i) => i.effectiveKeepAlive).length;
+  const countsPending =
+    p.snapshot.refreshing && items.some((i) => i.status === "Unknown");
   const refresh = async () => {
     setBusy(true);
     try {
@@ -147,13 +150,22 @@ export default function Instances() {
               <strong>
                 <DataRegion
                   inline
-                  pending={
-                    p.snapshot.refreshing &&
-                    items.some((i) => i.status === "Unknown")
-                  }
+                  pending={countsPending}
                   placeholder={<Skeleton className="skeleton-count" />}
                 >
                   {running}
+                </DataRegion>
+              </strong>
+            </span>
+            <span>
+              <span>已停止</span>
+              <strong>
+                <DataRegion
+                  inline
+                  pending={countsPending}
+                  placeholder={<Skeleton className="skeleton-count" />}
+                >
+                  {stopped}
                 </DataRegion>
               </strong>
             </span>
