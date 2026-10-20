@@ -126,8 +126,6 @@ test("新配置启用关键通知和每日汇总，保存后的自选和空选�
     "keepalive",
     "traffic",
     "operation-error",
-    "error",
-    "billing",
     "daily",
   ]);
   assert.deepEqual(

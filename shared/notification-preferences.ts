@@ -19,8 +19,6 @@ export const defaultNotificationTypes: readonly NotificationType[] = [
   "keepalive",
   "traffic",
   "operation-error",
-  "error",
-  "billing",
   "daily",
 ];
 interface Preferences {
