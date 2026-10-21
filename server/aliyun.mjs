@@ -1,13 +1,20 @@
-import Ecs from "@alicloud/ecs20140526";
-import Cdt from "@alicloud/cdt20210813";
-import Sts from "@alicloud/sts20150401";
-import Bss from "@alicloud/bssopenapi20171214";
-import Vpc from "@alicloud/vpc20160428";
-import Core from "@alicloud/openapi-core";
-import Dara from "@darabonba/typescript";
+import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
-const products = { ecs: Ecs, cdt: Cdt, sts: Sts, bss: Bss, vpc: Vpc };
+import { zoned } from "../shared/policy.mjs";
+const require = createRequire(import.meta.url);
+const products = {
+  ecs: "@alicloud/ecs20140526",
+  cdt: "@alicloud/cdt20210813",
+  sts: "@alicloud/sts20150401",
+  bss: "@alicloud/bssopenapi20171214",
+  vpc: "@alicloud/vpc20160428",
+};
+const sdk = (product) => {
+  if (!Object.hasOwn(products, product)) throw new Error("不支持的云产品");
+  return require(products[product]);
+};
+const cacheLimit = 128;
 export const monitorSource = (t) =>
   t.eipAllocationId
     ? "eip:" + t.eipAllocationId
@@ -68,6 +75,8 @@ export class AliyunGateway {
     this.cache = new Map();
     this.pending = new Map();
     this.epoch = 0;
+    const timer = setInterval(() => this.pruneCache(), 30000).unref();
+    store.onClose?.add(() => clearInterval(timer));
   }
   invalidate() {
     this.epoch++;
@@ -81,6 +90,8 @@ export class AliyunGateway {
       .digest("hex");
     const key = JSON.stringify([product, a.id, fingerprint, region, a.site]);
     if (!this.clients.has(key)) {
+      const Core = require("@alicloud/openapi-core"),
+        Dara = require("@darabonba/typescript");
       const endpoint =
         product === "sts"
           ? "sts.aliyuncs.com"
@@ -103,9 +114,15 @@ export class AliyunGateway {
         // Disable its retries; call() bounds read retries and never retries writes.
         retryOptions: new Dara.RetryOptions({ retryable: false }),
       });
-      this.clients.set(key, new products[product].default(c));
+      const client = new (sdk(product).default)(c);
+      if (this.clients.size >= cacheLimit)
+        this.clients.delete(this.clients.keys().next().value);
+      this.clients.set(key, client);
     }
-    return this.clients.get(key);
+    const client = this.clients.get(key);
+    this.clients.delete(key);
+    this.clients.set(key, client);
+    return client;
   }
   async call(
     accountOrId,
@@ -120,8 +137,9 @@ export class AliyunGateway {
         : accountOrId;
     if (this.rpc)
       return this.rpc(a, region, action, parameters, { product, write });
-    const sdk = products[product],
+    const model = sdk(product),
       c = this.client(product, a, region);
+    const Dara = require("@darabonba/typescript");
     const runtime = new Dara.RuntimeOptions({
       connectTimeout: 5000,
       readTimeout: 15000,
@@ -132,7 +150,7 @@ export class AliyunGateway {
       try {
         let response;
         if (typeof c[method] === "function") {
-          const Model = sdk[action + "Request"];
+          const Model = model[action + "Request"];
           if (Model) response = await c[method](new Model(parameters), runtime);
           else {
             if (Object.keys(parameters).length)
@@ -159,15 +177,29 @@ export class AliyunGateway {
       }
     }
   }
+  pruneCache() {
+    const now = Date.now();
+    for (const [key, entry] of this.cache)
+      if (entry.expires <= now) this.cache.delete(key);
+    while (this.cache.size > cacheLimit)
+      this.cache.delete(this.cache.keys().next().value);
+  }
   async cached(key, ttl, run) {
+    this.pruneCache();
     const hit = this.cache.get(key);
-    if (hit && hit.expires > Date.now()) return hit.value;
+    if (hit) {
+      this.cache.delete(key);
+      this.cache.set(key, hit);
+      return hit.value;
+    }
     if (this.pending.has(key)) return this.pending.get(key);
     const epoch = this.epoch;
     const promise = run()
       .then((value) => {
-        if (epoch === this.epoch)
+        if (epoch === this.epoch) {
           this.cache.set(key, { value, expires: Date.now() + ttl });
+          this.pruneCache();
+        }
         return value;
       })
       .finally(() => {
@@ -314,11 +346,7 @@ export class AliyunGateway {
       typeof accountId === "string" ? this.store.account(accountId) : accountId;
     // CDT is an account pool shared by every participating product and instance.
     // Cache once per account for a short interval, never per ECS instance.
-    const month = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Shanghai",
-      year: "numeric",
-      month: "2-digit",
-    }).format(new Date());
+    const month = zoned(new Date(), "Asia/Shanghai").month;
     const key = JSON.stringify(["cdt", a.id, month]);
     const read = () =>
       this.cached(key, 15000, async () => {

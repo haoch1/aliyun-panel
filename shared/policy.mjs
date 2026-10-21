@@ -1,15 +1,34 @@
+// Reuse ICU formatters across polling, billing and DST compensation checks.
+const formatters = new Map();
+function timeFormatters(timezone) {
+  let hit = formatters.get(timezone);
+  if (hit) formatters.delete(timezone);
+  else
+    hit = {
+      date: new Intl.DateTimeFormat("en-CA", {
+        timeZone: timezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }),
+      clock: new Intl.DateTimeFormat("en-GB", {
+        timeZone: timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }),
+    };
+  formatters.set(timezone, hit);
+  if (formatters.size > 32) formatters.delete(formatters.keys().next().value);
+  return hit;
+}
 export function zoned(now, timezone) {
   const p = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    })
-      .formatToParts(now)
+    timeFormatters(timezone)
+      .date.formatToParts(now)
       .map((x) => [x.type, x.value]),
   );
   return {
@@ -207,12 +226,7 @@ export function nextSchedule(rule, now) {
   const current = schedule(rule, now);
   // Search real minutes so DST gaps and repeated local hours remain accurate.
   const base = Math.floor(now.getTime() / 60000) * 60000;
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: rule.timezone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  });
+  const formatter = timeFormatters(rule.timezone).clock;
   for (let minute = 1; minute <= 60 * 49; minute++) {
     const at = base + minute * 60000;
     const clock = formatter.format(at);

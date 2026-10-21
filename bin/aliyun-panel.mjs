@@ -3,13 +3,6 @@ import { createServer } from "node:http";
 import { resolve } from "node:path";
 import { existsSync } from "node:fs";
 import { loadEnvFile } from "node:process";
-import { Store } from "../server/store.mjs";
-import { AliyunGateway } from "../server/aliyun.mjs";
-import { ResourceService } from "../server/service.mjs";
-import { Jobs } from "../server/jobs.mjs";
-import { Engine } from "../server/engine.mjs";
-import { Notifications } from "../server/notify.mjs";
-import { createApp } from "../server/app.mjs";
 import { startRuntimeIdentity } from "../server/runtime-identity.mjs";
 const stopIdentity = startRuntimeIdentity();
 if (existsSync(resolve(".env"))) loadEnvFile(resolve(".env"));
@@ -25,6 +18,24 @@ if (process.argv.includes("--healthcheck")) {
     process.exit(1);
   }
 }
+// Health probes exit above without loading the database, SDKs or application.
+const [
+  { Store },
+  { AliyunGateway },
+  { ResourceService },
+  { Jobs },
+  { Engine },
+  { Notifications },
+  { createApp },
+] = await Promise.all([
+  import("../server/store.mjs"),
+  import("../server/aliyun.mjs"),
+  import("../server/service.mjs"),
+  import("../server/jobs.mjs"),
+  import("../server/engine.mjs"),
+  import("../server/notify.mjs"),
+  import("../server/app.mjs"),
+]);
 const store = new Store(resolve(process.env.DATA_DIR || "data")),
   gateway = new AliyunGateway(store),
   service = new ResourceService(store, gateway),
