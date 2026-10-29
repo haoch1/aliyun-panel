@@ -50,7 +50,18 @@ export class Store extends BaseStore {
     this.dir = dir;
     this.db.exec(`PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS entities(kind TEXT NOT NULL,id TEXT NOT NULL,body TEXT NOT NULL,PRIMARY KEY(kind,id));
-      CREATE INDEX IF NOT EXISTS entity_kind ON entities(kind);`);
+      CREATE INDEX IF NOT EXISTS entity_kind ON entities(kind);
+      CREATE TABLE IF NOT EXISTS traffic_bindings(
+        id TEXT PRIMARY KEY, account_id TEXT NOT NULL, owner TEXT NOT NULL,
+        region TEXT NOT NULL, instance_id TEXT NOT NULL, source TEXT NOT NULL,
+        from_at INTEGER NOT NULL, to_at INTEGER, seen_at INTEGER NOT NULL,
+        legacy INTEGER NOT NULL DEFAULT 0);
+      CREATE INDEX IF NOT EXISTS traffic_binding_instance ON traffic_bindings(account_id,region,instance_id,from_at);
+      CREATE INDEX IF NOT EXISTS traffic_binding_source ON traffic_bindings(owner,region,source,to_at);
+      CREATE TABLE IF NOT EXISTS traffic_samples(
+        binding_id TEXT NOT NULL REFERENCES traffic_bindings(id) ON DELETE CASCADE,
+        at INTEGER NOT NULL, period INTEGER NOT NULL, in_bytes REAL, out_bytes REAL,
+        PRIMARY KEY(binding_id,at,period));`);
   }
   get(kind, id) {
     const r = this.db
@@ -230,6 +241,7 @@ export class Store extends BaseStore {
     return super.clearLogs();
   }
   deleteAccount(id) {
+    this.db.prepare("DELETE FROM traffic_bindings WHERE account_id=?").run(id);
     super.deleteAccount(id);
     this.db
       .prepare("DELETE FROM entities WHERE json_extract(body,'$.accountId')=?")
@@ -254,6 +266,12 @@ export class Store extends BaseStore {
       .map((r) => JSON.parse(r.body));
   }
   prune() {
+    this.db
+      .prepare("DELETE FROM traffic_samples WHERE at<?")
+      .run(Date.now() - 93 * 86400000);
+    this.db
+      .prepare("DELETE FROM traffic_bindings WHERE to_at<?")
+      .run(Date.now() - 93 * 86400000);
     this.db
       .prepare(
         "DELETE FROM entities WHERE kind='metric' AND json_extract(body,'$.at')<?",

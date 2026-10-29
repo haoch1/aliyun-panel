@@ -415,8 +415,9 @@ export class AliyunGateway {
     );
   }
   async monitor(t, metric, start, end, period = 3600) {
-    if (period !== 3600) throw new Error("每日流量仅支持小时采样");
     const eip = monitorSource(t).startsWith("eip:");
+    if (period !== 3600 && !(eip && period === 60))
+      throw new Error("监控仅支持小时采样，EIP 另支持分钟采样");
     if (eip && !t.eipAllocationId)
       throw new Error("EIP 标识尚未同步，请刷新实例后重试");
     const points = await this.cached(
@@ -427,6 +428,7 @@ export class AliyunGateway {
         monitorSource(t),
         start,
         end,
+        period,
       ]),
       30000,
       async () => {
@@ -435,11 +437,13 @@ export class AliyunGateway {
         // documents a 200-point limit; use that conservative bound, without retries on 4xx.
         const limit = eip ? 200 : 400;
         const earliest =
-          Math.ceil((Date.now() - 30 * 86400000) / 3600000) * 3600000;
+          Math.ceil((Date.now() - 30 * 86400000) / (period * 1000)) *
+          period *
+          1000;
         for (
           let from = Math.max(start, earliest);
           from < end;
-          from += limit * 3600000
+          from += limit * period * 1000
         ) {
           const b = await this.call(
             t.accountId,
@@ -451,10 +455,10 @@ export class AliyunGateway {
                 : { instanceId: t.id }),
               // Both APIs require UTC seconds without ISO fractional seconds.
               startTime: new Date(from).toISOString().replace(/\.\d{3}Z$/, "Z"),
-              endTime: new Date(Math.min(end, from + limit * 3600000))
+              endTime: new Date(Math.min(end, from + limit * period * 1000))
                 .toISOString()
                 .replace(/\.\d{3}Z$/, "Z"),
-              period: 3600,
+              period,
             },
             { product: eip ? "vpc" : "ecs" },
           ).catch((e) => {

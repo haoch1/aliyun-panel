@@ -9,6 +9,7 @@ import { billKey, billingCycle, instanceAmount } from "./billing.mjs";
 import { nextSchedule } from "./policy.mjs";
 import { randomUUID } from "node:crypto";
 import { sortByName } from "../shared/resource-order.ts";
+import { TrafficHistory, MINUTE, HOUR } from "./traffic-history.mjs";
 export async function mapLimit(items, n, run) {
   const output = new Array(items.length);
   let index = 0;
@@ -28,6 +29,38 @@ export class ResourceService {
     this.gateway = gateway;
     this.refreshing = null;
     this.trafficSync = new Map();
+    this.closed = false;
+    this.capturing = null;
+    this.history = new TrafficHistory(store, gateway, (t) =>
+      this.closed ? undefined : this.instance(t),
+    );
+    store.onClose.add(() => {
+      this.closed = true;
+    });
+  }
+  observeTraffic(items) {
+    for (const i of items)
+      if (i.publicNetwork === "eip" || this.history.has(i))
+        this.history.observe(i, i.statusAt || Date.now());
+  }
+  captureTraffic(filter = {}) {
+    if (this.closed) return Promise.resolve();
+    if (this.capturing) return this.capturing;
+    const items = this.instances(filter).items.filter(
+      (i) => i.publicNetwork === "eip" || this.history.has(i),
+    );
+    this.capturing = mapLimit(items, 2, async (i) => {
+      if (this.closed) return;
+      const now = Date.now(),
+        start = Date.parse(
+          new Date(now + 8 * HOUR).toISOString().slice(0, 7) +
+            "-01T00:00:00+08:00",
+        );
+      await this.history.sync(i, start, Math.floor(now / MINUTE) * MINUTE);
+    }).finally(() => {
+      this.capturing = null;
+    });
+    return this.capturing;
   }
   scopes() {
     return this.store
@@ -89,6 +122,10 @@ export class ResourceService {
       ),
       usage,
     });
+    if (sameDiscovery)
+      this.observeTraffic(
+        this.store.get("scope", id).items.filter((i) => metadata[i.id]),
+      );
   }
   instances(filter = {}) {
     const settings = this.store.settings(),
@@ -157,6 +194,7 @@ export class ResourceService {
           schedule: rule.scheduleEnabled
             ? nextSchedule(rule, new Date())
             : undefined,
+          trafficAt: this.store.get("health", "traffic:" + resourceKey(i))?.at,
         };
       }),
     );
@@ -313,6 +351,7 @@ export class ResourceService {
               ),
           );
           this.store.put("scope", key, scope);
+          this.observeTraffic(scope.items);
         }
       } catch (e) {
         if (this.store.accounts().some((a) => a.id === t.accountId))
@@ -434,6 +473,41 @@ export class ResourceService {
     );
     await this.collectUsage(scope, [t.id]);
     this.writePartial(scope, {}, [t.id]);
+    const instance = this.instance(t);
+    if (instance?.publicNetwork === "eip" && !instance.eipAllocationId)
+      throw new Error("EIP 标识尚未同步，请刷新实例后重试");
+    if (instance.publicNetwork === "eip" || this.history.has(t)) {
+      const now = Date.now(),
+        end = Math.floor(now / MINUTE) * MINUTE;
+      const local = new Date(now + 8 * HOUR).toISOString();
+      const start =
+        days === "month"
+          ? Date.parse(local.slice(0, 7) + "-01T00:00:00+08:00")
+          : Date.parse(local.slice(0, 10) + "T00:00:00+08:00") -
+            (days - 1) * 86400000;
+      const states = await this.history.sync(t, start, end);
+      const items = this.closed ? [] : this.history.days(t, start, end);
+      return {
+        start,
+        end,
+        timezone: "Asia/Shanghai",
+        estimated: true,
+        checkedAt: Math.max(0, ...states.map((s) => s.checkedAt || 0)),
+        usage: instance.usage,
+        items,
+        errors: [
+          ...new Set(
+            states
+              .filter((s) => s.error)
+              .map(
+                (s) =>
+                  errorText({ message: s.error, code: s.errorCode }) +
+                  (items.length ? "；已保留上次流量数据" : ""),
+              ),
+          ),
+        ],
+      };
+    }
     const now = Date.now(),
       end = Math.floor(now / 3600000) * 3600000,
       local = new Date(now + 8 * 3600000).toISOString(),

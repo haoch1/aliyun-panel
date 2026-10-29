@@ -61,6 +61,8 @@ const stop = () => {
       !engine.policyRunning &&
       !engine.reportRunning &&
       !service.refreshing &&
+      !service.capturing &&
+      !service.history.running.size &&
       !notify.running &&
       !engine.billing.running.size
     ) {

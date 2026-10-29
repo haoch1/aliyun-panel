@@ -221,6 +221,7 @@ export function registerConnections(route, { store, gateway, service, jobs }) {
     scans.delete(v.token);
     gateway.invalidate();
     await service.refresh({ accountId: saved.id });
+    await service.captureTraffic({ accountId: saved.id });
     store.audit({
       account: saved.id,
       action: "monitor-add",
@@ -336,6 +337,7 @@ export function registerConnections(route, { store, gateway, service, jobs }) {
         .items.map((i) => ({ region: i.region, id: i.id }));
     if (!all.some((x) => x.id === t.id && x.region === t.region))
       throw new Error("此实例未接入监控");
+    service.history.close(t);
     const monitors = all.filter((x) => x.id !== t.id || x.region !== t.region);
     if (monitors.length)
       store.saveAccount({ ...meta, monitors }, credentials, a.id);

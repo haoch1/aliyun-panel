@@ -59,6 +59,7 @@ export interface Instance {
   name: string;
   status: string;
   statusAt?: number;
+  trafficAt?: number;
   statusError?: string;
   ip: string[];
   privateIp: string[];

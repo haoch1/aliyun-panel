@@ -135,11 +135,11 @@ export function fixture(dir) {
       return {
         eipMonitorDatas: {
           eipMonitorData: Array.from(
-            { length: Math.floor((end - start) / 3600000) },
+            { length: Math.floor((end - start) / (params.period * 1000)) },
             (_, i) => ({
-              timeStamp: new Date(end - i * 3600000).toISOString(),
-              eipTX: 8192,
-              eipRX: 4096,
+              timeStamp: new Date(end - i * params.period * 1000).toISOString(),
+              eipTX: (8192 * params.period) / 3600,
+              eipRX: (4096 * params.period) / 3600,
             }),
           ),
         },

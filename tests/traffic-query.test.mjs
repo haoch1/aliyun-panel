@@ -109,6 +109,7 @@ test("DNS 失败保留真实历史，一分钟内合并失败请求，恢复后�
   const r = runtime(t);
   useEip(r);
   await r.service.refresh();
+  t.mock.timers.setTime(Date.now() + 2 * 60000);
   const first = await r.service.traffic(target, "month");
   const rpc = r.gateway.rpc;
   let failures = 0;
@@ -131,7 +132,10 @@ test("DNS 失败保留真实历史，一分钟内合并失败请求，恢复后�
   assert.match(failed.errors[0], /已保留上次流量数据/);
   assert.doesNotMatch(failed.errors[0], /https:|AllocationId/);
   assert.equal(
-    r.store.get("traffic-sync", resourceKey(target)).retryAt,
+    r.store.get(
+      "traffic-binding-error",
+      r.service.history.bindings(target).at(-1).id,
+    ).retryAt,
     Date.now() + 60000,
   );
   await new ResourceService(r.store, r.gateway).traffic(target, 7);
@@ -140,10 +144,16 @@ test("DNS 失败保留真实历史，一分钟内合并失败请求，恢复后�
   r.gateway.rpc = rpc;
   const recovered = await r.service.traffic(target, "month");
   assert.deepEqual(recovered.errors, []);
-  assert.deepEqual(recovered.items, first.items);
+  assert.ok(
+    recovered.items.reduce((n, d) => n + (d.outBytes || 0), 0) >=
+      first.items.reduce((n, d) => n + (d.outBytes || 0), 0),
+  );
   assert.equal(
-    r.store.get("traffic-sync", resourceKey(target)).error,
-    undefined,
+    r.store.get(
+      "traffic-binding-error",
+      r.service.history.bindings(target).at(-1).id,
+    ),
+    null,
   );
   assert.ok(r.calls.every((c) => !c.options.write));
 });
@@ -234,16 +244,22 @@ function useEip(r, id = "eip-test") {
     return body;
   };
 }
-test("EIP 自动选择 VPC 监控，字节不再转换为 Kbit，30 天最多四次且入出共用", async (t) => {
+test("EIP 历史使用小时采样并补分钟尾部，入出共用且不重复累计", async (t) => {
   const r = runtime(t);
   useEip(r);
   await r.service.refresh();
   assert.equal(r.service.instance(target).eipAllocationId, "eip-test");
   assert.equal(r.service.instance(target).publicNetwork, "eip");
+  // This fixture has an observed binding covering the entire requested range.
+  const start = Date.parse("2026-09-16T00:00:00+08:00");
+  r.store.db
+    .prepare("UPDATE traffic_bindings SET from_at=? WHERE id=?")
+    .run(start, r.service.history.bindings(target).at(-1).id);
   const data = await r.service.traffic(target, 30);
   assert.deepEqual(data.errors, []);
   const calls = r.calls.filter((c) => c.action === "DescribeEipMonitorData");
-  assert.equal(calls.length, 4);
+  assert.equal(calls.filter((c) => c.params.period === 3600).length, 4);
+  assert.equal(calls.filter((c) => c.params.period === 60).length, 1);
   assert.equal(monitorCalls(r).length, 0);
   assert.ok(
     calls.every(
@@ -255,19 +271,19 @@ test("EIP 自动选择 VPC 监控，字节不再转换为 Kbit，30 天最多四
   );
   assert.equal(
     data.items.reduce((sum, d) => sum + d.outBytes, 0),
-    710 * 8192,
+    710.5 * 8192,
   );
   assert.equal(
     data.items.reduce((sum, d) => sum + d.inBytes, 0),
-    710 * 4096,
+    710.5 * 4096,
   );
   await new ResourceService(r.store, r.gateway).traffic(target, 7);
   assert.equal(
     r.calls.filter((c) => c.action === "DescribeEipMonitorData").length,
-    4,
+    5,
   );
 });
-test("切换到 EIP 或更换 EIP 不复用旧来源历史，权限失败不会回退到 ECS 零值", async (t) => {
+test("切换 EIP 保留已归属该实例的历史，权限失败不查询旧来源冒充新流量", async (t) => {
   const r = runtime(t);
   await r.service.refresh();
   await r.service.traffic(target, "month");
@@ -290,7 +306,7 @@ test("切换到 EIP 或更换 EIP 不复用旧来源历史，权限失败不会�
   useEip(r, "eip-rebound");
   await r.service.refresh();
   const failed = await r.service.traffic(target, "month");
-  assert.equal(failed.items.length, 0);
+  assert.ok(failed.items.length > 0);
   assert.match(failed.errors[0], /vpc:DescribeEipMonitorData/);
   await new ResourceService(r.store, r.gateway).traffic(target, "month");
   assert.equal(denied, 1);
@@ -355,7 +371,9 @@ test("真实 VPC SDK 的参数和响应模型读取 EIP 字节，离线测试不
   const gateway = new AliyunGateway({ account: () => account });
   const client = gateway.client("vpc", account, "cn-hongkong");
   assert.equal(client._endpoint, "vpc.cn-hongkong.aliyuncs.com");
+  const periods = [];
   client.callApi = async (p, req) => {
+    periods.push(Number(req.query.Period));
     assert.equal(p.action, "DescribeEipMonitorData");
     assert.equal(req.query.AllocationId, "eip-test");
     assert.equal(req.query.RegionId, "cn-hongkong");
@@ -382,4 +400,73 @@ test("真实 VPC SDK 的参数和响应模型读取 EIP 字节，离线测试不
     end,
   );
   assert.equal(points[0].value, 5678);
+  const minute = await gateway.monitor(
+    {
+      accountId: "a",
+      region: "cn-hongkong",
+      id: "i-web",
+      eipAllocationId: "eip-test",
+    },
+    "INTERNET_IN",
+    end - 60000,
+    end,
+    60,
+  );
+  assert.equal(minute[0].value, 1234);
+  assert.deepEqual(periods, [3600, 60]);
+});
+
+test("分钟采样按 200 点拆分，入出复用请求且不会混用小时缓存", async () => {
+  const a = {
+    id: "a",
+    credentials: { accessKeyId: "fixture", accessKeySecret: "fixture" },
+  };
+  const calls = [];
+  const gateway = new AliyunGateway(
+    { account: () => a },
+    {
+      rpc: async (_a, _region, action, p) => {
+        assert.equal(action, "DescribeEipMonitorData");
+        calls.push(p);
+        const start = Date.parse(p.startTime),
+          end = Date.parse(p.endTime);
+        assert.ok((end - start) / (p.period * 1000) <= 200);
+        return {
+          eipMonitorDatas: {
+            eipMonitorData: Array.from(
+              { length: (end - start) / (p.period * 1000) },
+              (_, i) => ({
+                timeStamp: new Date(
+                  start + (i + 1) * p.period * 1000,
+                ).toISOString(),
+                eipRX: 10,
+                eipTX: 20,
+              }),
+            ),
+          },
+        };
+      },
+    },
+  );
+  const end = Math.floor(Date.now() / 60000) * 60000,
+    start = end - 350 * 60000;
+  const t = {
+    accountId: "a",
+    region: "cn-hongkong",
+    id: "i-web",
+    eipAllocationId: "eip-test",
+  };
+  const [aIn, aOut] = await Promise.all([
+    gateway.monitor(t, "INTERNET_IN", start, end, 60),
+    gateway.monitor(t, "INTERNET_OUT", start, end, 60),
+  ]);
+  assert.equal(calls.length, 2);
+  assert.equal(aIn.length, 350);
+  assert.equal(
+    aOut.reduce((n, p) => n + p.value, 0),
+    7000,
+  );
+  await gateway.monitor(t, "INTERNET_OUT", end - 3600000, end, 3600);
+  assert.equal(calls.length, 3);
+  assert.equal(calls.at(-1).period, 3600);
 });

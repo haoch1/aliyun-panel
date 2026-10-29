@@ -351,6 +351,14 @@ export class Engine {
         },
       });
       this.store.put("health", "engine", { at: Date.now(), owner: this.owner });
+      // Sampling runs after control decisions and never delays protection jobs.
+      void this.service.captureTraffic().catch((e) => {
+        if (!this.service.closed)
+          this.store.put("health", "traffic-error", {
+            at: Date.now(),
+            error: errorText(e),
+          });
+      });
     } catch (e) {
       this.store.audit({
         action: "monitor-cycle",

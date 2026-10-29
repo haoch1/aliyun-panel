@@ -28,6 +28,6 @@ export function useTraffic(
     t ? "/traffic?" + new URLSearchParams({ ...t, days }) : null,
     revision,
     true,
-    JSON.stringify([source, month]),
+    JSON.stringify([source, month, instance?.trafficAt]),
   );
 }

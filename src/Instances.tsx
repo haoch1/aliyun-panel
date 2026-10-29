@@ -602,7 +602,7 @@ function MonthlyTraffic({
       className="usage-trigger"
       aria-label={instance.name + " 流量详情"}
       title={[
-        "本月单向流量：入站与出站累计值取较大值",
+        "本月实例累计流量：合并各 EIP 在绑定期间的数据，入站与出站累计值取较大值",
         trafficRange(d.data?.start, d.data?.end),
         "刷新时间 " + date(d.data?.checkedAt),
         "额度为账号共享额度；流量保护按账号流量池用量判断",
@@ -650,7 +650,9 @@ export function Usage({
         <div>
           {monitor
             ? u?.used == null
-              ? "流量暂不可用"
+              ? monitor.error
+                ? "流量暂不可用"
+                : "等待流量采样"
               : `${bytes(u.used)}${u.total != null && u.total > 0 ? " / " + bytes(u.total) : ""}`
             : u?.quota === "none"
               ? "无固定流量配额"
