@@ -110,6 +110,8 @@ test("分钟尾部被完整小时替换后只计一次，并压缩已覆盖分�
   assert.equal(totals(await r.service.traffic(target, "month")), 600);
   r.advance(30);
   assert.equal(totals(await r.service.traffic(target, "month")), 1200);
+  r.advance(5);
+  assert.equal(totals(await r.service.traffic(target, "month")), 1300);
   const b = r.service.history.bindings(target)[0];
   assert.equal(
     r.store.db
@@ -117,9 +119,17 @@ test("分钟尾部被完整小时替换后只计一次，并压缩已覆盖分�
         "SELECT count(*) AS n FROM traffic_samples WHERE binding_id=? AND period=60",
       )
       .get(b.id).n,
-    0,
+    5,
   );
-  r.advance(30);
+  assert.equal(
+    r.store.db
+      .prepare(
+        "SELECT count(*) AS n FROM traffic_samples WHERE binding_id=? AND period=3600",
+      )
+      .get(b.id).n,
+    1,
+  );
+  r.advance(25);
   const data = await r.service.traffic(target, "month");
   assert.equal(totals(data), 1800);
   assert.equal(totals(await r.service.traffic(target, 7)), 1800);
@@ -213,6 +223,17 @@ test("关闭绑定的空响应不会冻结，超过十分钟仍能补回迟到�
   );
   r.gateway.monitor = monitor;
   r.advance(1);
+  const calls = r.monitorCalls.length;
+  await r.service.history.range(
+    target,
+    old,
+    old.from_at,
+    old.to_at,
+    60,
+    "head",
+  );
+  assert.equal(r.monitorCalls.length, calls);
+  r.advance(4);
   const state = await r.service.history.range(
     target,
     old,
@@ -249,15 +270,16 @@ test("小时数据只有单方向时，另一方向继续使用分钟数据", as
   const monitor = r.gateway.monitor;
   r.gateway.monitor = async (...args) =>
     args[4] === 3600 && args[1] === "INTERNET_IN" ? [] : monitor(...args);
-  r.advance(60);
+  r.advance(65);
   const first = await r.service.traffic(target, "month");
-  assert.equal(first.items[0].inBytes, 600);
-  assert.equal(first.items[0].outBytes, 1200);
+  assert.equal(first.items[0].inBytes, 650);
+  assert.equal(first.items[0].outBytes, 1300);
+  assert.ok(r.monitorCalls.some((c) => c.period === 3600));
   r.gateway.monitor = monitor;
   r.advance(6);
   const recovered = await r.service.traffic(target, "month");
-  assert.equal(recovered.items[0].inBytes, 660);
-  assert.equal(recovered.items[0].outBytes, 1320);
+  assert.equal(recovered.items[0].inBytes, 710);
+  assert.equal(recovered.items[0].outBytes, 1420);
 });
 
 test("另一个实例的旧数据迁移不能重叠已观察到的 EIP 归属", async (t) => {
@@ -428,4 +450,177 @@ test("旧数据迁移中途失败整体回滚，重试不丢历史或重复累�
   history.save = save;
   history.observe(i);
   assert.equal(history.days(target, base, Date.now())[0].outBytes, 200);
+});
+
+for (const [interval, expected] of [
+  [1, 26],
+  [5, 26],
+  [15, 10],
+])
+  test(`两台 EIP 每 ${interval} 分钟检测，稳定一小时最多 ${expected} 次流量 RPC，页面重读和重启不绕过节流`, async (t) => {
+    const r = runtime(t);
+    delete r.gateway.monitor; // Count real gateway RPCs, including in/out coalescing.
+    r.bindings.set(other.id, "eip-data");
+    await r.service.refresh();
+    r.advance(60);
+    await r.service.captureTraffic();
+    const before = r.calls.length;
+    for (let minute = interval; minute <= 60; minute += interval) {
+      r.advance(interval);
+      await r.service.captureTraffic();
+      await r.service.traffic(target, "month");
+      await r.service.traffic(other, "month");
+      if (minute === 30) {
+        const restarted = new ResourceService(r.store, r.gateway);
+        await restarted.captureTraffic();
+        await restarted.traffic(target, "month");
+      }
+    }
+    const calls = r.calls
+      .slice(before)
+      .filter((c) => c.action === "DescribeEipMonitorData");
+    assert.equal(calls.length, expected);
+    assert.equal(calls.filter((c) => c.params.period === 3600).length, 2);
+    assert.ok(
+      Math.abs(totals(await r.service.traffic(target, "month")) - 16384) < 1e-6,
+    );
+  });
+
+test("新 EIP 不受旧绑定五分钟节流影响，首个采样前快速探测并立即补齐旧尾部", async (t) => {
+  const r = runtime(t);
+  await r.service.refresh();
+  r.advance(60);
+  await r.service.captureTraffic();
+  r.advance(1);
+  const changedAt = Date.now(),
+    monitor = r.gateway.monitor;
+  r.bindings.set(target.id, "eip-new");
+  r.gateway.monitor = async (...args) => {
+    if (
+      args[0].eipAllocationId === "eip-new" &&
+      Date.now() < changedAt + 3 * MINUTE
+    ) {
+      r.monitorCalls.push({
+        t: args[0],
+        metric: args[1],
+        start: args[2],
+        end: args[3],
+        period: args[4],
+      });
+      return [];
+    }
+    return monitor(...args);
+  };
+  await r.service.refresh();
+  await r.service.captureTraffic();
+  assert.ok(
+    r.monitorCalls.some(
+      (c) => c.t.eipAllocationId === "eip-new" && c.end === changedAt,
+    ),
+  );
+  const old = r.service.history.bindings(target)[0];
+  assert.equal(
+    r.store.db
+      .prepare("SELECT max(at) AS at FROM traffic_samples WHERE binding_id=?")
+      .get(old.id).at,
+    changedAt,
+  );
+  for (let n = 1; n <= 3; n++) {
+    r.advance(1);
+    const before = r.monitorCalls.filter(
+      (c) => c.t.eipAllocationId === "eip-new",
+    ).length;
+    await r.service.captureTraffic();
+    assert.ok(
+      r.monitorCalls.filter((c) => c.t.eipAllocationId === "eip-new").length >
+        before,
+    );
+  }
+  assert.equal(totals(await r.service.traffic(target, "month")), 64 * 20);
+  const count = r.monitorCalls.filter(
+    (c) => c.t.eipAllocationId === "eip-new",
+  ).length;
+  for (let n = 0; n < 4; n++) {
+    r.advance(1);
+    await r.service.captureTraffic();
+    await r.service.traffic(target, "month");
+  }
+  assert.equal(
+    r.monitorCalls.filter((c) => c.t.eipAllocationId === "eip-new").length,
+    count,
+  );
+  r.advance(1);
+  assert.equal(totals(await r.service.traffic(target, "month")), 69 * 20);
+});
+
+test("旧 EIP 已完成时不再轮询，未返回数据时逐步退避且恢复后仍补齐", async (t) => {
+  const r = runtime(t);
+  await r.service.refresh();
+  r.advance(6);
+  r.bindings.set(target.id, "eip-new");
+  await r.service.refresh();
+  const monitor = r.gateway.monitor;
+  let delayed = true;
+  r.gateway.monitor = async (...args) =>
+    args[0].eipAllocationId === "eip-0" && delayed ? [] : monitor(...args);
+  await r.service.captureTraffic();
+  const old = r.service.history.bindings(target)[0];
+  r.advance(20);
+  await r.service.captureTraffic();
+  let state = r.store.get(
+    "traffic-binding-sync",
+    JSON.stringify([old.id, "tail"]),
+  );
+  assert.ok(state.nextAt > Date.now() + 5 * MINUTE);
+  delayed = false;
+  r.advance(5);
+  await r.service.captureTraffic();
+  assert.equal(
+    r.service.history.days(target, base, Date.now())[0].outBytes,
+    (20 * (Date.now() - base - 6 * MINUTE)) / MINUTE,
+  );
+  r.advance(5);
+  await r.service.captureTraffic();
+  assert.equal(totals(await r.service.traffic(target, "month")), 36 * 20);
+  const before = r.monitorCalls.filter(
+    (c) => c.t.eipAllocationId === "eip-0",
+  ).length;
+  r.advance(60);
+  await r.service.captureTraffic();
+  assert.equal(
+    r.monitorCalls.filter((c) => c.t.eipAllocationId === "eip-0").length,
+    before,
+  );
+});
+
+test("旧 EIP 被释放后的失败逐步退避，不拖慢新 EIP 采集或清空旧累计", async (t) => {
+  const r = runtime(t);
+  await r.service.refresh();
+  r.advance(10);
+  await r.service.captureTraffic();
+  const monitor = r.gateway.monitor;
+  let oldAttempts = 0;
+  r.gateway.monitor = async (...args) => {
+    if (args[0].eipAllocationId === "eip-0") {
+      if (args[1] === "INTERNET_IN") oldAttempts++;
+      throw Object.assign(Error("InvalidAllocationId.NotFound"), {
+        code: "InvalidAllocationId.NotFound",
+      });
+    }
+    return monitor(...args);
+  };
+  r.advance(1);
+  r.bindings.set(target.id, "eip-new");
+  await r.service.refresh();
+  await r.service.captureTraffic();
+  assert.equal(oldAttempts, 1);
+  r.advance(5);
+  await r.service.captureTraffic();
+  assert.equal(oldAttempts, 2);
+  r.advance(5);
+  await r.service.captureTraffic();
+  assert.equal(oldAttempts, 2);
+  const data = await r.service.traffic(target, "month");
+  assert.equal(totals(data), 20 * 20);
+  assert.equal(data.errors.length, 1);
 });

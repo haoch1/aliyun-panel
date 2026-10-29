@@ -7,6 +7,9 @@ export const MINUTE = 60000,
 const floor = (at, unit) => Math.floor(at / unit) * unit;
 const ceil = (at, unit) => Math.ceil(at / unit) * unit;
 const metricNames = ["INTERNET_IN", "INTERNET_OUT"];
+const pollInterval = 5 * MINUTE,
+  settleDelay = 5 * MINUTE,
+  initialWindow = 10 * MINUTE;
 const pointTime = (p) => {
   const value = p.timestamp ?? p.Timestamp ?? p.time ?? p.TimeStamp ?? p[0];
   return typeof value === "number" || /^\d{10,13}$/.test(String(value))
@@ -231,12 +234,11 @@ export class TrafficHistory {
         return at - period * 1000;
     return end;
   }
-  async range(t, binding, start, end, period, part) {
+  async range(t, binding, start, end, period, part, cadence = pollInterval) {
     if (end <= start) return {};
     const key = JSON.stringify([binding.id, part]);
     const previous = this.store.get("traffic-binding-sync", key);
-    const now = Date.now(),
-      ttl = period === 60 ? MINUTE : 5 * MINUTE;
+    const now = Date.now();
     const failure = this.store.get("traffic-binding-error", binding.id);
     if (failure?.retryAt > now) return failure;
     if (previous?.retryAt > now) return previous;
@@ -244,22 +246,34 @@ export class TrafficHistory {
       !previous?.error &&
       previous?.start <= start &&
       previous.end >= end &&
-      (now - previous.checkedAt < ttl ||
-        (previous.complete &&
-          previous.start === start &&
-          previous.end === end &&
-          (part === "head" || binding.to_at != null) &&
-          previous.checkedAt > end + 10 * MINUTE))
+      previous.complete &&
+      previous.checkedAt >= end + settleDelay &&
+      (period === 3600 || part === "head" || binding.to_at != null)
     )
       return previous;
+    // A moving range end must not bypass the cadence on every SSE/page read.
+    // A newly closed binding or completed head gets one immediate final read.
+    const coveredStart = previous?.start <= start && previous.end >= start,
+      closing = binding.to_at != null && previous?.closedAt !== binding.to_at,
+      headFinished =
+        part === "head" && previous?.end < end && end <= floor(now, HOUR);
+    if (coveredStart && !closing && !headFinished) {
+      if (now - previous.checkedAt < cadence) return previous;
+      if (previous.end >= end && previous.nextAt > now) return previous;
+    }
     const contiguous = previous?.start === start && previous.end >= start;
-    const from = contiguous
-      ? Math.max(
-          start,
-          Math.min(previous.missingFrom ?? previous.end, end) -
-            (period === 60 ? 2 * MINUTE : 2 * HOUR),
-        )
-      : start;
+    const from =
+      period === 3600
+        ? Math.max(
+            start,
+            Math.min(this.missingFrom(binding, start, end, period), end - HOUR),
+          )
+        : contiguous
+          ? Math.max(
+              start,
+              Math.min(previous.missingFrom ?? previous.end, end) - 2 * MINUTE,
+            )
+          : start;
     try {
       const source = binding.source;
       const target = {
@@ -326,6 +340,14 @@ export class TrafficHistory {
         throw e;
       }
       const missingFrom = this.missingFrom(latest, start, end, period);
+      const stalled =
+        missingFrom < end && previous?.missingFrom === missingFrom
+          ? (previous.stalled || 0) + 1
+          : 0;
+      const delay =
+        latest.to_at != null && now - latest.to_at >= initialWindow
+          ? Math.min(HOUR, pollInterval * 2 ** Math.min(stalled, 4))
+          : cadence;
       const state = {
         ...t,
         bindingId: binding.id,
@@ -334,6 +356,9 @@ export class TrafficHistory {
         checkedAt: now,
         missingFrom,
         complete: missingFrom === end,
+        closedAt: latest.to_at,
+        stalled,
+        nextAt: now + delay,
       };
       this.store.put("traffic-binding-sync", key, state);
       if (failure) this.store.remove("traffic-binding-error", binding.id);
@@ -344,13 +369,18 @@ export class TrafficHistory {
       if (!this.available(t)) return {};
       const errorCode = networkErrorCode(e),
         error = errorText(e);
+      const failures = (failure?.failures || 0) + 1,
+        retryDelay =
+          (errorCode ? MINUTE : pollInterval) *
+          (binding.to_at == null ? 1 : 2 ** Math.min(failures - 1, 6));
       const state = {
         ...previous,
         ...t,
         bindingId: binding.id,
         error,
         errorCode,
-        retryAt: now + (errorCode ? MINUTE : 5 * MINUTE),
+        retryAt: now + Math.min(HOUR, retryDelay),
+        failures,
       };
       this.store.put("traffic-binding-sync", key, state);
       this.store.put("traffic-binding-error", binding.id, state);
@@ -391,29 +421,43 @@ export class TrafficHistory {
       for (const b of this.bindings(t)) {
         if (b.legacy || b.from_at > end || (b.to_at ?? Infinity) <= start)
           continue;
+        const fresh =
+          Date.now() - b.from_at < initialWindow &&
+          !this.store.db
+            .prepare(
+              "SELECT 1 FROM traffic_samples WHERE binding_id=? AND in_bytes IS NOT NULL AND out_bytes IS NOT NULL LIMIT 1",
+            )
+            .get(b.id);
+        const cadence = fresh ? MINUTE : pollInterval;
         if (
           b.from_at === end &&
           b.to_at == null &&
           b.source.startsWith("eip:")
         ) {
-          results.push(await this.range(t, b, end - MINUTE, end, 60, "head"));
+          results.push(
+            await this.range(t, b, end - MINUTE, end, 60, "head", cadence),
+          );
           continue;
         }
         const from = Math.max(start, b.from_at),
           to = Math.min(end, b.to_at ?? Infinity);
         const hourFrom = ceil(from, HOUR),
-          hourTo = floor(to, HOUR);
+          hourTo = floor(Math.min(to, Date.now() - settleDelay), HOUR);
         if (hourTo > hourFrom)
           results.push(await this.range(t, b, hourFrom, hourTo, 3600, "hours"));
         if (!b.source.startsWith("eip:")) continue;
         const headEnd = Math.min(to, hourFrom);
         if (headEnd > from)
-          results.push(await this.range(t, b, from, headEnd, 60, "head"));
+          results.push(
+            await this.range(t, b, from, headEnd, 60, "head", cadence),
+          );
         // Re-read the recent minute tail as well: delayed hourly data must not
         // hide a completed hour, and aggregation never adds both resolutions.
         const tailFrom = Math.max(from, hourTo - HOUR, headEnd);
         if (to > tailFrom)
-          results.push(await this.range(t, b, tailFrom, to, 60, "tail"));
+          results.push(
+            await this.range(t, b, tailFrom, to, 60, "tail", cadence),
+          );
       }
       return results;
     };
