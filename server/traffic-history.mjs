@@ -10,6 +10,22 @@ const metricNames = ["INTERNET_IN", "INTERNET_OUT"];
 const pollInterval = 5 * MINUTE,
   settleDelay = 5 * MINUTE,
   initialWindow = 10 * MINUTE;
+function missingEipCode(error) {
+  for (let e = error, depth = 0; e && depth < 5; e = e.cause, depth++) {
+    const codes = [
+      "InvalidIpInstanceId.NotFound",
+      "InvalidAllocationId.NotFound",
+      "InvalidInstanceId.NotFound",
+    ];
+    if (codes.includes(e.code)) return e.code;
+    // Older persisted failures retained only the SDK message, not its code.
+    const message = String(e.error || e.message || e);
+    const code = codes.find(
+      (code) => message.startsWith(code + ":") || message === code,
+    );
+    if (code) return code;
+  }
+}
 const pointTime = (p) => {
   const value = p.timestamp ?? p.Timestamp ?? p.time ?? p.TimeStamp ?? p[0];
   return typeof value === "number" || /^\d{10,13}$/.test(String(value))
@@ -234,12 +250,76 @@ export class TrafficHistory {
         return at - period * 1000;
     return end;
   }
+  retireMissing(t, binding, error) {
+    const current = this.available(t),
+      code = missingEipCode(error);
+    if (
+      !code ||
+      !binding?.source.startsWith("eip:") ||
+      binding.to_at == null ||
+      !current?.publicNetwork ||
+      monitorSource(current) === "eip:unknown" ||
+      monitorSource(current) === binding.source
+    )
+      return;
+    const existing = this.store.get("traffic-binding-unavailable", binding.id);
+    if (existing) return existing;
+    const state = {
+      ...t,
+      bindingId: binding.id,
+      source: binding.source,
+      at: Date.now(),
+      code,
+      historical: true,
+      warning: "旧 EIP 监控记录已不可查询，已保留历史累计；未采集部分无法补回",
+    };
+    this.store.db.exec("BEGIN");
+    try {
+      this.store.put("traffic-binding-unavailable", binding.id, state);
+      this.store.remove("traffic-binding-error", binding.id);
+      for (const part of ["head", "hours", "tail"]) {
+        const key = JSON.stringify([binding.id, part]),
+          previous = this.store.get("traffic-binding-sync", key);
+        if (!previous?.error) continue;
+        const { error, errorCode, retryAt, failures, ...saved } = previous;
+        this.store.put("traffic-binding-sync", key, saved);
+      }
+      this.store.audit({
+        account: t.accountId,
+        action: "traffic-query",
+        category: "query",
+        level: "warning",
+        status: "attention",
+        target: current.name,
+        detail: state.warning,
+        context: {
+          api: "DescribeEipMonitorData",
+          region: t.region,
+          instanceId: t.id,
+          source: binding.source,
+          bindingId: binding.id,
+          errorCode: code,
+          retainedCache: true,
+        },
+      });
+      this.store.put("health", "traffic:" + resourceKey(t), { at: state.at });
+      this.store.db.exec("COMMIT");
+      return state;
+    } catch (e) {
+      this.store.db.exec("ROLLBACK");
+      throw e;
+    }
+  }
   async range(t, binding, start, end, period, part, cadence = pollInterval) {
     if (end <= start) return {};
     const key = JSON.stringify([binding.id, part]);
     const previous = this.store.get("traffic-binding-sync", key);
     const now = Date.now();
     const failure = this.store.get("traffic-binding-error", binding.id);
+    const unavailable =
+      this.store.get("traffic-binding-unavailable", binding.id) ||
+      this.retireMissing(t, binding, failure || previous);
+    if (unavailable) return unavailable;
     if (failure?.retryAt > now) return failure;
     if (previous?.retryAt > now) return previous;
     if (
@@ -367,6 +447,12 @@ export class TrafficHistory {
       return state;
     } catch (e) {
       if (!this.available(t)) return {};
+      const latest = this.store.db
+        .prepare("SELECT * FROM traffic_bindings WHERE id=?")
+        .get(binding.id);
+      if (!latest) return {};
+      const unavailable = this.retireMissing(t, latest, e);
+      if (unavailable) return unavailable;
       const errorCode = networkErrorCode(e),
         error = errorText(e);
       const failures = (failure?.failures || 0) + 1,
@@ -377,6 +463,7 @@ export class TrafficHistory {
         ...previous,
         ...t,
         bindingId: binding.id,
+        historical: latest.to_at != null,
         error,
         errorCode,
         retryAt: now + Math.min(HOUR, retryDelay),
@@ -397,6 +484,8 @@ export class TrafficHistory {
             : "DescribeInstanceMonitorData",
           region: t.region,
           instanceId: t.id,
+          source: binding.source,
+          bindingId: binding.id,
           start: from,
           end,
           retryAt: state.retryAt,
@@ -421,6 +510,19 @@ export class TrafficHistory {
       for (const b of this.bindings(t)) {
         if (b.legacy || b.from_at > end || (b.to_at ?? Infinity) <= start)
           continue;
+        const unavailable = this.store.get("traffic-binding-unavailable", b.id);
+        if (unavailable) {
+          results.push(unavailable);
+          continue;
+        }
+        const read = async (...args) => {
+          const result = await this.range(t, b, ...args);
+          results.push({
+            ...result,
+            source: b.source,
+            historical: result.historical || b.to_at != null,
+          });
+        };
         const fresh =
           Date.now() - b.from_at < initialWindow &&
           !this.store.db
@@ -434,30 +536,21 @@ export class TrafficHistory {
           b.to_at == null &&
           b.source.startsWith("eip:")
         ) {
-          results.push(
-            await this.range(t, b, end - MINUTE, end, 60, "head", cadence),
-          );
+          await read(end - MINUTE, end, 60, "head", cadence);
           continue;
         }
         const from = Math.max(start, b.from_at),
           to = Math.min(end, b.to_at ?? Infinity);
         const hourFrom = ceil(from, HOUR),
           hourTo = floor(Math.min(to, Date.now() - settleDelay), HOUR);
-        if (hourTo > hourFrom)
-          results.push(await this.range(t, b, hourFrom, hourTo, 3600, "hours"));
+        if (hourTo > hourFrom) await read(hourFrom, hourTo, 3600, "hours");
         if (!b.source.startsWith("eip:")) continue;
         const headEnd = Math.min(to, hourFrom);
-        if (headEnd > from)
-          results.push(
-            await this.range(t, b, from, headEnd, 60, "head", cadence),
-          );
+        if (headEnd > from) await read(from, headEnd, 60, "head", cadence);
         // Re-read the recent minute tail as well: delayed hourly data must not
         // hide a completed hour, and aggregation never adds both resolutions.
         const tailFrom = Math.max(from, hourTo - HOUR, headEnd);
-        if (to > tailFrom)
-          results.push(
-            await this.range(t, b, tailFrom, to, 60, "tail", cadence),
-          );
+        if (to > tailFrom) await read(tailFrom, to, 60, "tail", cadence);
       }
       return results;
     };

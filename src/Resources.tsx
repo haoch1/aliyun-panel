@@ -67,6 +67,11 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
         />
       </div>
       <ErrorBox error={d.error || d.data?.errors.join("；")} />
+      {!!d.data?.warnings?.length && (
+        <div className="traffic-warning" role="status">
+          {d.data.warnings.join("；")}
+        </div>
+      )}
       {instance && (
         <>
           <section

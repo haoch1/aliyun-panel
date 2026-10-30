@@ -498,11 +498,23 @@ export class ResourceService {
         errors: [
           ...new Set(
             states
-              .filter((s) => s.error)
+              .filter((s) => s.error && !s.historical)
               .map(
                 (s) =>
                   errorText({ message: s.error, code: s.errorCode }) +
                   (items.length ? "；已保留上次流量数据" : ""),
+              ),
+          ),
+        ],
+        warnings: [
+          ...new Set(
+            states
+              .filter((s) => s.warning || (s.error && s.historical))
+              .map(
+                (s) =>
+                  s.warning ||
+                  "旧 EIP 历史补采暂时失败，已保留累计；当前 EIP 单独采集：" +
+                    errorText({ message: s.error, code: s.errorCode }),
               ),
           ),
         ],

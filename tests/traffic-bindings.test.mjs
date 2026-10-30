@@ -593,7 +593,7 @@ test("旧 EIP 已完成时不再轮询，未返回数据时逐步退避且恢复
   );
 });
 
-test("旧 EIP 被释放后的失败逐步退避，不拖慢新 EIP 采集或清空旧累计", async (t) => {
+test("旧 EIP 被释放后停止无效补采，不误报新 EIP 失败或清空旧累计", async (t) => {
   const r = runtime(t);
   await r.service.refresh();
   r.advance(10);
@@ -616,11 +616,202 @@ test("旧 EIP 被释放后的失败逐步退避，不拖慢新 EIP 采集或清�
   assert.equal(oldAttempts, 1);
   r.advance(5);
   await r.service.captureTraffic();
-  assert.equal(oldAttempts, 2);
+  assert.equal(oldAttempts, 1);
   r.advance(5);
   await r.service.captureTraffic();
-  assert.equal(oldAttempts, 2);
+  assert.equal(oldAttempts, 1);
   const data = await r.service.traffic(target, "month");
   assert.equal(totals(data), 20 * 20);
-  assert.equal(data.errors.length, 1);
+  assert.deepEqual(data.errors, []);
+  assert.equal(data.warnings.length, 1);
+});
+
+for (const code of [
+  "InvalidIpInstanceId.NotFound",
+  "InvalidAllocationId.NotFound",
+  "InvalidInstanceId.NotFound",
+])
+  test(`已结束的旧 EIP 返回 ${code} 时只警告一次并跨重启停止查询`, async (t) => {
+    const r = runtime(t);
+    await r.service.refresh();
+    r.advance(10);
+    await r.service.captureTraffic();
+    const old = r.service.history.bindings(target)[0],
+      before = r.store.db
+        .prepare(
+          "SELECT * FROM traffic_samples WHERE binding_id=? ORDER BY at,period",
+        )
+        .all(old.id);
+    const monitor = r.gateway.monitor;
+    let attempts = 0;
+    r.gateway.monitor = async (...args) => {
+      if (args[0].eipAllocationId === "eip-0") {
+        if (args[1] === "INTERNET_IN") attempts++;
+        throw Object.assign(Error(code + ": code: 404, missing EIP"), { code });
+      }
+      return monitor(...args);
+    };
+    r.advance(1);
+    r.bindings.set(target.id, "eip-new");
+    await r.service.refresh();
+    await r.service.captureTraffic();
+    r.advance(5);
+    let data = await r.service.traffic(target, "month");
+    assert.deepEqual(data.errors, []);
+    assert.match(data.warnings[0], /旧 EIP.*已保留历史累计/);
+    assert.equal(totals(data), 300);
+    assert.equal(attempts, 1);
+    assert.equal(r.store.get("traffic-binding-error", old.id), null);
+    assert.equal(r.store.get("traffic-binding-unavailable", old.id).code, code);
+    r.advance(60);
+    const restarted = new ResourceService(r.store, r.gateway);
+    data = await restarted.traffic(target, "month");
+    assert.deepEqual(data.errors, []);
+    assert.equal(data.warnings.length, 1);
+    assert.equal(attempts, 1);
+    assert.deepEqual(
+      r.store.db
+        .prepare(
+          "SELECT * FROM traffic_samples WHERE binding_id=? ORDER BY at,period",
+        )
+        .all(old.id),
+      before,
+    );
+    const warningLogs = r.store
+      .logs()
+      .filter((l) => l.action === "traffic-query" && l.status === "attention");
+    assert.equal(warningLogs.length, 1);
+    assert.equal(warningLogs[0].context.source, "eip:eip-0");
+    assert.equal(warningLogs[0].context.bindingId, old.id);
+    await r.service.statusCycle();
+    assert.equal(r.service.instance(target).usage.error, undefined);
+    r.store.deleteAccount(target.accountId);
+    assert.equal(r.store.get("traffic-binding-unavailable", old.id), null);
+  });
+
+test("升级前旧 EIP 的 404 缓存即使仍在长冷却，也会直接结束无效重试", async (t) => {
+  const r = runtime(t);
+  await r.service.refresh();
+  r.advance(10);
+  await r.service.captureTraffic();
+  const old = r.service.history.bindings(target)[0];
+  r.advance(1);
+  r.bindings.set(target.id, "eip-new");
+  await r.service.refresh();
+  const cached = {
+    ...target,
+    bindingId: old.id,
+    error:
+      "InvalidIpInstanceId.NotFound: code: 404, The specified Eip InstanceId does not exist in our records. request id: old-request",
+    retryAt: Date.now() + HOUR,
+    failures: 3,
+  };
+  r.store.put("traffic-binding-error", old.id, cached);
+  r.store.put("traffic-binding-sync", JSON.stringify([old.id, "tail"]), {
+    ...r.store.get("traffic-binding-sync", JSON.stringify([old.id, "tail"])),
+    ...cached,
+  });
+  const monitor = r.gateway.monitor;
+  r.gateway.monitor = async (...args) => {
+    assert.notEqual(args[0].eipAllocationId, "eip-0");
+    return monitor(...args);
+  };
+  const data = await r.service.traffic(target, "month");
+  assert.deepEqual(data.errors, []);
+  assert.equal(data.warnings.length, 1);
+  assert.equal(totals(data), 200);
+  assert.equal(r.store.get("traffic-binding-error", old.id), null);
+  assert.equal(
+    r.store.get("traffic-binding-sync", JSON.stringify([old.id, "tail"])).error,
+    undefined,
+  );
+});
+
+test("当前 EIP 的 404 仍报错并重试，不能当作旧 EIP 终止状态掩盖", async (t) => {
+  const r = runtime(t);
+  await r.service.refresh();
+  const monitor = r.gateway.monitor;
+  r.gateway.monitor = async () => {
+    throw Object.assign(
+      Error("InvalidIpInstanceId.NotFound: code: 404, current EIP missing"),
+      { code: "InvalidIpInstanceId.NotFound" },
+    );
+  };
+  r.advance(2);
+  const failed = await r.service.traffic(target, "month");
+  assert.match(failed.errors[0], /InvalidIpInstanceId/);
+  assert.deepEqual(failed.warnings, []);
+  const current = r.service.history.bindings(target)[0];
+  assert.equal(r.store.get("traffic-binding-unavailable", current.id), null);
+  r.gateway.monitor = monitor;
+  r.advance(6);
+  const recovered = await r.service.traffic(target, "month");
+  assert.deepEqual(recovered.errors, []);
+  assert.equal(totals(recovered), 160);
+});
+
+test("旧 EIP 网络或权限错误只影响历史完整性，保留重试并继续采集新 EIP", async (t) => {
+  const r = runtime(t);
+  await r.service.refresh();
+  r.advance(10);
+  await r.service.captureTraffic();
+  const monitor = r.gateway.monitor;
+  let failed = true;
+  r.gateway.monitor = async (...args) => {
+    if (failed && args[0].eipAllocationId === "eip-0")
+      throw Object.assign(Error("Forbidden.RAM"), { code: "Forbidden.RAM" });
+    return monitor(...args);
+  };
+  r.advance(1);
+  r.bindings.set(target.id, "eip-new");
+  await r.service.refresh();
+  r.advance(5);
+  const data = await r.service.traffic(target, "month");
+  assert.deepEqual(data.errors, []);
+  assert.match(data.warnings[0], /旧 EIP 历史补采暂时失败/);
+  assert.equal(totals(data), 300);
+  const old = r.service.history.bindings(target)[0];
+  assert.equal(r.store.get("traffic-binding-unavailable", old.id), null);
+  failed = false;
+  r.advance(6);
+  const recovered = await r.service.traffic(target, "month");
+  assert.deepEqual(recovered.errors, []);
+  assert.deepEqual(recovered.warnings, []);
+  assert.equal(totals(recovered), 22 * 20);
+});
+
+test("EIP 查询进行中发生换绑，迟到的旧 EIP 404 不污染新 EIP 状态", async (t) => {
+  const r = runtime(t);
+  await r.service.refresh();
+  r.advance(5);
+  await r.service.captureTraffic();
+  r.advance(5);
+  let release, entered;
+  const held = new Promise((r) => (release = r)),
+    ready = new Promise((r) => (entered = r)),
+    monitor = r.gateway.monitor;
+  r.gateway.monitor = async (...args) => {
+    if (args[0].eipAllocationId === "eip-0") {
+      entered();
+      await held;
+      throw Object.assign(Error("InvalidIpInstanceId.NotFound: old response"), {
+        code: "InvalidIpInstanceId.NotFound",
+      });
+    }
+    return monitor(...args);
+  };
+  const pending = r.service.traffic(target, "month");
+  await ready;
+  r.advance(1);
+  r.bindings.set(target.id, "eip-new");
+  await r.service.refresh();
+  release();
+  const result = await pending;
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.warnings.length, 1);
+  assert.equal(totals(result), 100);
+  r.advance(5);
+  const fresh = await r.service.traffic(target, "month");
+  assert.deepEqual(fresh.errors, []);
+  assert.equal(totals(fresh), 200);
 });

@@ -272,6 +272,9 @@ export class Store extends BaseStore {
     this.db
       .prepare("DELETE FROM traffic_bindings WHERE to_at<?")
       .run(Date.now() - 93 * 86400000);
+    this.db.exec(
+      "DELETE FROM entities WHERE kind='traffic-binding-unavailable' AND id NOT IN (SELECT id FROM traffic_bindings)",
+    );
     this.db
       .prepare(
         "DELETE FROM entities WHERE kind='metric' AND json_extract(body,'$.at')<?",

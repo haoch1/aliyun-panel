@@ -23,6 +23,17 @@
 .traffic-periods .button {
   white-space: nowrap;
 }
+.traffic-warning {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--warning-border);
+  border-radius: 7px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
 .traffic-overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

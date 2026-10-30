@@ -607,6 +607,7 @@ function MonthlyTraffic({
         "刷新时间 " + date(d.data?.checkedAt),
         "额度为账号共享额度；流量保护按账号流量池用量判断",
         error,
+        ...(d.data?.warnings || []),
       ]
         .filter(Boolean)
         .join("\n")}
@@ -669,7 +670,11 @@ export function Usage({
             <small>{ratio.toFixed(1)}%</small>
           </div>
         )}
-        {u?.error && <small className="danger-text">用量更新失败</small>}
+        {u?.error && (
+          <small className="danger-text">
+            {monitor ? "流量更新失败" : "用量更新失败"}
+          </small>
+        )}
         {!!u?.overflow && (
           <small className="danger-text">超额 {bytes(u.overflow)}</small>
         )}

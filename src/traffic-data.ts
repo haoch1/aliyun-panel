@@ -5,6 +5,7 @@ import { target, useData } from "./lib";
 export interface TrafficData {
   items: TrafficDay[];
   errors: string[];
+  warnings?: string[];
   start: number;
   end: number;
   timezone: string;
