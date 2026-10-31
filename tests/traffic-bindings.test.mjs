@@ -623,7 +623,7 @@ test("旧 EIP 被释放后停止无效补采，不误报新 EIP 失败或清空�
   const data = await r.service.traffic(target, "month");
   assert.equal(totals(data), 20 * 20);
   assert.deepEqual(data.errors, []);
-  assert.equal(data.warnings.length, 1);
+  assert.deepEqual(data.warnings, []);
 });
 
 for (const code of [
@@ -631,7 +631,7 @@ for (const code of [
   "InvalidAllocationId.NotFound",
   "InvalidInstanceId.NotFound",
 ])
-  test(`已结束的旧 EIP 返回 ${code} 时只警告一次并跨重启停止查询`, async (t) => {
+  test(`已结束的旧 EIP 返回 ${code} 时只记录一次日志，跨重启不再提示或查询`, async (t) => {
     const r = runtime(t);
     await r.service.refresh();
     r.advance(10);
@@ -658,7 +658,7 @@ for (const code of [
     r.advance(5);
     let data = await r.service.traffic(target, "month");
     assert.deepEqual(data.errors, []);
-    assert.match(data.warnings[0], /旧 EIP.*已保留历史累计/);
+    assert.deepEqual(data.warnings, []);
     assert.equal(totals(data), 300);
     assert.equal(attempts, 1);
     assert.equal(r.store.get("traffic-binding-error", old.id), null);
@@ -667,7 +667,7 @@ for (const code of [
     const restarted = new ResourceService(r.store, r.gateway);
     data = await restarted.traffic(target, "month");
     assert.deepEqual(data.errors, []);
-    assert.equal(data.warnings.length, 1);
+    assert.deepEqual(data.warnings, []);
     assert.equal(attempts, 1);
     assert.deepEqual(
       r.store.db
@@ -681,6 +681,7 @@ for (const code of [
       .logs()
       .filter((l) => l.action === "traffic-query" && l.status === "attention");
     assert.equal(warningLogs.length, 1);
+    assert.match(warningLogs[0].detail, /旧 EIP.*已保留历史累计/);
     assert.equal(warningLogs[0].context.source, "eip:eip-0");
     assert.equal(warningLogs[0].context.bindingId, old.id);
     await r.service.statusCycle();
@@ -688,6 +689,46 @@ for (const code of [
     r.store.deleteAccount(target.accountId);
     assert.equal(r.store.get("traffic-binding-unavailable", old.id), null);
   });
+
+test("旧版保存的终止警告在所有日期范围均不再提示，当前 EIP 失败仍显示", async (t) => {
+  const r = runtime(t);
+  await r.service.refresh();
+  r.advance(10);
+  await r.service.captureTraffic();
+  const old = r.service.history.bindings(target)[0];
+  r.bindings.set(target.id, "eip-new");
+  await r.service.refresh();
+  r.store.put("traffic-binding-unavailable", old.id, {
+    ...target,
+    bindingId: old.id,
+    source: old.source,
+    historical: true,
+    code: "InvalidIpInstanceId.NotFound",
+    warning: "旧 EIP 监控记录已不可查询，已保留历史累计；未采集部分无法补回",
+  });
+  const monitor = r.gateway.monitor;
+  r.gateway.monitor = async (...args) => {
+    assert.notEqual(args[0].eipAllocationId, "eip-0");
+    return monitor(...args);
+  };
+  r.advance(5);
+  for (const days of ["month", 7, 30]) {
+    const data = await r.service.traffic(target, days);
+    assert.deepEqual(data.errors, []);
+    assert.deepEqual(data.warnings, []);
+    assert.equal(totals(data), 300);
+  }
+  r.gateway.monitor = async () => {
+    throw Object.assign(Error("current EIP access denied"), {
+      code: "Forbidden.RAM",
+    });
+  };
+  r.advance(6);
+  const failed = await r.service.traffic(target, "month");
+  assert.match(failed.errors[0], /current EIP access denied/);
+  assert.deepEqual(failed.warnings, []);
+  assert.equal(totals(failed), 300);
+});
 
 test("升级前旧 EIP 的 404 缓存即使仍在长冷却，也会直接结束无效重试", async (t) => {
   const r = runtime(t);
@@ -718,7 +759,7 @@ test("升级前旧 EIP 的 404 缓存即使仍在长冷却，也会直接结束�
   };
   const data = await r.service.traffic(target, "month");
   assert.deepEqual(data.errors, []);
-  assert.equal(data.warnings.length, 1);
+  assert.deepEqual(data.warnings, []);
   assert.equal(totals(data), 200);
   assert.equal(r.store.get("traffic-binding-error", old.id), null);
   assert.equal(
@@ -808,7 +849,7 @@ test("EIP 查询进行中发生换绑，迟到的旧 EIP 404 不污染新 EIP �
   release();
   const result = await pending;
   assert.deepEqual(result.errors, []);
-  assert.equal(result.warnings.length, 1);
+  assert.deepEqual(result.warnings, []);
   assert.equal(totals(result), 100);
   r.advance(5);
   const fresh = await r.service.traffic(target, "month");

@@ -509,12 +509,13 @@ export class ResourceService {
         warnings: [
           ...new Set(
             states
-              .filter((s) => s.warning || (s.error && s.historical))
+              // Terminal old-source gaps are audited once; only ongoing,
+              // retryable supplement failures belong in the current UI.
+              .filter((s) => s.error && s.historical)
               .map(
                 (s) =>
-                  s.warning ||
                   "旧 EIP 历史补采暂时失败，已保留累计；当前 EIP 单独采集：" +
-                    errorText({ message: s.error, code: s.errorCode }),
+                  errorText({ message: s.error, code: s.errorCode }),
               ),
           ),
         ],
