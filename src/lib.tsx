@@ -288,7 +288,9 @@ export function InstanceSelect({
       value={value}
       onChange={(e) => onChange(e.target.value)}
     >
-      <option value="">选择实例</option>
+      <option value="" disabled>
+        选择实例
+      </option>
       {snapshot.items.map((i) => (
         <option key={key(i)} value={key(i)}>
           {i.name}
