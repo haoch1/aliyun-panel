@@ -193,7 +193,7 @@ export function createApp(
     }),
   );
   route("get", "/api/instances", (req, res) =>
-    res.json(service.instances(req.query)),
+    res.json(service.instances(req.query, { traffic: true })),
   );
   route("post", "/api/refresh", async (req, res) => {
     const { check, ...filter } = z
@@ -208,7 +208,7 @@ export function createApp(
       await engine.cycle(true, filter);
       await jobs.tick();
     } else await service.refresh(filter);
-    res.json(service.instances(filter));
+    res.json(service.instances(filter, { traffic: true }));
   });
   route("put", "/api/keepalive", (req, res) => {
     const v = z
@@ -341,7 +341,7 @@ export function createApp(
     const { days, ...q } = req.query;
     const t = V.target.parse(q);
     res.json(
-      await service.traffic(
+      service.readTraffic(
         t,
         days === "month"
           ? "month"

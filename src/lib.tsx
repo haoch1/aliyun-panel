@@ -63,9 +63,10 @@ export async function api<T = any>(
 }
 export function useData<T>(
   path: string | null,
-  revision = 0,
+  revision: number | string = 0,
   cache = true,
   scope = "",
+  initialData?: T,
 ) {
   const cacheKey = (isDemo() ? "demo:" : "real:") + path + scope;
   const epoch = queryCache.version;
@@ -119,13 +120,14 @@ export function useData<T>(
     };
   }, [path, revision, cache, cacheKey, epoch]);
   const matches = state.path === cacheKey && state.epoch === epoch;
-  const data = !path
+  const stored = !path
     ? undefined
     : matches
       ? (cached ?? state.data)
       : cache
         ? queryCache.get<T>(cacheKey)
         : undefined;
+  const data = path ? (stored ?? initialData) : undefined;
   const error =
     path && matches && (cached === undefined || cached === state.data)
       ? state.error

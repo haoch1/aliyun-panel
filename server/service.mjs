@@ -10,6 +10,7 @@ import { nextSchedule } from "./policy.mjs";
 import { randomUUID } from "node:crypto";
 import { sortByName } from "../shared/resource-order.ts";
 import { TrafficHistory, MINUTE, HOUR } from "./traffic-history.mjs";
+import { trafficSnapshot } from "./traffic-snapshot.mjs";
 export async function mapLimit(items, n, run) {
   const output = new Array(items.length);
   let index = 0;
@@ -29,6 +30,7 @@ export class ResourceService {
     this.gateway = gateway;
     this.refreshing = null;
     this.trafficSync = new Map();
+    this.trafficReads = new Map();
     this.closed = false;
     this.capturing = null;
     this.history = new TrafficHistory(store, gateway, (t) =>
@@ -127,7 +129,7 @@ export class ResourceService {
         this.store.get("scope", id).items.filter((i) => metadata[i.id]),
       );
   }
-  instances(filter = {}) {
+  instances(filter = {}, { traffic = false } = {}) {
     const settings = this.store.settings(),
       active = this.store
         .list("job")
@@ -154,7 +156,7 @@ export class ResourceService {
               j.region === i.region &&
               j.instanceId === i.id,
           );
-        return {
+        const result = {
           ...i,
           name:
             this.store
@@ -196,6 +198,14 @@ export class ResourceService {
             : undefined,
           trafficAt: this.store.get("health", "traffic:" + resourceKey(i))?.at,
         };
+        if (traffic)
+          result.traffic = trafficSnapshot(
+            this.store,
+            this.history,
+            result,
+            "month",
+          );
+        return result;
       }),
     );
     return {
@@ -456,133 +466,66 @@ export class ResourceService {
       },
     );
   }
+  readTraffic(t, days) {
+    const instance = this.instance(t);
+    if (!instance) throw new Error("此实例未添加监控或尚未同步");
+    const snapshot = trafficSnapshot(this.store, this.history, instance, days);
+    const key = JSON.stringify([resourceKey(t), days]);
+    const failed = this.store.get("traffic-read-error", resourceKey(t));
+    const cooling =
+      failed?.source === monitorSource(instance) && failed.retryAt > Date.now();
+    if (!this.closed && !cooling && !this.trafficReads.has(key)) {
+      // Return saved bytes before network work. Reuse the same persisted cadence,
+      // cooling and in-flight monitor locks as the scheduled background collector.
+      const pending = Promise.resolve()
+        .then(async () => {
+          if (this.closed) return;
+          await this.traffic(t, days);
+          if (!this.closed && failed)
+            this.store.remove("traffic-read-error", resourceKey(t));
+        })
+        .catch((e) => {
+          if (!this.closed && this.instance(t))
+            this.store.put("traffic-read-error", resourceKey(t), {
+              ...t,
+              source: monitorSource(instance),
+              retryAt: Date.now() + MINUTE,
+              at: Date.now(),
+              error: errorText(e),
+            });
+        })
+        .finally(() => this.trafficReads.delete(key));
+      this.trafficReads.set(key, pending);
+    }
+    return snapshot;
+  }
   async traffic(t, days) {
+    if (this.closed) return;
     if (!this.instance(t)) throw new Error("此实例未添加监控或尚未同步");
-    // Older databases lack the public-network metadata. Discover it before
-    // selecting an API, rather than treating an unknown EIP as fixed ECS IP.
     if (!this.instance(t).publicNetwork) {
       if (this.refreshing) await this.refreshing;
       if (!this.instance(t)?.publicNetwork)
         await this.refresh({ accountId: t.accountId, region: t.region });
+      if (this.closed) return;
       if (!this.instance(t)?.publicNetwork)
         throw new Error("实例公网类型尚未同步，请稍后重试");
     }
-    const scope = this.store.get(
-      "scope",
-      JSON.stringify([t.accountId, t.region]),
-    );
-    await this.collectUsage(scope, [t.id]);
-    this.writePartial(scope, {}, [t.id]);
     const instance = this.instance(t);
-    if (instance?.publicNetwork === "eip" && !instance.eipAllocationId)
+    if (instance.publicNetwork === "eip" && !instance.eipAllocationId)
       throw new Error("EIP 标识尚未同步，请刷新实例后重试");
-    if (instance.publicNetwork === "eip" || this.history.has(t)) {
-      const now = Date.now(),
-        end = Math.floor(now / MINUTE) * MINUTE;
-      const local = new Date(now + 8 * HOUR).toISOString();
-      const start =
-        days === "month"
-          ? Date.parse(local.slice(0, 7) + "-01T00:00:00+08:00")
-          : Date.parse(local.slice(0, 10) + "T00:00:00+08:00") -
-            (days - 1) * 86400000;
-      const states = await this.history.sync(t, start, end);
-      const items = this.closed ? [] : this.history.days(t, start, end);
-      return {
-        start,
-        end,
-        timezone: "Asia/Shanghai",
-        estimated: true,
-        checkedAt: Math.max(0, ...states.map((s) => s.checkedAt || 0)),
-        usage: instance.usage,
-        items,
-        errors: [
-          ...new Set(
-            states
-              .filter((s) => s.error && !s.historical)
-              .map(
-                (s) =>
-                  errorText({ message: s.error, code: s.errorCode }) +
-                  (items.length ? "；已保留上次流量数据" : ""),
-              ),
-          ),
-        ],
-        warnings: [
-          ...new Set(
-            states
-              // Terminal old-source gaps are audited once; only ongoing,
-              // retryable supplement failures belong in the current UI.
-              .filter((s) => s.error && s.historical)
-              .map(
-                (s) =>
-                  "旧 EIP 历史补采暂时失败，已保留累计；当前 EIP 单独采集：" +
-                  errorText({ message: s.error, code: s.errorCode }),
-              ),
-          ),
-        ],
-      };
-    }
-    const now = Date.now(),
-      end = Math.floor(now / 3600000) * 3600000,
-      local = new Date(now + 8 * 3600000).toISOString(),
-      start =
-        days === "month"
-          ? Date.parse(local.slice(0, 7) + "-01T00:00:00+08:00")
-          : Date.parse(local.slice(0, 10) + "T00:00:00+08:00") -
-            (days - 1) * 86400000;
-    if (end <= start)
-      return {
-        start,
-        end,
-        timezone: "Asia/Shanghai",
-        estimated: true,
-        checkedAt: Date.now(),
-        usage: this.instance(t)?.usage,
-        items: [],
-        errors: [],
-      };
-    const synced = await this.syncTraffic(t, start, end);
-    const source = monitorSource(this.instance(t));
-    const metrics = ["INTERNET_IN", "INTERNET_OUT"];
-    const rows = new Map();
-    for (const metric of metrics)
-      for (const p of this.store.metrics(
-        t,
-        trafficMetric(source, metric),
-        start,
-        end,
-      )) {
-        const date = new Date(p.at - 1).toLocaleDateString("en-CA", {
-            timeZone: "Asia/Shanghai",
-          }),
-          r = rows.get(date) || {
-            date,
-            inBytes: null,
-            outBytes: null,
-            flowBytes: null,
-            inPoints: 0,
-            outPoints: 0,
-            flowPoints: 0,
-          };
-        const field = metric === "INTERNET_IN" ? "inBytes" : "outBytes";
-        r[field] = (r[field] ?? 0) + p.value;
-        r[field === "inBytes" ? "inPoints" : "outPoints"]++;
-        rows.set(date, r);
-      }
-    return {
-      start,
-      end,
-      timezone: "Asia/Shanghai",
-      estimated: true,
-      checkedAt: synced.checkedAt,
-      usage: this.instance(t)?.usage,
-      items: [...rows.values()].sort((a, b) => b.date.localeCompare(a.date)),
-      errors: synced.error
-        ? [
-            errorText({ message: synced.error, code: synced.errorCode }) +
-              (rows.size ? "；已保留上次流量数据" : ""),
-          ]
-        : [],
-    };
+    const { start, end } = trafficSnapshot(
+      this.store,
+      this.history,
+      instance,
+      days,
+    );
+    if (instance.publicNetwork === "eip" || this.history.has(t))
+      await this.history.sync(t, start, end);
+    else if (end > start) await this.syncTraffic(t, start, end);
+    if (this.closed) return;
+    const latest = this.instance(t);
+    if (!latest) throw new Error("实例已移除");
+    return trafficSnapshot(this.store, this.history, latest, days);
   }
   async syncTraffic(t, start, end) {
     const key = resourceKey(t);

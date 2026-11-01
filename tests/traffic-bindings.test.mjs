@@ -467,13 +467,21 @@ for (const [interval, expected] of [
     const before = r.calls.length;
     for (let minute = interval; minute <= 60; minute += interval) {
       r.advance(interval);
+      // Opening/reloading the list and details must share the collector budget.
+      for (let reload = 0; reload < 3; reload++) {
+        r.service.instances({}, { traffic: true });
+        r.service.readTraffic(target, "month");
+        r.service.readTraffic(other, "month");
+      }
       await r.service.captureTraffic();
+      await Promise.all(r.service.trafficReads.values());
       await r.service.traffic(target, "month");
       await r.service.traffic(other, "month");
       if (minute === 30) {
         const restarted = new ResourceService(r.store, r.gateway);
         await restarted.captureTraffic();
-        await restarted.traffic(target, "month");
+        restarted.readTraffic(target, "month");
+        await Promise.all(restarted.trafficReads.values());
       }
     }
     const calls = r.calls

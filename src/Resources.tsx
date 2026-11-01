@@ -36,7 +36,7 @@ export function Traffic({ instance: supplied }: { instance?: Instance }) {
     : selection.instance;
   const [days, setDays] = useState("month");
   const t = instance ? target(instance) : undefined;
-  const d = useTraffic(instance, days);
+  const d = useTraffic(instance, days, p.revision);
   const rows = [...(d.data?.items || [])].sort((a, b) =>
       b.date.localeCompare(a.date),
     ),

@@ -1,16 +1,7 @@
-import type { Instance } from "../shared/types";
-import type { TrafficDay } from "../shared/traffic-presentation";
+import type { Instance, TrafficSnapshot } from "../shared/types";
 import { target, useData } from "./lib";
 
-export interface TrafficData {
-  items: TrafficDay[];
-  errors: string[];
-  warnings?: string[];
-  start: number;
-  end: number;
-  timezone: string;
-  checkedAt?: number;
-}
+export type TrafficData = TrafficSnapshot;
 
 // The list and detail view read the same range and subscribe to the same result.
 // A changed public-network binding or calendar month must not reuse old totals.
@@ -20,15 +11,16 @@ export function useTraffic(
   revision = 0,
 ) {
   const t = instance ? target(instance) : undefined;
-  const month = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 7);
+  const today = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
   const source =
     instance?.publicNetwork === "eip"
       ? "eip:" + instance.eipAllocationId
       : instance?.publicNetwork || "pending";
   return useData<TrafficData>(
     t ? "/traffic?" + new URLSearchParams({ ...t, days }) : null,
-    revision,
+    JSON.stringify([revision, instance?.trafficAt]),
     true,
-    JSON.stringify([source, month, instance?.trafficAt]),
+    JSON.stringify([source, days === "month" ? today.slice(0, 7) : today]),
+    days === "month" ? instance?.traffic : undefined,
   );
 }

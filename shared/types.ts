@@ -51,6 +51,15 @@ export interface Usage {
   pool?: "china" | "international";
   error?: string;
 }
+export interface TrafficSnapshot {
+  items: import("./traffic-presentation").TrafficDay[];
+  errors: string[];
+  warnings?: string[];
+  start: number;
+  end: number;
+  timezone: string;
+  checkedAt?: number;
+}
 export interface Instance {
   accountId: string;
   accountName: string;
@@ -60,6 +69,7 @@ export interface Instance {
   status: string;
   statusAt?: number;
   trafficAt?: number;
+  traffic?: TrafficSnapshot;
   statusError?: string;
   ip: string[];
   privateIp: string[];

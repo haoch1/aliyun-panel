@@ -6,7 +6,7 @@ export function createResourceCache(limit = 80) {
   const notify = (key: string) => listeners.get(key)?.forEach((fn) => fn());
   const requests = new Map<
     string,
-    { promise: Promise<unknown>; revision: number }
+    { promise: Promise<unknown>; revision: number | string }
   >();
   return {
     get version() {
@@ -30,7 +30,11 @@ export function createResourceCache(limit = 80) {
       requests.clear();
       listeners.forEach((_, key) => notify(key));
     },
-    request<T>(key: string, load: () => Promise<T>, revision = 0): Promise<T> {
+    request<T>(
+      key: string,
+      load: () => Promise<T>,
+      revision: number | string = 0,
+    ): Promise<T> {
       const running = requests.get(key);
       if (running?.revision === revision) return running.promise as Promise<T>;
       const started = version;
