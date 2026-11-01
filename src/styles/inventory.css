@@ -16,8 +16,8 @@
     td[data-label="本月流量"]
     .traffic-progress-heading
     > span:first-child {
-    font-weight: var(--weight-semibold);
-    font-size: var(--font-md);
+    font-weight: var(--weight-medium);
+    font-size: var(--font-sm);
   }
 }
 @media (max-width: 900px) {
@@ -192,8 +192,8 @@
 }
 .inventory-card-traffic .usage,
 .inventory-card-traffic .traffic-progress.compact .traffic-progress-heading {
-  font-size: var(--font-md);
-  line-height: 22px;
+  font-size: var(--font-sm);
+  line-height: 20px;
   font-weight: var(--weight-medium);
 }
 .inventory-card-traffic .inventory-traffic-quota {
