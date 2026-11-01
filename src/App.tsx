@@ -1,3 +1,4 @@
+import { Sidebar } from "./components/ui/Sidebar";
 import { Input } from "./components/ui/Input";
 import { ThemeControl } from "./theme";
 import Select from "./components/ui/Select";
@@ -89,57 +90,6 @@ export default function App() {
     return () => window.removeEventListener("auth-revoked", loadAuth);
   }, [loadAuth]);
 
-  useEffect(() => {
-    if (!mobile) return;
-    const closeAtDesktop = () => {
-      if (window.matchMedia("(min-width: 901px)").matches) setMobile(false);
-    };
-    closeAtDesktop();
-    window.addEventListener("resize", closeAtDesktop);
-    const previous = document.activeElement as HTMLElement;
-    const sidebar = document.getElementById("main-navigation");
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const controls = () =>
-      Array.from(
-        sidebar?.querySelectorAll<HTMLElement>("button, a[href]") || [],
-      ).filter(
-        (e) =>
-          e.getClientRects().length &&
-          getComputedStyle(e).visibility !== "hidden",
-      );
-    controls()
-      .find((e) => e.classList.contains("active"))
-      ?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setMobile(false);
-      }
-      if (e.key !== "Tab") return;
-      const items = controls(),
-        first = items[0],
-        last = items.at(-1);
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last?.focus();
-      } else if (
-        !e.shiftKey &&
-        (document.activeElement === last ||
-          !sidebar?.contains(document.activeElement))
-      ) {
-        e.preventDefault();
-        first?.focus();
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = oldOverflow;
-      document.removeEventListener("keydown", onKey);
-      window.removeEventListener("resize", closeAtDesktop);
-      if (previous?.isConnected) previous.focus();
-    };
-  }, [mobile]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [page]);
@@ -241,14 +191,7 @@ export default function App() {
       }}
     >
       <div className="app-shell">
-        {mobile && (
-          <div className="mobile-backdrop" onClick={() => setMobile(false)} />
-        )}
-        <aside
-          id="main-navigation"
-          className={"sidebar " + (mobile ? "mobile-open" : "")}
-          aria-label="主导航"
-        >
+        <Sidebar open={mobile} onOpenChange={setMobile} id="main-navigation">
           <a className="brand" href="#instances">
             <Cloud size={23} />
             <strong>Aliyun Panel</strong>
@@ -276,7 +219,7 @@ export default function App() {
           <div className="sidebar-bottom">
             <ThemeControl compact />
           </div>
-        </aside>
+        </Sidebar>
         <div className="workspace">
           <header className="topbar">
             <div className="topbar-left">

@@ -1,135 +1,93 @@
+import * as Menu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import {
-  useEffect,
-  useLayoutEffect,
+  Children,
+  cloneElement,
+  isValidElement,
   useRef,
-  useState,
+  type MouseEvent,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
 
-// Matches Lightsail-Panel's instance context menu and keyboard behavior.
+// Preserve business buttons and handlers; Radix supplies the menu behavior.
+function menuItems(children: ReactNode, beforeSelect: () => void): ReactNode {
+  return Children.map(children, (child) => {
+    if (
+      !isValidElement<{
+        children?: ReactNode;
+        disabled?: boolean;
+        onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+      }>(child)
+    )
+      return child;
+    if (child.type === "button")
+      return (
+        <Menu.Item asChild disabled={child.props.disabled}>
+          {cloneElement(child, {
+            onClick: (event: MouseEvent<HTMLButtonElement>) => {
+              beforeSelect();
+              child.props.onClick?.(event);
+            },
+          })}
+        </Menu.Item>
+      );
+    if (child.type === "hr")
+      return <Menu.Separator asChild>{child}</Menu.Separator>;
+    if (child.props.children)
+      return cloneElement(
+        child,
+        {},
+        menuItems(child.props.children, beforeSelect),
+      );
+    return child;
+  });
+}
 export function ActionMenu({
   label,
   children,
+  open,
+  onOpenChange,
 }: {
   label: string;
   children: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ left: 0, top: 0, maxHeight: 320 });
-  const trigger = useRef<HTMLButtonElement>(null),
-    menu = useRef<HTMLDivElement>(null);
-  const close = () => {
-    setOpen(false);
-    trigger.current?.focus({ preventScroll: true });
-  };
-  useLayoutEffect(() => {
-    if (!open) return;
-    const place = () => {
-      const rect = trigger.current?.getBoundingClientRect();
-      if (!rect) return;
-      const width = menu.current?.getBoundingClientRect().width || 233,
-        height = (menu.current?.scrollHeight || 320) + 12,
-        below = innerHeight - rect.bottom - 12,
-        above = rect.top - 12;
-      const upward = below < height && above > below,
-        maxHeight = Math.min(height, Math.max(below, above));
-      setPosition({
-        left: Math.max(
-          8,
-          Math.min(
-            rect.right - width,
-            document.documentElement.clientWidth - width - 8,
-          ),
-        ),
-        top: upward ? Math.max(8, rect.top - maxHeight - 5) : rect.bottom + 5,
-        maxHeight,
-      });
-    };
-    place();
-    window.addEventListener("resize", place);
-    document.addEventListener("scroll", place, true);
-    menu.current
-      ?.querySelector<HTMLButtonElement>("button:not(:disabled)")
-      ?.focus({ preventScroll: true });
-    return () => {
-      window.removeEventListener("resize", place);
-      document.removeEventListener("scroll", place, true);
-    };
-  }, [open]);
-  useEffect(() => {
-    if (!open) return;
-    const outside = (e: PointerEvent) => {
-      if (
-        !trigger.current?.contains(e.target as Node) &&
-        !menu.current?.contains(e.target as Node)
-      )
-        setOpen(false);
-    };
-    document.addEventListener("pointerdown", outside);
-    return () => document.removeEventListener("pointerdown", outside);
-  }, [open]);
+  const trigger = useRef<HTMLButtonElement>(null);
   return (
-    <>
-      <button
-        ref={trigger}
-        type="button"
-        className="button small instance-menu-button"
-        aria-label={label + " 操作"}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-      >
-        操作
-        <ChevronDown size={13} />
-      </button>
-      {open &&
-        createPortal(
-          <div
-            ref={menu}
-            role="menu"
-            aria-label={label + " 操作菜单"}
-            className="context-menu instance-menu"
-            style={position}
-            onClick={(e) => {
-              if ((e.target as HTMLElement).closest("button")) close();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                e.stopPropagation();
-                close();
-                return;
-              }
-              if (e.key === "Tab") {
-                close();
-                return;
-              }
-              if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key))
-                return;
-              e.preventDefault();
-              const items = Array.from(
-                  menu.current?.querySelectorAll<HTMLButtonElement>(
-                    "button:not(:disabled)",
-                  ) || [],
-                ),
-                n = items.indexOf(document.activeElement as HTMLButtonElement);
-              const next =
-                e.key === "Home"
-                  ? 0
-                  : e.key === "End"
-                    ? items.length - 1
-                    : (n + (e.key === "ArrowDown" ? 1 : -1) + items.length) %
-                      items.length;
-              items[next]?.focus();
-            }}
-          >
-            <div className="menu-title">{label}</div>
-            {children}
-          </div>,
-          document.body,
-        )}
-    </>
+    <Menu.Root modal={false} open={open} onOpenChange={onOpenChange}>
+      <Menu.Trigger asChild>
+        <button
+          ref={trigger}
+          type="button"
+          className="button small instance-menu-button"
+          aria-label={label + " 操作"}
+        >
+          操作
+          <ChevronDown size={14} />
+        </button>
+      </Menu.Trigger>
+      <Menu.Portal>
+        <Menu.Content
+          className="context-menu instance-menu"
+          aria-label={label + " 操作菜单"}
+          align="end"
+          sideOffset={5}
+          collisionPadding={8}
+          loop
+          onCloseAutoFocus={(event) => {
+            if (document.querySelector('[role="dialog"]'))
+              event.preventDefault();
+          }}
+        >
+          <Menu.Label className="menu-title">{label}</Menu.Label>
+          <Menu.Group>
+            {menuItems(children, () =>
+              trigger.current?.focus({ preventScroll: true }),
+            )}
+          </Menu.Group>
+        </Menu.Content>
+      </Menu.Portal>
+    </Menu.Root>
   );
 }

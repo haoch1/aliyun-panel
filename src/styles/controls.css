@@ -13,16 +13,16 @@
   white-space: nowrap;
   background: var(--surface);
   border: 1px solid var(--control-border);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   line-height: 20px;
   min-height: 40px;
-  font-size: 14px;
+  font-size: var(--font-md);
   padding: 9px 14px;
   border-radius: 6px;
   transition:
-    background 0.15s,
-    border-color 0.15s,
-    opacity 160ms ease-out;
+    background var(--motion-normal),
+    border-color var(--motion-normal),
+    opacity var(--motion-normal) ease-out;
 }
 .button:hover:enabled {
   background: var(--surface-hover);
@@ -82,7 +82,7 @@
   border: 1px solid var(--control-border);
   background: var(--subtle);
   border-radius: 20px;
-  transition: background 150ms;
+  transition: background var(--motion-normal);
 }
 .switch span {
   position: absolute;
@@ -93,8 +93,8 @@
   border-radius: 50%;
   background: var(--muted);
   transition:
-    transform 150ms,
-    background 150ms;
+    transform var(--motion-normal),
+    background var(--motion-normal);
 }
 .switch.checked::before {
   background: var(--accent);
@@ -125,16 +125,21 @@ input[type="checkbox"]:indeterminate::after {
   background: var(--subtle);
   border-radius: 7px;
   max-width: 100%;
+  flex-wrap: wrap;
 }
 .segmented-control > button {
   padding: 5px 12px;
   min-height: 30px;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   line-height: 20px;
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   color: var(--muted);
   white-space: nowrap;
+  transition:
+    background var(--motion-fast),
+    color var(--motion-fast),
+    box-shadow var(--motion-fast);
 }
 .segmented-control > button:hover:enabled {
   color: var(--text);
@@ -154,7 +159,7 @@ input[type="checkbox"]:indeterminate::after {
   background: var(--text);
   color: var(--surface);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--font-xs);
   line-height: 18px;
   box-shadow: var(--shadow);
   animation: dialog-in 100ms ease-out;
@@ -176,7 +181,7 @@ input[type="checkbox"]:indeterminate::after {
   align-items: center;
   gap: 16px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .pagination-info .custom-select {
   width: 124px;
@@ -184,7 +189,7 @@ input[type="checkbox"]:indeterminate::after {
 .pagination-info .select-trigger {
   min-height: 34px;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .pagination-controls,
 .pagination-pages {
@@ -203,7 +208,7 @@ input[type="checkbox"]:indeterminate::after {
 }
 .pagination-mobile {
   display: none;
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
   padding: 0 8px;
 }
@@ -222,14 +227,14 @@ input[type="checkbox"]:indeterminate::after {
   }
 }
 .button.danger {
-  background: #b93849;
-  border-color: #b93849;
+  background: var(--danger-button);
+  border-color: var(--danger-button);
   color: #fff;
 }
 .button.small {
   gap: 5px;
   min-height: 34px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   padding: 6px 10px;
 }
 .button.full {
@@ -245,7 +250,7 @@ input[type="checkbox"]:indeterminate::after {
   width: 34px;
   height: 34px;
   border-radius: 6px;
-  transition: opacity 160ms ease-out;
+  transition: opacity var(--motion-normal) ease-out;
 }
 .icon-button:hover {
   background: var(--surface-hover);
@@ -257,7 +262,7 @@ input[type="checkbox"]:indeterminate::after {
   gap: 5px;
   padding: 0;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .text-link:hover {
   color: var(--text);
@@ -267,7 +272,7 @@ input[type="checkbox"]:indeterminate::after {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
   margin-bottom: 9px;
   padding: 0;
@@ -291,7 +296,7 @@ input[type="checkbox"]:indeterminate::after {
   width: 100%;
   background: transparent;
   outline: 0;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .search .icon-button {
   width: 28px;
@@ -309,7 +314,7 @@ input[type="checkbox"]:indeterminate::after {
 .tabs button {
   color: var(--muted);
   padding: 8px 11px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   min-height: 34px;
   border-radius: 4px;
 }
@@ -327,7 +332,7 @@ input[type="checkbox"]:indeterminate::after {
   gap: 7px;
   padding: 0;
   max-width: 100%;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .copy-text svg {
   opacity: 0.5;
@@ -349,7 +354,7 @@ input[type="checkbox"]:indeterminate::after {
   flex-shrink: 0;
 }
 .button.danger:hover:enabled {
-  background: #a42d3d;
+  background: var(--danger-button-hover);
 }
 .button:disabled {
   opacity: 0.6;
@@ -365,7 +370,7 @@ input[type="checkbox"]:indeterminate::after {
   box-shadow: none;
 }
 .details .copy-text {
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .auth-card > .theme-control {
   margin-top: 20px;
@@ -386,12 +391,12 @@ input[type="checkbox"]:indeterminate::after {
   border-radius: 6px;
   color: var(--text);
   text-align: left;
-  font-size: 14px;
+  font-size: var(--font-md);
   line-height: 20px;
   transition:
-    border-color 0.15s,
-    box-shadow 0.15s,
-    background 0.15s;
+    border-color var(--motion-normal),
+    box-shadow var(--motion-normal),
+    background var(--motion-normal);
 }
 .month-trigger {
   display: flex;
@@ -406,9 +411,9 @@ input[type="checkbox"]:indeterminate::after {
   color: var(--text);
   text-align: left;
   line-height: 1.5;
-  transition: border-color 0.15s;
+  transition: border-color var(--motion-normal);
   justify-content: space-between;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .select-trigger:hover:enabled {
   border-color: var(--focus);
@@ -476,7 +481,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   color: var(--muted);
   flex-shrink: 0;
   margin-left: 4px;
-  transition: transform 0.15s;
+  transition: transform var(--motion-normal);
 }
 .select-trigger[aria-expanded="true"] .select-arrow {
   transform: rotate(180deg);
@@ -485,24 +490,45 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   display: none;
 }
 .select-menu {
-  position: fixed;
-  z-index: 110;
+  position: relative;
+  z-index: var(--layer-menu);
+  display: flex;
+  flex-direction: column;
+  width: max(
+    var(--radix-select-trigger-width, var(--radix-popover-trigger-width)),
+    var(--select-min-width, 0px)
+  );
+  max-width: calc(100vw - 16px);
+  max-height: min(
+    320px,
+    var(
+      --radix-select-content-available-height,
+      var(--radix-popover-content-available-height, 320px)
+    )
+  );
   padding: 6px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-menu);
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow);
-  overflow-y: hidden;
-  overflow-x: hidden;
+  overflow: hidden;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
+  transform-origin: var(
+    --radix-select-content-transform-origin,
+    var(--radix-popover-content-transform-origin)
+  );
+  animation: popover-in var(--motion-fast) var(--ease-out);
 }
 .select-options {
+  min-height: 0;
+  flex: 1;
+  max-height: inherit;
   overflow: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   position: relative;
+  scroll-padding-block: 6px;
 }
 .select-search {
   display: flex;
@@ -518,13 +544,13 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   border-radius: 0;
   padding: 4px 0;
   min-height: 30px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   background: transparent;
   box-shadow: none;
 }
 .select-empty {
   padding: 20px 10px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   color: var(--muted);
 }
 .time-picker {
@@ -540,12 +566,18 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   height: 16px;
 }
 .time-popover {
+  z-index: var(--layer-menu);
+  width: min(280px, calc(100vw - 24px));
+  max-height: var(--radix-popover-content-available-height);
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-menu);
   box-shadow: var(--shadow);
   background: var(--surface);
   overflow: auto;
+  overscroll-behavior: contain;
+  transform-origin: var(--radix-popover-content-transform-origin);
+  animation: popover-in var(--motion-fast) var(--ease-out);
 }
 .time-picker-parts {
   display: grid;
@@ -556,7 +588,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 .time-picker-parts label {
   display: grid;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   color: var(--muted);
 }
 .time-popover > .button {
@@ -569,17 +601,18 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   gap: 12px;
   min-height: 36px;
   padding: 8px 10px;
-  font-size: 14px;
+  font-size: var(--font-md);
   line-height: 20px;
   cursor: pointer;
   border-radius: 5px;
+  outline: none;
 }
 .select-option > span {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 .instance-status-menu .select-option {
-  font-size: 13px;
+  font-size: var(--font-sm);
   gap: 8px;
 }
 .instance-status-menu .select-option > span {
@@ -588,19 +621,19 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 .instance-status-menu .select-option > svg {
   flex-shrink: 0;
 }
-.select-option[data-active="true"] {
-  background: var(--subtle);
+.select-option:is([data-highlighted], [data-selected="true"]) {
+  background: var(--surface-hover);
 }
-.select-option[aria-selected="true"] {
+.select-option[data-current="true"] {
   background: var(--accent-soft);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 .select-option.disabled {
   opacity: 0.45;
   cursor: default;
 }
 .select-group {
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
   padding: 11px 10px 5px;
 }
@@ -613,7 +646,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   min-width: 0;
 }
 .theme-control .select-trigger {
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .theme-control.compact .select-trigger {
   background: var(--subtle);
@@ -621,14 +654,14 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 .ssh-command .copy-text {
   font-family: var(--mono);
   text-align: left;
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .month-filter {
   display: flex;
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .month-picker {
   width: 172px;
@@ -637,7 +670,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   color: var(--muted);
 }
 .month-menu {
-  position: fixed;
+  position: relative;
   z-index: 110;
   width: 276px;
   padding: 12px;
@@ -646,6 +679,11 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow);
+  max-width: calc(100vw - 24px);
+  max-height: var(--radix-popover-content-available-height);
+  overflow: auto;
+  transform-origin: var(--radix-popover-content-transform-origin);
+  animation: popover-in var(--motion-fast) var(--ease-out);
 }
 .month-year {
   display: flex;
@@ -654,8 +692,8 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   margin-bottom: 10px;
 }
 .month-year strong {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-md);
+  font-weight: var(--weight-medium);
 }
 .month-grid {
   display: grid;
@@ -665,7 +703,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 .month-grid button {
   height: 38px;
   border-radius: 5px;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .month-grid button:hover:enabled {
   background: var(--subtle);
@@ -682,7 +720,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   border-top: 1px solid var(--border);
 }
 .month-footer .text-link {
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .ssh-key-actions .text-link {
   display: inline-flex;
@@ -691,7 +729,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   padding: 8px 0;
 }
 .instance-addresses .copy-text {
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .refresh-icon,
 .refresh-turn {
@@ -717,18 +755,20 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 }
 
 .context-menu {
-  position: fixed;
   width: 233px;
   max-width: calc(100vw - 16px);
   border: 1px solid var(--border);
   background: var(--surface);
   z-index: 60;
-  max-height: calc(100dvh - 80px);
   overflow: auto;
-  animation: menu-in 0.12s ease-out;
+  animation: popover-in var(--motion-fast) var(--ease-out);
   border-radius: 8px;
   box-shadow: var(--shadow);
   padding: 5px;
+  position: relative;
+  max-height: var(--radix-dropdown-menu-content-available-height);
+  outline: none;
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
 }
 .context-menu button {
   display: flex;
@@ -739,7 +779,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   border-radius: 4px;
   width: 100%;
   min-height: 36px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   line-height: 20px;
 }
 .context-menu button svg {
@@ -763,7 +803,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   gap: 5px;
   padding: 6px 4px;
   min-height: 32px;
-  font-size: 12px;
+  font-size: var(--font-xs);
   line-height: 18px;
   border: 1px solid var(--border);
 }
@@ -781,7 +821,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   margin: 4px -5px;
 }
 .menu-title {
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
   padding: 7px 10px;
   overflow: hidden;
@@ -797,12 +837,12 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   justify-content: center;
   padding: 24px;
   z-index: 80;
-  animation: modal-in 160ms ease-out;
+  animation: modal-in var(--motion-normal) ease-out;
   background: #0006;
   backdrop-filter: blur(2px);
 }
 .modal {
-  animation: dialog-in 180ms ease-out;
+  animation: dialog-in var(--motion-slow) ease-out;
   max-width: 100%;
   max-height: calc(100dvh - var(--modal-inset));
   display: flex;
@@ -864,10 +904,10 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
   margin-top: auto;
 }
 .account-manager-backdrop {
-  animation: account-backdrop-in 160ms ease-out;
+  animation: account-backdrop-in var(--motion-normal) ease-out;
 }
 .account-manager-backdrop.closing {
-  animation: account-backdrop-out 150ms ease-in forwards;
+  animation: account-backdrop-out var(--motion-normal) ease-in forwards;
   pointer-events: none;
 }
 .modal.account-manager-modal {
@@ -935,7 +975,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 }
 .modal-head h2 {
   line-height: 1.5;
-  font-size: 18px;
+  font-size: var(--font-dialog);
   overflow-wrap: anywhere;
 }
 @keyframes dialog-in {
@@ -951,7 +991,7 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 .modal-head p {
   color: var(--muted);
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   word-break: normal;
   overflow-wrap: anywhere;
 }
@@ -973,4 +1013,58 @@ input[data-pending="true"]:disabled:is([type="checkbox"], [type="radio"]) {
 .account-manager-modal[aria-busy="true"] .row-actions > .icon-button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+[cmdk-root] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+[cmdk-group-heading] {
+  font-size: var(--font-xs);
+  color: var(--muted);
+  padding: 11px 10px 5px;
+}
+.select-option [data-radix-select-item-indicator] {
+  flex-shrink: 0;
+}
+.context-menu button[data-highlighted] {
+  background: var(--surface-hover);
+  outline: none;
+}
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (max-width: 600px) {
+  .search input:not([type="checkbox"]),
+  .select-search input:not([type="checkbox"]):not([type="radio"]) {
+    font-size: 16px;
+  }
+  .tooltip {
+    max-width: calc(100vw - 24px);
+  }
+}
+@media (pointer: coarse) {
+  .button,
+  .icon-button,
+  .select-trigger,
+  .month-trigger,
+  .segmented-control > button,
+  .select-option,
+  .context-menu button {
+    min-height: 44px;
+  }
+  .icon-button {
+    min-width: 44px;
+  }
+  .check-row {
+    min-height: 44px;
+  }
 }

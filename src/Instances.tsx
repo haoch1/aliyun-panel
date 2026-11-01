@@ -1,12 +1,14 @@
+import { InventoryTable } from "./components/ui/InventoryTable";
 import { Input } from "./components/ui/Input";
 import { Checkbox } from "./components/ui/Checkbox";
 import { PageHeader } from "./components/ui/PageHeader";
-import { Table, TablePanel } from "./components/ui/Table";
+import { TablePanel } from "./components/ui/Table";
 import { Button } from "./components/ui/Button";
 import { regionName } from "../shared/regions";
 import { matchesInstanceSearch } from "../shared/instance-search";
 import { SearchInput } from "./components/ui/SearchInput";
 import { ActionMenu } from "./components/ui/ActionMenu";
+import { InventoryTrafficHeading } from "./components/ui/InventoryTrafficHeading";
 import { CopyText } from "./components/ui/CopyText";
 import { Cloud, Plus, Pencil, ShieldCheck, Clock3, Trash2 } from "lucide-react";
 import ConnectionDialog from "./Connections";
@@ -117,7 +119,7 @@ export default function Instances() {
     }
   };
   return (
-    <>
+    <div className="instance-inventory">
       <PageHeader
         title="Aliyun 实例"
         icon={Cloud}
@@ -197,6 +199,21 @@ export default function Instances() {
             <option value="Starting">启动中</option>
             <option value="Stopping">停止中</option>
           </Select>
+          <label className="inventory-select-all">
+            <Checkbox
+              aria-label="选择所有筛选结果"
+              indeterminate={
+                selected.length > 0 && selected.length < items.length
+              }
+              checked={
+                items.length > 0 && items.every((i) => chosen.includes(key(i)))
+              }
+              onChange={(e) =>
+                setChosen(e.target.checked ? items.map(key) : [])
+              }
+            />
+            <span>全选</span>
+          </label>
           {(search || status !== "all") && (
             <Button
               variant="ghost"
@@ -234,7 +251,7 @@ export default function Instances() {
           aria-label="实例列表"
           tabIndex={0}
         >
-          <Table aria-label="Aliyun 实例">
+          <InventoryTable aria-label="Aliyun 实例" className="inventory-table">
             <thead>
               <tr>
                 <th>
@@ -482,7 +499,7 @@ export default function Instances() {
                 </tr>
               ))}
             </tbody>
-          </Table>
+          </InventoryTable>
           {!items.length && (
             <Empty>
               {!p.accounts.length ? (
@@ -582,7 +599,7 @@ export default function Instances() {
           </div>
         </Modal>
       )}
-    </>
+    </div>
   );
 }
 function MonthlyTraffic({
@@ -613,6 +630,7 @@ function MonthlyTraffic({
         .join("\n")}
       onClick={onClick}
     >
+      <InventoryTrafficHeading />
       <Usage
         instance={instance}
         monitor={{ used, pending: d.initialLoading, error }}
@@ -649,15 +667,35 @@ export function Usage({
     >
       <div className="usage">
         <div>
-          {monitor
-            ? u?.used == null
-              ? monitor.error
-                ? "流量暂不可用"
-                : "等待流量采样"
-              : `${bytes(u.used)}${u.total != null && u.total > 0 ? " / " + bytes(u.total) : ""}`
-            : u?.quota === "none"
-              ? "无固定流量配额"
-              : `${bytes(u?.used)} / ${bytes(u?.total)}`}
+          {monitor ? (
+            u?.used == null ? (
+              monitor.error ? (
+                "流量暂不可用"
+              ) : (
+                "等待流量采样"
+              )
+            ) : (
+              <>
+                <span className="inventory-traffic-used">{bytes(u.used)}</span>
+                {u.total != null && u.total > 0 && (
+                  <span className="inventory-traffic-quota">
+                    {" "}
+                    / {bytes(u.total)}
+                  </span>
+                )}
+              </>
+            )
+          ) : u?.quota === "none" ? (
+            "无固定流量配额"
+          ) : (
+            <>
+              <span className="inventory-traffic-used">{bytes(u?.used)}</span>
+              <span className="inventory-traffic-quota">
+                {" "}
+                / {bytes(u?.total)}
+              </span>
+            </>
+          )}
         </div>
         {ratio != null && (
           <div className="usage-meter">

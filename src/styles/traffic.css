@@ -30,7 +30,7 @@
   border-radius: 7px;
   background: var(--warning-soft);
   color: var(--warning);
-  font-size: 13px;
+  font-size: var(--font-sm);
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
@@ -50,13 +50,13 @@
 }
 .traffic-overview > div > span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .traffic-overview strong {
   display: block;
   margin-top: 12px;
-  font-size: 26px;
-  font-weight: 600;
+  font-size: var(--font-stat);
+  font-weight: var(--weight-semibold);
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -72,7 +72,7 @@
 }
 .traffic-overview strong > .traffic-unit {
   font-size: 0.65em;
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   letter-spacing: 0;
   color: var(--muted);
 }
@@ -83,8 +83,8 @@
   list-style: none;
   padding: 4px 0;
   margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-md);
+  font-weight: var(--weight-medium);
 }
 .traffic-details > summary::-webkit-details-marker {
   display: none;
@@ -93,7 +93,7 @@
   width: 16px;
   height: 16px;
   transform: rotate(-90deg);
-  transition: transform 150ms;
+  transition: transform var(--motion-normal);
 }
 .traffic-details[open] > summary > svg {
   transform: rotate(0);
@@ -115,7 +115,7 @@
 }
 .traffic-range {
   margin: 14px 0 22px;
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -135,12 +135,12 @@
 }
 .daily-chart-heading h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-section);
+  font-weight: var(--weight-semibold);
 }
 .daily-chart-heading > span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .daily-chart-scroll {
   overflow-x: auto;
@@ -203,11 +203,11 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .daily-bar-date {
   display: block;
-  font-size: 12px;
+  font-size: var(--font-xs);
   line-height: 16px;
   white-space: nowrap;
 }
@@ -216,7 +216,7 @@
   display: grid;
   place-items: center;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .daily-chart-tooltip {
   position: fixed;
@@ -231,11 +231,11 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: var(--shadow);
-  font-size: 13px;
+  font-size: var(--font-sm);
   font-variant-numeric: tabular-nums;
 }
 .daily-chart-tooltip strong {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 .daily-chart-tooltip dl {
   margin: 8px 0 0;
@@ -278,7 +278,7 @@
     height: 180px;
   }
   .daily-bar-date {
-    font-size: 13px;
+    font-size: var(--font-sm);
   }
 }
 @media (max-width: 420px) {
@@ -291,12 +291,12 @@
   }
   .traffic-periods .button {
     padding: 8px;
-    font-size: 12px;
+    font-size: var(--font-xs);
     min-height: 36px;
   }
   .traffic-toolbar > .button {
     padding: 8px 10px;
-    font-size: 12px;
+    font-size: var(--font-xs);
     min-height: 36px;
   }
   .traffic-overview > div,
@@ -304,13 +304,13 @@
     padding: 14px 8px;
   }
   .traffic-overview > div > span {
-    font-size: 12px;
+    font-size: var(--font-xs);
   }
   .traffic-overview strong {
     font-size: 17px;
   }
   .traffic-range {
-    font-size: 13px;
+    font-size: var(--font-sm);
     line-height: 1.7;
   }
 }
@@ -322,7 +322,7 @@
   .traffic-daily-table th,
   .traffic-daily-table td {
     padding: 12px 8px;
-    font-size: 12px;
+    font-size: var(--font-xs);
     white-space: nowrap;
   }
 }

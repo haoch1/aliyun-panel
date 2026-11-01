@@ -1,21 +1,19 @@
+import * as Primitive from "@radix-ui/react-select";
+import * as Popover from "@radix-ui/react-popover";
+import { Command } from "cmdk";
 import { Check, ChevronDown, Search } from "lucide-react";
-import { Input } from "./Input";
-import type {
-  ChangeEvent,
-  KeyboardEvent,
-  ReactNode,
-  SelectHTMLAttributes,
-} from "react";
 import {
   Children,
+  Fragment,
   isValidElement,
   useEffect,
-  useId,
-  useLayoutEffect,
   useRef,
   useState,
+  type ChangeEvent,
+  type ReactNode,
+  type SelectHTMLAttributes,
 } from "react";
-import { createPortal } from "react-dom";
+import { Input } from "./Input";
 
 type Option = {
   value: string;
@@ -42,7 +40,11 @@ function plain(node: ReactNode): string {
     ? plain(node.props.children)
     : "";
 }
-function optionsOf(children: ReactNode, group?: string): Option[] {
+function optionsOf(
+  children: ReactNode,
+  group?: string,
+  disabled = false,
+): Option[] {
   const result: Option[] = [];
   Children.forEach(children, (child) => {
     if (
@@ -54,19 +56,27 @@ function optionsOf(children: ReactNode, group?: string): Option[] {
       }>(child)
     )
       return;
-    if (child.type === "optgroup")
-      result.push(...optionsOf(child.props.children, child.props.label));
+    if (child.type === "optgroup" || child.type === Fragment)
+      result.push(
+        ...optionsOf(
+          child.props.children,
+          child.props.label || group,
+          disabled || !!child.props.disabled,
+        ),
+      );
     else if (child.type === "option")
       result.push({
         value: String(child.props.value ?? plain(child.props.children)),
         label: child.props.children,
         text: plain(child.props.children),
-        disabled: !!child.props.disabled,
+        disabled: disabled || !!child.props.disabled,
         group,
       });
   });
   return result;
 }
+// Prefix values to support native <option value=""> without Radix's reserved empty value.
+const keyOf = (value: string) => "option:" + value;
 export default function Select({
   children,
   value,
@@ -89,44 +99,23 @@ export default function Select({
   ...props
 }: Props) {
   const disabled = unavailable || pending;
-  const generated = useId();
-  const listId = generated + "-list";
-  const root = useRef<HTMLDivElement>(null),
-    trigger = useRef<HTMLButtonElement>(null),
-    menu = useRef<HTMLDivElement>(null),
-    list = useRef<HTMLDivElement>(null),
-    queryInput = useRef<HTMLInputElement>(null),
-    native = useRef<HTMLSelectElement>(null);
-  const [open, setOpen] = useState(false),
-    [active, setActive] = useState(0),
-    [internal, setInternal] = useState(String(defaultValue ?? ""));
-  const [position, setPosition] = useState<{
-    left: number;
-    top?: number;
-    bottom?: number;
-    width: number;
-    maxHeight: number;
-  }>({
-    left: 0,
-    top: 0,
-    width: 0,
-    maxHeight: 300,
-  });
-  const search = useRef({ text: "", at: 0 });
+  const trigger = useRef<HTMLButtonElement>(null);
+  const native = useRef<HTMLSelectElement>(null);
+  const queryInput = useRef<HTMLInputElement>(null);
+  const [internal, setInternal] = useState(String(defaultValue ?? ""));
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [active, setActive] = useState("");
   const options = optionsOf(children);
   const current = String(value ?? internal);
-  const selected = options.find((o) => o.value === current) || options[0];
-  const visible = options
-    .map((o, index) => ({ ...o, index }))
-    .filter(
-      (o) =>
-        !searchable ||
-        o.text.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
-    );
-  const available = visible.filter((o) => !o.disabled);
-  const change = (option: Option) => {
-    if (option.disabled || disabled) return;
+  const selected =
+    options.find((option) => option.value === current) || options[0];
+  const visible = options.filter((option) =>
+    option.text.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  );
+  function change(next: string) {
+    const option = options.find((option) => keyOf(option.value) === next);
+    if (!option || option.disabled || disabled) return;
     setInternal(option.value);
     if (native.current) {
       native.current.value = option.value;
@@ -136,334 +125,217 @@ export default function Select({
       } as ChangeEvent<HTMLSelectElement>);
     }
     setOpen(false);
-    trigger.current?.focus({ preventScroll: true });
-  };
-  function show(initial?: number) {
-    if (disabled) return;
-    setQuery("");
-    const selectedIndex = options.findIndex(
-      (o) => o.value === current && !o.disabled,
-    );
-    setActive(
-      initial ??
-        (openFromStart
-          ? available[0]?.index || 0
-          : selectedIndex >= 0
-            ? selectedIndex
-            : available[0]?.index || 0),
-    );
-    setOpen(true);
   }
-  useLayoutEffect(() => {
-    if (open && searchable && position.width)
-      queryInput.current?.focus({ preventScroll: true });
-  }, [open, searchable, position.width]);
-  useLayoutEffect(() => {
-    if (!open) return;
-    const update = () => {
-      const rect = trigger.current?.getBoundingClientRect();
-      if (!rect) return;
-      if (rect.bottom <= 0 || rect.top >= innerHeight) {
-        setOpen(false);
-        return;
-      }
-      const below = Math.max(0, innerHeight - rect.bottom - 12),
-        above = Math.max(0, rect.top - 12);
-      // Measure the rendered items, including wrapped labels and menu borders.
-      // Re-measure after assigning the final width so short lists do not scroll.
-      const style = menu.current && getComputedStyle(menu.current);
-      const chrome = style
-        ? parseFloat(style.paddingTop) +
-          parseFloat(style.paddingBottom) +
-          parseFloat(style.borderTopWidth) +
-          parseFloat(style.borderBottomWidth)
-        : 14;
-      const contentHeight =
-        (list.current?.scrollHeight || visible.length * 36) +
-        chrome +
-        (searchable ? 50 : 0);
-      const height = Math.min(320, Math.max(below, above), contentHeight);
-      const upward = placement === "auto" && below < height && above > below;
-      const viewportWidth = document.documentElement.clientWidth || innerWidth;
-      const width = Math.min(
-        Math.max(rect.width, menuMinWidth),
-        viewportWidth - 16,
-      );
-      setPosition({
-        left: Math.max(8, Math.min(rect.left, viewportWidth - width - 8)),
-        top: upward ? undefined : rect.bottom + 5,
-        bottom: upward ? innerHeight - rect.top + 5 : undefined,
-        width,
-        maxHeight: upward ? Math.min(height, above) : Math.min(height, below),
-      });
-    };
-    update();
-    window.addEventListener("resize", update);
-    const onScroll = (event: Event) => {
-      if (!menu.current?.contains(event.target as Node)) update();
-    };
-    document.addEventListener("scroll", onScroll, true);
-    return () => {
-      window.removeEventListener("resize", update);
-      document.removeEventListener("scroll", onScroll, true);
-    };
-  }, [
-    open,
-    options.length,
-    placement,
-    menuMinWidth,
-    position.width,
-    query,
-    searchable,
-  ]);
+  function changeOpen(next: boolean) {
+    setOpen(next && !disabled);
+    if (next) {
+      setQuery("");
+      const initial =
+        !openFromStart && selected && !selected.disabled
+          ? selected
+          : options.find((option) => !option.disabled);
+      setActive(initial ? keyOf(initial.value) : "");
+    }
+  }
   useEffect(() => {
-    if (!open) return;
-    const outside = (event: PointerEvent) => {
-      if (
-        !root.current?.contains(event.target as Node) &&
-        !menu.current?.contains(event.target as Node)
-      )
-        setOpen(false);
-    };
-    document.addEventListener("pointerdown", outside);
-    return () => document.removeEventListener("pointerdown", outside);
-  }, [open]);
-  useLayoutEffect(() => {
-    if (!open || !position.width) return;
-    const option = list.current?.querySelector<HTMLElement>(
-      '[data-active="true"]',
-    );
-    if (option && list.current) {
-      const top =
-          option.getBoundingClientRect().top -
-          list.current.getBoundingClientRect().top +
-          list.current.scrollTop,
-        bottom = top + option.offsetHeight;
-      if (active === 0) list.current.scrollTop = 0;
-      else if (top < list.current.scrollTop) list.current.scrollTop = top;
-      else if (bottom > list.current.scrollTop + list.current.clientHeight)
-        list.current.scrollTop = bottom - list.current.clientHeight;
-    }
-  }, [open, active, position.width, position.maxHeight]);
-  function keyboard(event: KeyboardEvent<HTMLElement>) {
-    if (event.nativeEvent.isComposing) return;
-    if (event.key === "Escape" && open) {
-      event.preventDefault();
-      event.stopPropagation();
-      setOpen(false);
-      trigger.current?.focus({ preventScroll: true });
-      return;
-    }
-    if (event.key === "Tab") {
-      if (open && searchable) trigger.current?.focus({ preventScroll: true });
-      setOpen(false);
-      return;
-    }
-    if (
-      [
-        "ArrowDown",
-        "ArrowUp",
-        "Enter",
-        ...(!searchable || event.currentTarget === trigger.current
-          ? ["Home", "End", " "]
-          : []),
-      ].includes(event.key)
-    ) {
-      event.preventDefault();
-      if (!open) {
-        show(
-          event.key === "Home"
-            ? available[0]?.index
-            : event.key === "End"
-              ? available.at(-1)?.index
-              : undefined,
-        );
-        return;
-      }
-      if (event.key === "Enter" || event.key === " ") {
-        const option = available.find((o) => o.index === active);
-        if (option) change(option);
-        return;
-      }
-      const index = available.findIndex((o) => o.index === active);
-      const next =
-        event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? available.length - 1
-            : Math.max(
-                0,
-                Math.min(
-                  available.length - 1,
-                  index + (event.key === "ArrowDown" ? 1 : -1),
-                ),
-              );
-      setActive(available[next]?.index || 0);
-    } else if (!searchable && event.key.length === 1) {
-      const now = Date.now();
-      search.current = {
-        text:
-          (now - search.current.at < 600 ? search.current.text : "") +
-          event.key.toLowerCase(),
-        at: now,
-      };
-      const option = available.find((o) =>
-        o.text.toLowerCase().startsWith(search.current.text),
-      );
-      if (option) {
-        if (!open) setOpen(true);
-        setActive(option.index);
-      }
-    }
-  }
-  let priorGroup: string | undefined;
-  return (
-    <div ref={root} className={"custom-select " + className}>
-      <button
-        ref={trigger}
-        id={id}
-        type="button"
-        className="select-trigger"
-        role={searchable ? undefined : "combobox"}
-        aria-label={props["aria-label"]}
-        aria-labelledby={props["aria-labelledby"]}
-        aria-describedby={props["aria-describedby"]}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        aria-controls={open ? listId : undefined}
-        aria-activedescendant={
-          open && !searchable ? listId + "-" + active : undefined
+    if (disabled) setOpen(false);
+  }, [disabled]);
+  const triggerElement = (
+    <button
+      ref={trigger}
+      id={id}
+      type="button"
+      className="select-trigger"
+      disabled={disabled}
+      aria-label={props["aria-label"]}
+      aria-labelledby={props["aria-labelledby"]}
+      aria-describedby={props["aria-describedby"]}
+      aria-invalid={props["aria-invalid"]}
+      aria-required={required}
+      data-pending={(pending && !unavailable) || undefined}
+      title={props.title}
+      onKeyDown={(event) => {
+        if (
+          searchable &&
+          !event.nativeEvent.isComposing &&
+          ["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)
+        ) {
+          event.preventDefault();
+          changeOpen(true);
         }
-        aria-required={required}
-        disabled={disabled}
-        data-pending={(pending && !unavailable) || undefined}
-        title={props.title || selected?.text}
-        onClick={() => (open ? setOpen(false) : show())}
-        onKeyDown={keyboard}
-      >
-        {icon && <span className="select-icon">{icon}</span>}
-        <span className="select-value">
-          {(selected && renderValue?.(selected.value)) ||
-            selected?.label ||
-            "请选择"}
-        </span>
-        <ChevronDown size={14} className="select-arrow" />
-      </button>
-      <select
-        ref={native}
-        value={current}
-        name={name}
-        required={required}
-        disabled={disabled}
-        aria-hidden="true"
-        tabIndex={-1}
-        className="select-native"
-        onChange={onChange}
-        onInvalid={(e) => {
-          e.preventDefault();
-          show();
-          trigger.current?.focus();
-        }}
-      >
-        {children}
-      </select>
-      {open &&
-        createPortal(
-          <div
-            ref={menu}
-            className={
-              "select-menu " +
-              (searchable ? "searchable-select " : "") +
-              menuClassName
-            }
-            style={{
-              ...position,
-              visibility: position.width ? "visible" : "hidden",
-            }}
-          >
-            {searchable && (
-              <div className="select-search">
-                <Search size={15} />
-                <Input
-                  ref={queryInput}
-                  role="combobox"
-                  aria-label={"搜索" + (props["aria-label"] || "选项")}
-                  aria-expanded="true"
-                  aria-controls={listId}
-                  aria-autocomplete="list"
-                  aria-activedescendant={
-                    available.some((o) => o.index === active)
-                      ? listId + "-" + active
-                      : undefined
-                  }
-                  value={query}
-                  onKeyDown={keyboard}
-                  onChange={(e) => {
-                    const q = e.target.value;
-                    setQuery(q);
-                    setActive(
-                      options.findIndex(
-                        (o) =>
-                          !o.disabled &&
-                          o.text
-                            .toLocaleLowerCase()
-                            .includes(q.trim().toLocaleLowerCase()),
-                      ),
-                    );
-                  }}
-                />
-              </div>
-            )}
-            <div
-              ref={list}
-              id={listId}
-              role="listbox"
-              aria-label={props["aria-label"] || "选项"}
-              className="select-options"
-              style={{
-                maxHeight: Math.max(
-                  40,
-                  position.maxHeight - (searchable ? 62 : 14),
-                ),
+      }}
+    >
+      {icon && <span className="select-icon">{icon}</span>}
+      <span className="select-value">
+        {selected
+          ? (renderValue?.(selected.value) ?? selected.label)
+          : "请选择"}
+      </span>
+      <ChevronDown size={14} className="select-arrow" />
+    </button>
+  );
+  const nativeElement = (
+    <select
+      ref={native}
+      id={id ? id + "-native" : undefined}
+      value={current}
+      name={name}
+      required={required}
+      disabled={disabled}
+      aria-hidden="true"
+      tabIndex={-1}
+      className="select-native"
+      autoComplete="off"
+      data-1p-ignore="true"
+      data-lpignore="true"
+      data-bwignore="true"
+      data-form-type="other"
+      onChange={onChange}
+      onInvalid={(event) => {
+        event.preventDefault();
+        changeOpen(true);
+        trigger.current?.focus();
+      }}
+    >
+      {children}
+    </select>
+  );
+  const contentStyle = {
+    "--select-min-width": menuMinWidth + "px",
+  } as React.CSSProperties;
+  if (searchable)
+    return (
+      <div className={"custom-select " + className}>
+        <Popover.Root open={open} onOpenChange={changeOpen}>
+          <Popover.Trigger asChild>{triggerElement}</Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content
+              className={"select-menu searchable-select " + menuClassName}
+              style={contentStyle}
+              sideOffset={5}
+              collisionPadding={8}
+              avoidCollisions={placement === "auto"}
+              aria-label={props["aria-label"] || "选择选项"}
+              onOpenAutoFocus={(event) => {
+                event.preventDefault();
+                queryInput.current?.focus({ preventScroll: true });
               }}
             >
-              {visible.map((option) => {
-                const index = option.index;
-                const heading = option.group !== priorGroup && option.group;
-                priorGroup = option.group;
-                return (
-                  <div key={option.value + index}>
-                    {heading && <div className="select-group">{heading}</div>}
-                    <div
-                      id={listId + "-" + index}
-                      role="option"
-                      aria-selected={option.value === current}
-                      aria-disabled={option.disabled || undefined}
-                      data-active={index === active}
-                      className={
-                        "select-option " + (option.disabled ? "disabled" : "")
-                      }
-                      onPointerMove={() => !option.disabled && setActive(index)}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => change(option)}
-                    >
-                      <span>
-                        {renderOption?.(option.value) || option.label}
-                      </span>
-                      {option.value === current && <Check size={14} />}
-                    </div>
-                  </div>
-                );
-              })}
-              {!visible.length && (
-                <div className="select-empty" role="status">
-                  没有匹配的选项
+              <Command
+                label={props["aria-label"] || "选择选项"}
+                shouldFilter={false}
+                loop
+                value={active}
+                onValueChange={setActive}
+                onKeyDownCapture={(event) => {
+                  if (event.nativeEvent.isComposing) event.stopPropagation();
+                }}
+              >
+                <div className="select-search">
+                  <Search size={15} />
+                  <Command.Input asChild value={query} onValueChange={setQuery}>
+                    <Input
+                      ref={queryInput}
+                      aria-label={"搜索" + (props["aria-label"] || "选项")}
+                    />
+                  </Command.Input>
                 </div>
+                <Command.List className="select-options">
+                  <Command.Empty className="select-empty">
+                    没有匹配的选项
+                  </Command.Empty>
+                  {Array.from(
+                    new Set(visible.map((option) => option.group)),
+                  ).map((group) => (
+                    <Command.Group key={group || "ungrouped"} heading={group}>
+                      {visible
+                        .filter((option) => option.group === group)
+                        .map((option) => (
+                          <Command.Item
+                            key={option.value}
+                            value={keyOf(option.value)}
+                            disabled={option.disabled}
+                            onSelect={change}
+                            data-current={option.value === current}
+                            className={
+                              "select-option " +
+                              (option.disabled ? "disabled" : "")
+                            }
+                          >
+                            <span>
+                              {renderOption?.(option.value) ?? option.label}
+                            </span>
+                            {option.value === current && <Check size={14} />}
+                          </Command.Item>
+                        ))}
+                    </Command.Group>
+                  ))}
+                </Command.List>
+              </Command>
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+        {nativeElement}
+      </div>
+    );
+  return (
+    <div className={"custom-select " + className}>
+      <Primitive.Root
+        value={selected ? keyOf(selected.value) : ""}
+        onValueChange={change}
+        disabled={disabled}
+        open={open}
+        onOpenChange={changeOpen}
+      >
+        <Primitive.Trigger asChild>{triggerElement}</Primitive.Trigger>
+        <Primitive.Portal>
+          <Primitive.Content
+            className={"select-menu " + menuClassName}
+            position="popper"
+            style={contentStyle}
+            sideOffset={5}
+            collisionPadding={8}
+            avoidCollisions={placement === "auto"}
+          >
+            <Primitive.Viewport className="select-options">
+              {Array.from(new Set(options.map((option) => option.group))).map(
+                (group) => (
+                  <Primitive.Group key={group || "ungrouped"}>
+                    {group && (
+                      <Primitive.Label className="select-group">
+                        {group}
+                      </Primitive.Label>
+                    )}
+                    {options
+                      .filter((option) => option.group === group)
+                      .map((option) => (
+                        <Primitive.Item
+                          key={option.value}
+                          value={keyOf(option.value)}
+                          disabled={option.disabled}
+                          textValue={option.text}
+                          className={
+                            "select-option " +
+                            (option.disabled ? "disabled" : "")
+                          }
+                          data-current={option.value === current}
+                        >
+                          <Primitive.ItemText>
+                            {renderOption?.(option.value) ?? option.label}
+                          </Primitive.ItemText>
+                          <Primitive.ItemIndicator>
+                            <Check size={14} />
+                          </Primitive.ItemIndicator>
+                        </Primitive.Item>
+                      ))}
+                  </Primitive.Group>
+                ),
               )}
-            </div>
-          </div>,
-          document.body,
-        )}
+            </Primitive.Viewport>
+          </Primitive.Content>
+        </Primitive.Portal>
+      </Primitive.Root>
+      {nativeElement}
     </div>
   );
 }

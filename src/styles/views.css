@@ -9,7 +9,7 @@
   flex-wrap: wrap;
   font-family:
     "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
-  font-size: 14px;
+  font-size: var(--font-md);
   line-height: 24px;
 }
 .instance-counts > span {
@@ -28,7 +28,7 @@
 }
 .instance-counts strong {
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   font-variant-numeric: lining-nums tabular-nums;
 }
 .selection-actions {
@@ -89,7 +89,7 @@
 }
 .instances-table td[data-label="实例"] strong {
   display: block;
-  font-size: 14px;
+  font-size: var(--font-md);
   overflow-wrap: anywhere;
 }
 .instances-table .mono {
@@ -108,7 +108,7 @@
   align-items: center;
   gap: 6px;
   padding: 3px 8px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   line-height: 20px;
   border-radius: 20px;
   background: var(--subtle);
@@ -146,7 +146,7 @@
 }
 .usage {
   font-variant-numeric: tabular-nums;
-  font-size: 13px;
+  font-size: var(--font-sm);
   white-space: nowrap;
 }
 .usage-meter {
@@ -160,7 +160,7 @@
   margin: 0;
 }
 .usage small {
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
 }
 .progress {
@@ -190,7 +190,7 @@
   gap: 7px;
 }
 .keep-column .row > span {
-  font-size: 13px;
+  font-size: var(--font-sm);
   white-space: nowrap;
 }
 .keep-reason {
@@ -205,7 +205,7 @@
   padding: 4px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--font-xs);
   line-height: 20px;
   white-space: nowrap;
 }
@@ -224,8 +224,8 @@
 }
 .fee-trigger {
   padding: 0;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -234,7 +234,7 @@
   text-underline-offset: 4px;
 }
 .instance-menu-button {
-  font-size: 13px;
+  font-size: var(--font-sm);
   min-height: 32px;
   padding: 5px 10px;
   gap: 6px;
@@ -280,7 +280,7 @@
   text-align: right;
 }
 .billing-table .amount-cell {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   white-space: nowrap;
 }
 .billing-table td:first-child {
@@ -288,7 +288,7 @@
 }
 .billing-error {
   color: var(--danger);
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .billing-error summary {
   text-align: right;
@@ -299,7 +299,7 @@
 }
 .billing-refresh {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-xs);
   margin-top: 4px;
 }
 /* Settings */
@@ -344,8 +344,8 @@
   gap: 12px;
   margin-bottom: 14px;
   padding: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
 }
 .notification-selection-actions {
   display: flex;
@@ -358,7 +358,7 @@
   gap: 6px 16px;
 }
 .notification-type-grid .check-row {
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .notification-report-settings {
   border-bottom: 1px solid var(--border);
@@ -375,7 +375,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--subtle);
-  font-size: 14px;
+  font-size: var(--font-md);
   line-height: 1.8;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -479,7 +479,7 @@
   min-width: 0;
 }
 .log-stream-copy p {
-  font-size: 14px;
+  font-size: var(--font-md);
   line-height: 22px;
   overflow-wrap: anywhere;
 }
@@ -490,7 +490,7 @@
   gap: 12px;
   margin-top: 10px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 .log-severity.warning {
   color: var(--warning);
@@ -508,7 +508,7 @@
 .log-resource-table {
   table-layout: fixed;
   min-width: 580px;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .log-resource-table col {
   width: calc((100% - 112px) / 4);
@@ -522,7 +522,7 @@
   background: transparent;
   border: 0;
   height: auto;
-  font-size: 13px;
+  font-size: var(--font-sm);
   white-space: normal;
   text-align: left;
 }
@@ -532,7 +532,7 @@
 }
 .log-resource-table th[scope="row"] {
   color: var(--text);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 .log-resource-table tbody tr + tr {
   border-top: 1px solid var(--border);
@@ -562,8 +562,8 @@
   display: block;
   color: var(--muted);
   margin-top: 4px;
-  font-size: 12px;
-  font-weight: 400;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-regular);
 }
 .log-resource-table .log-resource-error td {
   color: var(--danger);
@@ -573,7 +573,7 @@
 .log-event-summary {
   margin-top: 8px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-sm);
   line-height: 22px;
   overflow-wrap: anywhere;
 }
@@ -581,7 +581,7 @@
   color: var(--danger);
 }
 .log-resource-more {
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
   margin-top: 8px;
 }
@@ -597,13 +597,13 @@
 .log-decision {
   margin-bottom: 16px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .badge {
   display: inline-flex;
   align-items: center;
   line-height: 20px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   white-space: nowrap;
 }
 .badge.ok {
@@ -628,13 +628,13 @@
   min-width: 0;
 }
 .log-metadata dt {
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
   margin-bottom: 4px;
 }
 .log-metadata dd {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-sm);
   overflow-wrap: anywhere;
 }
 .log-metadata > div:has(.log-content) {
@@ -644,7 +644,7 @@
   border-top: 1px solid var(--border);
   padding-top: 14px;
   margin-top: 18px;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .log-technical > summary {
   color: var(--muted);
@@ -701,7 +701,7 @@
 }
 .discovery-warnings {
   color: var(--warning);
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .discovery-warnings ul {
   margin: 10px 0 0;
@@ -715,7 +715,7 @@
   padding: 14px;
   background: var(--subtle);
   border-radius: 6px;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .log-retention-select {
   max-width: 260px;
@@ -727,11 +727,13 @@
 .auth-page {
   min-height: 100dvh;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   padding: 24px;
 }
 .auth-card {
-  width: 420px;
+  width: min(420px, 100%);
+  min-width: 0;
   max-width: 100%;
   padding: 32px;
   border: 1px solid var(--border);
@@ -748,18 +750,18 @@
 }
 .auth-brand strong {
   font-size: 17px;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: -0.4px;
 }
 .auth-card h1 {
-  font-size: 22px;
-  font-weight: 650;
+  font-size: var(--font-title);
+  font-weight: var(--weight-semibold);
   line-height: 30px;
 }
 .auth-card > p {
   color: var(--muted);
   margin-top: -12px;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }
 .auth-card form {
   display: grid;
@@ -776,16 +778,18 @@
   justify-content: center;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--font-sm);
   padding: 12px 0 0;
   border-top: 1px solid var(--border);
 }
 .auth-foot {
   display: flex;
+  flex-wrap: wrap;
+  text-align: center;
   gap: 6px;
   justify-content: center;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--font-xs);
   color: var(--muted);
 }
 @media (max-width: 1200px) {
@@ -802,80 +806,15 @@
   }
   .instance-counts {
     gap: 18px;
-    font-size: 13px;
+    font-size: var(--font-sm);
   }
   .instance-counts > span {
-    font-size: 13px;
+    font-size: var(--font-sm);
     gap: 6px;
   }
   .selection-actions {
     margin: 0;
     width: 100%;
-  }
-  .instances-table table,
-  .instances-table tbody {
-    display: block;
-    min-width: 0;
-  }
-  .instances-table thead {
-    display: none;
-  }
-  .instances-table tr {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 16px;
-    padding: 20px 16px;
-    position: relative;
-    border-top: 1px solid var(--border);
-  }
-  .instances-table tr:first-child {
-    border: 0;
-  }
-  .instances-table td {
-    display: block;
-    padding: 0;
-    border: 0;
-    min-width: 0;
-  }
-  .instances-table td:first-child {
-    position: absolute;
-    right: 16px;
-    top: 16px;
-    width: auto;
-  }
-  .instances-table td:nth-child(2) {
-    grid-column: 1/-1;
-    padding-right: 32px;
-  }
-  .instances-table td:last-child {
-    grid-column: 1/-1;
-    border: 0;
-    border-top: 1px solid var(--border);
-    padding-top: 16px;
-    text-align: left;
-  }
-  .instances-table td::before {
-    content: attr(data-label);
-    display: block;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  .instances-table td:first-child::before,
-  .instances-table td:nth-child(2)::before,
-  .instances-table td:last-child::before {
-    content: none;
-  }
-  .instances-table .usage-trigger {
-    max-width: 100%;
-  }
-  .instances-table .usage {
-    font-size: 12px;
-  }
-  .instances-table .mono,
-  .instances-table .copy-text > span {
-    white-space: normal;
-    overflow-wrap: anywhere;
   }
   .settings-page,
   .settings-overview {
@@ -886,7 +825,7 @@
     gap: 4px 12px;
   }
   .notification-type-grid .check-row {
-    font-size: 12px;
+    font-size: var(--font-xs);
     gap: 7px;
   }
   .notification-preview .custom-select {
@@ -894,7 +833,7 @@
   }
   .notification-example {
     padding: 16px;
-    font-size: 13px;
+    font-size: var(--font-sm);
   }
   .log-settings-row .custom-select {
     max-width: none;
@@ -905,7 +844,7 @@
     grid-template-columns: 5px minmax(0, 1fr) 28px;
   }
   .log-stream-copy p {
-    font-size: 13px;
+    font-size: var(--font-sm);
   }
   .log-line-meta {
     gap: 6px 12px;
@@ -945,7 +884,7 @@
   .log-resource-table td[data-label]::before {
     content: attr(data-label);
     display: block;
-    font-size: 12px;
+    font-size: var(--font-xs);
     line-height: 20px;
     color: var(--muted);
     margin-bottom: 4px;
@@ -981,7 +920,7 @@
     display: inline-block;
     width: 64px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: var(--font-xs);
   }
   .notification-table td .subline {
     margin-left: 64px;
@@ -1025,21 +964,21 @@
     gap: 12px;
     border: 0;
     padding: 0;
-    font-size: 13px;
+    font-size: var(--font-sm);
     text-align: right;
   }
   .billing-table td::before,
   .discovery-table td::before {
     content: attr(data-label);
     color: var(--muted);
-    font-size: 12px;
-    font-weight: 400;
+    font-size: var(--font-xs);
+    font-weight: var(--weight-regular);
     text-align: left;
     flex-shrink: 0;
   }
   .billing-table td:first-child {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: var(--font-md);
+    font-weight: var(--weight-semibold);
     text-align: left;
     padding-bottom: 8px;
   }
@@ -1087,7 +1026,7 @@
     width: 140px;
   }
   .billing-toolbar .button {
-    font-size: 13px;
+    font-size: var(--font-sm);
     padding: 8px 10px;
   }
   .month-filter {

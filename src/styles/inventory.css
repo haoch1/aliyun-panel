@@ -1,0 +1,266 @@
+/* Shared instance inventory: traffic first, on every narrow viewport. */
+.inventory-select-all {
+  display: none;
+}
+.inventory-traffic-heading {
+  display: none;
+}
+@media (min-width: 901px) {
+  .inventory-table td[data-label="本月流量"] .usage-trigger,
+  .inventory-table td[data-label="本月流量"] .traffic-progress.compact {
+    max-width: 240px;
+    width: 100%;
+  }
+  .inventory-table td[data-label="本月流量"] .inventory-traffic-used,
+  .inventory-table
+    td[data-label="本月流量"]
+    .traffic-progress-heading
+    > span:first-child {
+    font-weight: var(--weight-semibold);
+    font-size: var(--font-md);
+  }
+}
+@media (max-width: 900px) {
+  .instance-inventory {
+    min-width: 0;
+  }
+  .instance-inventory .page-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .instance-inventory .page-heading > :first-child {
+    flex: 1 1 100%;
+  }
+  .instance-inventory .page-actions,
+  .instance-inventory .instances-heading > .row-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .instance-inventory .page-actions .button,
+  .instance-inventory .instances-heading > .row-actions .button {
+    width: 100%;
+    min-height: 44px;
+    font-size: var(--font-sm);
+  }
+  .instance-inventory .instances-overview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .instance-inventory .instance-counts {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-family: inherit;
+    font-size: var(--font-sm);
+  }
+  .instance-inventory .instance-counts > span {
+    gap: 5px;
+    font-size: inherit;
+  }
+  .instance-inventory .instance-times {
+    width: 100%;
+    font-size: var(--font-xs);
+  }
+  .instance-inventory .table-panel {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+  .instance-inventory .instances-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 12px;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    margin-bottom: 12px;
+  }
+  .instance-inventory .instances-toolbar > .toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+  .instance-inventory .instances-toolbar > .toolbar-actions:empty {
+    display: none;
+  }
+  .instance-inventory .instances-toolbar .search {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .instance-inventory .instances-toolbar .custom-select {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .instance-inventory .inventory-select-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 10px;
+    min-height: 44px;
+    cursor: pointer;
+    font-size: var(--font-sm);
+    color: var(--muted);
+  }
+  .instance-inventory .selection-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+  .instance-inventory .table-wrap {
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+}
+.inventory-cards {
+  display: grid;
+  gap: 12px;
+}
+.inventory-cards [data-slot="card"][data-selected] {
+  outline: 1px solid var(--focus);
+}
+.inventory-cards [data-slot="card-header"] {
+  min-width: 0;
+}
+.inventory-cards [data-slot="card-title"] {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.inventory-cards [data-slot="card-title"] strong,
+.inventory-cards .instance-name {
+  font-size: var(--font-md);
+  font-weight: var(--weight-medium);
+  line-height: 22px;
+}
+.inventory-cards .subline {
+  color: var(--muted);
+  font-size: var(--font-xs);
+  margin-top: 3px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.inventory-card-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.inventory-card-actions .selection-box {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.inventory-card-traffic {
+  min-width: 0;
+}
+.inventory-card-traffic .usage-trigger,
+.inventory-card-traffic .traffic-link,
+.inventory-card-traffic .traffic-progress.compact {
+  display: block;
+  width: 100%;
+  max-width: none;
+  text-align: left;
+  padding: 0;
+}
+.inventory-card-traffic .inventory-traffic-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: var(--font-xs);
+  line-height: 20px;
+}
+.inventory-traffic-heading > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.inventory-card-traffic .usage,
+.inventory-card-traffic .traffic-progress.compact .traffic-progress-heading {
+  font-size: var(--font-md);
+  line-height: 22px;
+  font-weight: var(--weight-medium);
+}
+.inventory-card-traffic .inventory-traffic-quota {
+  margin-left: 5px;
+  color: var(--muted);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-regular);
+}
+.inventory-card-traffic .traffic-progress-track,
+.inventory-card-traffic .progress {
+  height: 4px;
+  margin-top: 6px;
+  background: var(--border);
+}
+.inventory-card-traffic .traffic-progress-percent {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-regular);
+}
+.inventory-card-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+.inventory-card-fields > div {
+  min-width: 0;
+}
+.inventory-card-fields > div[data-field="公网 IP"],
+.inventory-card-fields > div[data-field="网络"] {
+  grid-column: 1 / -1;
+}
+.inventory-card-fields dt {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: var(--font-xs);
+  line-height: 20px;
+}
+.inventory-card-fields dd {
+  margin: 0;
+  font-size: var(--font-sm);
+  overflow-wrap: anywhere;
+}
+.inventory-card-fields [data-field="网络"] dt {
+  display: none;
+}
+.inventory-card-fields .instance-addresses {
+  min-width: 0;
+}
+.inventory-card-fields .instance-addresses .copy-text {
+  min-width: 0;
+  flex-shrink: 1;
+}
+.inventory-card-fields .copy-text span,
+.inventory-card-fields .mono {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.inventory-card-fields .rule-chip {
+  max-width: 100%;
+  white-space: normal;
+}
+.inventory-card-fields .instance-region span {
+  display: inline;
+  white-space: normal;
+}
+.inventory-card-placeholder {
+  min-height: 260px;
+  background: var(--subtle);
+  border-radius: var(--radius-control);
+}

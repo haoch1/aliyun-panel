@@ -84,7 +84,46 @@
   --font-title: 24px;
   --font-stat: 26px;
   --radius-control: 6px;
-  --radius-panel: 8px;
+  --radius-panel: 10px;
   --control-height: 40px;
   --control-compact: 34px;
+}
+
+:root {
+  --control-hover: var(--focus);
+  --scroll-thumb: #c1c1c1;
+  --danger-button: #b93849;
+  --danger-button-hover: #a42d3d;
+}
+:root[data-theme="dark"] {
+  --scroll-thumb: #606060;
+}
+
+/* Shared panel scale. Keep these tokens identical in both applications. */
+:root {
+  --font-2xs: 11px;
+  --font-label: 15px;
+  --font-dialog: 18px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --radius-menu: 8px;
+  --radius-dialog: 12px;
+  --motion-fast: 120ms;
+  --motion-normal: 150ms;
+  --motion-slow: 180ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --layer-menu: 110;
+}
+@media (max-width: 900px) {
+  :root {
+    --font-title: 22px;
+    scrollbar-gutter: auto;
+  }
+}
+@media (max-width: 600px) {
+  :root {
+    --font-title: 21px;
+  }
 }

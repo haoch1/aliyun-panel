@@ -1,6 +1,10 @@
 * {
   box-sizing: border-box;
 }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 body {
   margin: 0;
   background: var(--canvas);
@@ -28,11 +32,13 @@ select {
   background: var(--surface);
   padding: 9px 12px;
   width: 100%;
-  transition: border-color 0.12s;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
   appearance: auto;
   min-height: 40px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--font-md);
   line-height: 1.5;
 }
 textarea {
@@ -44,11 +50,13 @@ textarea {
   background: var(--surface);
   padding: 9px 12px;
   width: 100%;
-  transition: border-color 0.12s;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
   resize: vertical;
   min-height: 40px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--font-md);
   line-height: 20px;
 }
 a {
@@ -66,15 +74,15 @@ svg {
 }
 h1 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 650;
+  font-size: var(--font-title);
+  font-weight: var(--weight-semibold);
   letter-spacing: -0.5px;
   line-height: 1.4;
 }
 h2 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--font-dialog);
+  font-weight: var(--weight-semibold);
   letter-spacing: -0.25px;
 }
 h3 {
@@ -109,10 +117,12 @@ input:not([type="checkbox"]):not([type="radio"]) {
   background: var(--surface);
   padding: 9px 12px;
   width: 100%;
-  transition: border-color 0.12s;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
   min-height: 40px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--font-md);
   line-height: 20px;
 }
 input::placeholder {
@@ -183,8 +193,8 @@ input[type="checkbox"]:disabled,
   font-variant-numeric: tabular-nums;
 }
 code {
-  font-family: "Cascadia Code", Consolas, monospace;
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: var(--font-sm);
 }
 ::selection {
   background: var(--accent-soft);
@@ -208,11 +218,11 @@ input:read-only:not([type="checkbox"]):not([type="radio"]) {
 }
 
 h3 {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
 }
 small {
-  font-size: 12px;
+  font-size: var(--font-xs);
   line-height: 1.65;
 }
 .row {
@@ -233,7 +243,7 @@ small {
 }
 .subline {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-sm);
   line-height: 20px;
   margin-top: 4px;
 }

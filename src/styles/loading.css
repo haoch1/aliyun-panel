@@ -56,14 +56,14 @@
   pointer-events: none;
   overflow: hidden;
   transition:
-    opacity 180ms ease-out,
-    visibility 0s 180ms;
+    opacity var(--motion-slow) ease-out,
+    visibility 0s var(--motion-slow);
 }
 .data-region[aria-busy="true"] > .data-region-placeholder {
   position: relative;
   opacity: 1;
   visibility: visible;
-  transition: opacity 180ms ease-out;
+  transition: opacity var(--motion-slow) ease-out;
 }
 .data-region[aria-busy="true"] > .data-region-content {
   position: absolute;

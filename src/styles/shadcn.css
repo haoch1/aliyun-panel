@@ -1,0 +1,14 @@
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "../components/ui/ShadcnCard.tsx";
+@source "../components/ui/InventoryTable.tsx";
+@theme inline {
+  --text-sm: 14px;
+  --text-base: 16px;
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-foreground: var(--text);
+  --color-muted-foreground: var(--muted);
+  --font-heading: inherit;
+}

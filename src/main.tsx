@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { ThemeProvider } from "./theme";
 import { TooltipProvider } from "./components/ui/Tooltip";
+import "./styles/shadcn.css";
 import "./styles/tokens.css";
 import "./styles/foundation.css";
 import "./styles/controls.css";
@@ -19,3 +20,5 @@ createRoot(document.getElementById("root")!).render(
     </ThemeProvider>
   </StrictMode>,
 );
+
+import "./styles/inventory.css";
