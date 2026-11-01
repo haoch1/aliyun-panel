@@ -1,6 +1,7 @@
 import { Sidebar } from "./components/ui/Sidebar";
 import { Input } from "./components/ui/Input";
 import { Form } from "./components/ui/Form";
+import { usePasswordManagerPolicy } from "./components/ui/usePasswordManagerPolicy";
 import { ThemeControl } from "./theme";
 import Select from "./components/ui/Select";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -56,6 +57,7 @@ if (location.pathname !== `/${initialPage}` || location.hash)
   history.replaceState(null, "", `/${initialPage}${location.search}`);
 export default function App() {
   const [auth, setAuth] = useState<any>();
+  usePasswordManagerPolicy(auth?.authenticated === false);
   const [authError, setAuthError] = useState("");
   const [revision, setRevision] = useState(0);
   const [page, setPage] = useState(initialPage);

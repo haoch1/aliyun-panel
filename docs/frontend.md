@@ -29,6 +29,8 @@
 
 登录与初始化页共用两仓库相同的 `auth.css`，外观选择器与登录按钮等宽。表单使用 `Form`，输入使用 `Input`；只有登录页显式启用 `allowPasswordManager`，其余输入（含密码型 Token、云密钥）和表单均关闭自动填充，并提供常见密码管理器的忽略标记。
 
+按 [1Password 官方整页忽略规则](https://www.1password.dev/web/compatible-website-design)，业务页面的 `body` 设置 `data-1p-ignore`，也覆盖 Portal 弹窗和动态输入。登录和初始化页解除整页忽略，登录成功后恢复；同步到渲染提交阶段，避免跳转时出现短暂提示。
+
 桌面已通过 `scrollbar-gutter: stable` 预留滚动条空间。Radix 锁定滚动时只保留这一次预留，避免重复补偿导致卡片缩窄；移动端及不支持该属性的浏览器保留组件原有补偿。
 
 ## 表格布局
