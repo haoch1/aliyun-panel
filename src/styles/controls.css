@@ -256,6 +256,11 @@ input[type="checkbox"]:indeterminate::after {
   background: var(--surface-hover);
   color: var(--text);
 }
+.topbar-logout {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
 .text-link {
   display: inline-flex;
   align-items: center;

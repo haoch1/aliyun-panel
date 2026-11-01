@@ -47,15 +47,18 @@ const nav = [
   ["settings", "设置", SettingsIcon],
 ] as const;
 const empty: Snapshot = { items: [], at: 0, errors: [], refreshing: false };
+const currentPage = () => {
+  const page = location.pathname.slice(1);
+  return nav.some((n) => n[0] === page) ? page : "instances";
+};
+const initialPage = currentPage();
+if (location.pathname !== `/${initialPage}` || location.hash)
+  history.replaceState(null, "", `/${initialPage}${location.search}`);
 export default function App() {
   const [auth, setAuth] = useState<any>();
   const [authError, setAuthError] = useState("");
   const [revision, setRevision] = useState(0);
-  const [page, setPage] = useState(
-    nav.some((n) => n[0] === location.hash.slice(1))
-      ? location.hash.slice(1)
-      : "instances",
-  );
+  const [page, setPage] = useState(initialPage);
   const [selected, setSelected] = useState("");
   const [mobile, setMobile] = useState(false);
   const [notices, setNotices] = useState<
@@ -94,14 +97,12 @@ export default function App() {
     window.scrollTo(0, 0);
   }, [page]);
   useEffect(() => {
-    const handler = () =>
-      setPage(
-        nav.some((n) => n[0] === location.hash.slice(1))
-          ? location.hash.slice(1)
-          : "instances",
-      );
-    window.addEventListener("hashchange", handler);
-    return () => window.removeEventListener("hashchange", handler);
+    const handler = () => {
+      setPage(currentPage());
+      setMobile(false);
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
   }, []);
   useEffect(() => {
     if (!auth?.authenticated) return;
@@ -161,8 +162,8 @@ export default function App() {
     settings.initialLoading;
   const select = (p: string, i?: Instance) => {
     if (i) setSelected(key(i));
+    if (page !== p) history.pushState(null, "", `/${p}${location.search}`);
     setPage(p);
-    location.hash = p;
     setMobile(false);
   };
   const logout = async () => {
@@ -192,7 +193,21 @@ export default function App() {
     >
       <div className="app-shell">
         <Sidebar open={mobile} onOpenChange={setMobile} id="main-navigation">
-          <a className="brand" href="#instances">
+          <a
+            className="brand"
+            href={"/instances" + location.search}
+            onClick={(event) => {
+              if (
+                event.ctrlKey ||
+                event.metaKey ||
+                event.shiftKey ||
+                event.altKey
+              )
+                return;
+              event.preventDefault();
+              select("instances");
+            }}
+          >
             <Cloud size={23} />
             <strong>Aliyun Panel</strong>
           </a>
@@ -255,7 +270,7 @@ export default function App() {
               {auth?.authenticated && (
                 <Tooltip content="退出登录">
                   <button
-                    className="icon-button"
+                    className="icon-button topbar-logout"
                     aria-label="退出登录"
                     onClick={logout}
                   >
@@ -433,7 +448,7 @@ function Auth({
             {initialized ? "登录" : "初始化面板"}
           </PendingButton>
         </form>
-        <a className="demo-entry" href="/?demo=1#instances">
+        <a className="demo-entry" href="/instances?demo=1">
           <FlaskConical size={15} />
           先预览演示面板
           <ArrowUpRight size={14} />

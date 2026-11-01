@@ -467,6 +467,9 @@ tr[data-selected] {
     padding: 0 16px;
     gap: 8px;
   }
+  .breadcrumb {
+    display: none;
+  }
   .workspace main {
     padding: 24px 20px 40px;
   }
@@ -515,10 +518,6 @@ tr[data-selected] {
   .page-actions .button {
     padding: 8px 10px;
     font-size: var(--font-sm);
-  }
-  .breadcrumb > span,
-  .breadcrumb > svg {
-    display: none;
   }
   .topbar-actions {
     gap: 8px;
