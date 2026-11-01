@@ -1,3 +1,4 @@
+import { Form } from "./components/ui/Form";
 import { Input } from "./components/ui/Input";
 import {
   notificationChoices,
@@ -104,7 +105,7 @@ export default function SettingsPage() {
   return (
     <div className="settings-page">
       <PageHeader title="设置" icon={HeadingSettingsIcon} />
-      <form id="panel-settings" className="form-stack" onSubmit={save}>
+      <Form id="panel-settings" className="form-stack" onSubmit={save}>
         <div className="settings-overview">
           <Card
             title="监控设置"
@@ -338,7 +339,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </Card>
-      </form>
+      </Form>
       <Card title="登录有效期">
         <div className="form-stack">
           <div className="row session-row">

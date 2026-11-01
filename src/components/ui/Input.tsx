@@ -1,20 +1,17 @@
 import type { ComponentProps } from "react";
+import { ignoreAutofill } from "../../lib/input-autofill";
 
-/** Ordinary fields are application data; only password fields offer vault filling. */
-export function Input({ type = "text", ...props }: ComponentProps<"input">) {
+/** Credential autofill is an explicit exception reserved for the login screen. */
+export function Input({
+  type = "text",
+  allowPasswordManager = false,
+  ...props
+}: ComponentProps<"input"> & { allowPasswordManager?: boolean }) {
   return (
     <input
       {...props}
       type={type}
-      {...(type === "password"
-        ? {}
-        : {
-            autoComplete: "off",
-            "data-1p-ignore": "true",
-            "data-lpignore": "true",
-            "data-bwignore": "true",
-            "data-form-type": "other",
-          })}
+      {...(allowPasswordManager ? {} : ignoreAutofill)}
     />
   );
 }

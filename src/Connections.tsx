@@ -1,3 +1,4 @@
+import { Form } from "./components/ui/Form";
 import { Input } from "./components/ui/Input";
 import { Table } from "./components/ui/Table";
 import {
@@ -171,7 +172,7 @@ export default function ConnectionDialog({
             <ErrorBox error={error} />
           </>
         ) : (
-          <form className="form-stack connection-form" onSubmit={submit}>
+          <Form className="form-stack connection-form" onSubmit={submit}>
             {isDemo() && (
               <div className="info-box">
                 演示凭证仅用于模拟发现，不会验证或保存真实 AccessKey
@@ -394,7 +395,7 @@ export default function ConnectionDialog({
                 </div>
               </>
             )}
-          </form>
+          </Form>
         )}
       </DataRegion>
     </Modal>

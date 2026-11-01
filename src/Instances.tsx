@@ -1,3 +1,4 @@
+import { Form } from "./components/ui/Form";
 import { InventoryTable } from "./components/ui/InventoryTable";
 import { Input } from "./components/ui/Input";
 import { Checkbox } from "./components/ui/Checkbox";
@@ -887,7 +888,7 @@ function RuleDialog({
   };
   return (
     <Modal title={i.name + " · " + title} onClose={onClose} busy={busy}>
-      <form className="form-stack" onSubmit={save}>
+      <Form className="form-stack" onSubmit={save}>
         {kind === "traffic" ? (
           <>
             <Usage instance={i} />
@@ -1036,7 +1037,7 @@ function RuleDialog({
             保存
           </PendingButton>
         </div>
-      </form>
+      </Form>
     </Modal>
   );
 }

@@ -1,5 +1,6 @@
 import { Sidebar } from "./components/ui/Sidebar";
 import { Input } from "./components/ui/Input";
+import { Form } from "./components/ui/Form";
 import { ThemeControl } from "./theme";
 import Select from "./components/ui/Select";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -16,7 +17,6 @@ import {
   ChevronRight,
   ScrollText,
   Settings as SettingsIcon,
-  ShieldCheck,
   X,
 } from "lucide-react";
 import type { Account, Settings, Snapshot, Instance } from "../shared/types";
@@ -384,20 +384,15 @@ function Auth({
           <Cloud size={27} />
           <strong>Aliyun Panel</strong>
         </div>
-        <h1>{initialized ? "登录面板" : "初始化你的面板"}</h1>
-        <p>
-          {initialized
-            ? "登录后管理实例与后台自动化"
-            : "设置管理员密码，开始管理 ECS 实例"}
-        </p>
-        <form onSubmit={submit}>
-          <Field
-            label="管理员密码"
-            hint={initialized ? undefined : "至少 12 位，无默认密码"}
-          >
+        <h1>{initialized ? "登录" : "初始化"}</h1>
+        <Form allowPasswordManager onSubmit={submit}>
+          <Field label="管理员密码">
             <Input
+              allowPasswordManager
               aria-label="管理员密码"
               type="password"
+              name="password"
+              placeholder={initialized ? undefined : "至少 12 位"}
               minLength={initialized ? 1 : 12}
               required
               autoComplete={initialized ? "current-password" : "new-password"}
@@ -409,7 +404,9 @@ function Auth({
           {!initialized && (
             <Field label="确认密码">
               <Input
+                allowPasswordManager
                 type="password"
+                name="password-confirmation"
                 minLength={12}
                 required
                 autoComplete="new-password"
@@ -421,6 +418,7 @@ function Auth({
           )}
           <Field label="登录有效期">
             <Select
+              aria-label="登录有效期"
               disabled={busy}
               value={hours}
               onChange={(e) => setHours(+e.target.value)}
@@ -447,16 +445,12 @@ function Auth({
           >
             {initialized ? "登录" : "初始化面板"}
           </PendingButton>
-        </form>
+        </Form>
         <a className="demo-entry" href="/instances?demo=1">
           <FlaskConical size={15} />
           先预览演示面板
           <ArrowUpRight size={14} />
         </a>
-        <div className="auth-foot">
-          <ShieldCheck size={14} />
-          凭证保存在你的服务器 · AES-256-GCM 加密
-        </div>
         <ThemeControl />
       </div>
     </div>

@@ -377,9 +377,6 @@ input[type="checkbox"]:indeterminate::after {
 .details .copy-text {
   font-size: var(--font-sm);
 }
-.auth-card > .theme-control {
-  margin-top: 20px;
-}
 .custom-select {
   min-width: 0;
   width: 100%;

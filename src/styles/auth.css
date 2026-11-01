@@ -1,0 +1,74 @@
+/* Shared login layout: keep this file identical in both panels. */
+.auth-page,
+.auth-wrap {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding: 24px;
+  background: var(--canvas);
+}
+.auth-card {
+  width: min(420px, 100%);
+  min-width: 0;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 24px #00000005;
+  display: grid;
+  gap: 20px;
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.auth-brand strong {
+  font-size: 17px;
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.4px;
+}
+.auth-card h1 {
+  font-size: var(--font-title);
+  font-weight: var(--weight-semibold);
+  line-height: 30px;
+}
+.auth-card form {
+  display: grid;
+  gap: 18px;
+}
+.auth-card .field {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.auth-card .full,
+.auth-card > .theme-control {
+  width: 100%;
+}
+.auth-card > .theme-control {
+  margin: 0;
+}
+.auth-card .demo-entry {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-sm);
+  color: var(--muted);
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.auth-card .demo-entry:hover {
+  color: var(--text);
+}
+@media (max-width: 600px) {
+  .auth-page,
+  .auth-wrap {
+    padding: 20px;
+  }
+  .auth-card {
+    padding: 24px;
+  }
+}
