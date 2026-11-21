@@ -23,3 +23,4 @@ createRoot(document.getElementById("root")!).render(
 
 import "./styles/inventory.css";
 import "./styles/auth.css";
+import "./styles/unified.css";

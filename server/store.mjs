@@ -45,6 +45,7 @@ export const defaultSettings = () => ({
   },
 });
 export class Store extends BaseStore {
+  _secretsCache = null;
   constructor(dir) {
     super(dir);
     this.dir = dir;
@@ -83,6 +84,10 @@ export class Store extends BaseStore {
       .run(kind, id, JSON.stringify(body));
     this.emit(kind);
     return body;
+  }
+  saveAccount(meta, credentials, id) {
+    this._secretsCache = null;
+    return super.saveAccount(meta, credentials, id);
   }
   accounts() {
     return sortByName(super.accounts());
@@ -150,6 +155,7 @@ export class Store extends BaseStore {
           events: notificationSelection(value),
         },
       };
+    this._secretsCache = null;
     this.config(
       "settings",
       this.encrypt({
@@ -172,11 +178,18 @@ export class Store extends BaseStore {
       );
     return deleted;
   }
+  _secrets() {
+    if (!this._secretsCache) {
+      this._secretsCache = super
+        .accounts()
+        .flatMap((a) => Object.values(this.account(a.id).credentials))
+        .concat(this.settings().notifications.telegramToken)
+        .filter((v) => typeof v === "string" && v.length >= 6);
+    }
+    return this._secretsCache;
+  }
   redact(value) {
-    const secrets = this.accounts()
-      .flatMap((a) => Object.values(this.account(a.id).credentials))
-      .concat(this.settings().notifications.telegramToken)
-      .filter((v) => typeof v === "string" && v.length >= 6);
+    const secrets = this._secrets();
     const walk = (v, key = "") => {
       if (/secret|token|password|authorization/i.test(key)) return "[已隐藏]";
       if (typeof v === "string")
@@ -232,20 +245,37 @@ export class Store extends BaseStore {
   }
   logs() {
     return this.db
-      .prepare("SELECT * FROM audit ORDER BY at DESC, rowid DESC LIMIT ?")
+      .prepare(
+        `SELECT a.*, e.body AS detail_body
+         FROM audit a
+         LEFT JOIN entities e ON e.kind='log-detail' AND e.id=a.id
+         ORDER BY a.at DESC, a.rowid DESC
+         LIMIT ?`,
+      )
       .all(this.logLimit())
-      .map((r) => ({ ...r, ...this.get("log-detail", r.id) }));
+      .map(({ detail_body, ...r }) => ({
+        ...r,
+        ...(detail_body ? JSON.parse(detail_body) : null),
+      }));
   }
   clearLogs() {
     this.db.exec("DELETE FROM entities WHERE kind='log-detail'");
     return super.clearLogs();
   }
   deleteAccount(id) {
-    this.db.prepare("DELETE FROM traffic_bindings WHERE account_id=?").run(id);
-    super.deleteAccount(id);
-    this.db
-      .prepare("DELETE FROM entities WHERE json_extract(body,'$.accountId')=?")
-      .run(id);
+    this._secretsCache = null;
+    this.db.exec("BEGIN");
+    try {
+      this.db.prepare("DELETE FROM traffic_bindings WHERE account_id=?").run(id);
+      super.deleteAccount(id);
+      this.db
+        .prepare("DELETE FROM entities WHERE json_extract(body,'$.accountId')=?")
+        .run(id);
+      this.db.exec("COMMIT");
+    } catch (e) {
+      this.db.exec("ROLLBACK");
+      throw e;
+    }
     this.emit("accounts");
   }
   saveMetric(t, metric, at, value) {

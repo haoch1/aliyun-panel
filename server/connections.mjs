@@ -107,7 +107,10 @@ export function registerConnections(route, { store, gateway, service, jobs }) {
         })
       ).flat();
     } finally {
-      gateway.invalidate();
+      for (const key of gateway.clients.keys())
+        if (JSON.parse(key)[1] === a.id) gateway.clients.delete(key);
+      for (const key of gateway.cache.keys())
+        if (key.includes(a.id)) gateway.cache.delete(key);
     }
     if (!items.length && !errors.length)
       throw new Error("未找到ECS 实例，请核对地域、实例 ID 和 AccessKey 权限");

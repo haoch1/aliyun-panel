@@ -71,12 +71,12 @@ export default function App() {
   const notice = useCallback((message: string, error = false) => {
     const id = Date.now() + Math.random();
     setNotices((v) => [
-      ...v.filter((n) => n.error && n.message !== message).slice(-1),
+      ...v.filter((n) => n.message !== message).slice(-2),
       { id, message, error },
     ]);
     setTimeout(
       () => setNotices((v) => v.filter((n) => n.id !== id)),
-      error ? 8000 : 2000,
+      error ? 8000 : 3200,
     );
   }, []);
   const loadAuth = useCallback(() => {
@@ -210,8 +210,12 @@ export default function App() {
               select("instances");
             }}
           >
-            <Cloud size={23} />
-            <strong>Aliyun Panel</strong>
+            <span className="brand-mark" aria-hidden="true">
+              <Cloud size={18} />
+            </span>
+            <span className="brand-text">
+              <strong>Aliyun Panel</strong>
+            </span>
           </a>
           <button
             className="mobile-close icon-button"
@@ -254,6 +258,9 @@ export default function App() {
                 <ChevronRight size={13} />
                 <strong>{nav.find((n) => n[0] === page)?.[1]}</strong>
               </div>
+              <span className="mobile-page-title">
+                {nav.find((n) => n[0] === page)?.[1]}
+              </span>
             </div>
             <div className="topbar-actions">
               {isDemo() && (

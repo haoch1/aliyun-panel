@@ -1,7 +1,6 @@
 import { Monitor, Moon, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import Select from "./components/ui/Select";
 
 type Theme = "system" | "light" | "dark";
 const key = "aliyun-panel:theme:v1";
@@ -10,6 +9,7 @@ const ThemeContext = createContext<{
   setTheme: (theme: Theme) => void;
   resolved: "light" | "dark";
 }>(null!);
+
 function savedTheme(): Theme {
   try {
     const value = localStorage.getItem(key);
@@ -19,6 +19,11 @@ function savedTheme(): Theme {
   }
   return "system";
 }
+
+export function useTheme() {
+  return useContext(ThemeContext);
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(savedTheme);
   const [systemDark, setSystemDark] = useState(
@@ -36,7 +41,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.colorScheme = resolved;
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", resolved === "dark" ? "#141414" : "#fafafa");
+      ?.setAttribute("content", resolved === "dark" ? "#0a0a0b" : "#fafafa");
     try {
       localStorage.setItem(key, theme);
     } catch {
@@ -56,21 +61,36 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     </ThemeContext.Provider>
   );
 }
+
+const themeOptions: [Theme, string, typeof Sun][] = [
+  ["light", "浅色", Sun],
+  ["system", "自动", Monitor],
+  ["dark", "深色", Moon],
+];
+
 export function ThemeControl({ compact = false }: { compact?: boolean }) {
   const { theme, setTheme } = useContext(ThemeContext);
-  const Icon = theme === "system" ? Monitor : theme === "dark" ? Moon : Sun;
   return (
-    <Select
-      className={"theme-control " + (compact ? "compact" : "")}
-      icon={<Icon size={16} />}
-      placement="auto"
+    <div
+      className={"theme-switcher" + (compact ? " compact" : "")}
+      role="group"
       aria-label="外观主题"
-      value={theme}
-      onChange={(e) => setTheme(e.target.value as Theme)}
     >
-      <option value="system">跟随系统</option>
-      <option value="light">浅色模式</option>
-      <option value="dark">暗色模式</option>
-    </Select>
+      {themeOptions.map(([value, label, Icon]) => (
+        <button
+          key={value}
+          type="button"
+          className={
+            "theme-switcher-btn" + (theme === value ? " active" : "")
+          }
+          aria-pressed={theme === value}
+          title={label + "模式"}
+          onClick={() => setTheme(value)}
+        >
+          <Icon size={14} />
+          <span>{label}</span>
+        </button>
+      ))}
+    </div>
   );
 }

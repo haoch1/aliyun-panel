@@ -148,6 +148,7 @@ export function createApp(
   route("post", "/api/session", (req, res) => {
     const hours = z.number().int().min(12).max(2160).parse(req.body.hours),
       s = store.renewSession(token(req), hours);
+    if (!s) return res.status(401).json({ error: "会话已过期，请重新登录" });
     cookie(res, { token: token(req), expires: s.expires });
     res.json(s);
   });
@@ -155,17 +156,35 @@ export function createApp(
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("X-Accel-Buffering", "no");
     res.flushHeaders();
-    const event = (type) =>
-      res.write("data: " + JSON.stringify({ type }) + "\n\n");
-    store.onEvent.add(event);
-    const timer = setInterval(() => {
-      if (!store.sessionByHash(req.panelSession.hash)) res.end();
-      else res.write(": heartbeat\n\n");
-    }, 15000);
-    req.on("close", () => {
+    let closed = false;
+    const cleanup = () => {
+      if (closed) return;
+      closed = true;
       clearInterval(timer);
       store.onEvent.delete(event);
-    });
+    };
+    const event = (type) => {
+      if (closed || res.writableEnded) return cleanup();
+      try {
+        res.write("data: " + JSON.stringify({ type }) + "\n\n");
+      } catch {
+        cleanup();
+      }
+    };
+    store.onEvent.add(event);
+    const timer = setInterval(() => {
+      if (closed || res.writableEnded || !store.sessionByHash(req.panelSession.hash)) {
+        cleanup();
+        if (!res.writableEnded) res.end();
+      } else {
+        try {
+          res.write(": heartbeat\n\n");
+        } catch {
+          cleanup();
+        }
+      }
+    }, 15000);
+    req.on("close", cleanup);
     event("connected");
   });
   route("get", "/api/accounts", (_req, res) =>
@@ -399,8 +418,14 @@ export function createApp(
   route("get", "/api/billing", (_req, res) =>
     res.json(
       billing.view(
-        V.cycle.parse(_req.query.cycle || billingCycle()),
-        _req.query.accountId || "all",
+        V.cycle.parse(
+          typeof _req.query.cycle === "string"
+            ? _req.query.cycle
+            : billingCycle(),
+        ),
+        typeof _req.query.accountId === "string" && _req.query.accountId
+          ? _req.query.accountId
+          : "all",
       ),
     ),
   );

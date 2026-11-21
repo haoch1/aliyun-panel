@@ -65,11 +65,12 @@ export class ResourceService {
     return this.capturing;
   }
   scopes() {
+    const accountMap = new Map(this.store.accounts().map((a) => [a.id, a]));
     return this.store
       .list("scope")
-      .filter((s) => this.store.accounts().some((a) => a.id === s.accountId))
+      .filter((s) => accountMap.has(s.accountId))
       .map((s) => {
-        const a = this.store.account(s.accountId);
+        const a = accountMap.get(s.accountId);
         return {
           ...s,
           items: s.items.filter(
@@ -131,9 +132,12 @@ export class ResourceService {
   }
   instances(filter = {}, { traffic = false } = {}) {
     const settings = this.store.settings(),
+      accountMap = new Map(this.store.accounts().map((a) => [a.id, a])),
       active = this.store
         .list("job")
         .filter((j) => ["queued", "submitted", "attention"].includes(j.status));
+    const billingMap = new Map();
+    const cycle = billingCycle();
     const scopes = this.scopes().filter(
       (s) =>
         (!filter.accountId ||
@@ -145,10 +149,13 @@ export class ResourceService {
     );
     const items = scopes.flatMap((s) =>
       s.items.map((i) => {
-        const bill = this.store.get(
-          "billing",
-          billKey(i.accountId, billingCycle()),
-        );
+        const acc = accountMap.get(i.accountId);
+        if (!billingMap.has(i.accountId))
+          billingMap.set(
+            i.accountId,
+            this.store.get("billing", billKey(i.accountId, cycle)),
+          );
+        const bill = billingMap.get(i.accountId);
         const rule = this.store.rule(i),
           job = active.find(
             (j) =>
@@ -159,9 +166,7 @@ export class ResourceService {
         const result = {
           ...i,
           name:
-            this.store
-              .account(i.accountId)
-              .monitors?.find((m) => m.region === i.region && m.id === i.id)
+            acc?.monitors?.find((m) => m.region === i.region && m.id === i.id)
               ?.name || i.name,
           usage: s.usage?.[i.id],
           rule,
@@ -182,9 +187,7 @@ export class ResourceService {
                 amount: bill?.items ? instanceAmount(bill.items, i.id) : null,
                 currency:
                   bill?.currency ||
-                  (this.store.account(i.accountId).site === "international"
-                    ? "USD"
-                    : "CNY"),
+                  (acc?.site === "international" ? "USD" : "CNY"),
                 at: bill?.at,
                 error: bill?.billError,
                 stale:

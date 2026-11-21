@@ -8,7 +8,7 @@ import {
   logErrorText,
 } from "../shared/log-presentation";
 import { Modal } from "./components/ui/Modal";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ChevronRight, ScrollText } from "lucide-react";
 import Select from "./components/ui/Select";
 import { SearchInput } from "./components/ui/SearchInput";
@@ -341,21 +341,34 @@ export default function Logs() {
   const [clearOpen, setClearOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
   const all = d.data?.items || [];
-  const rows = all.filter(
-    (r) =>
-      (view === "all" ||
-        (view === "checks"
-          ? r.category === "monitor"
-          : r.category !== "monitor")) &&
-      (level === "all" ||
-        (r.level || (r.status === "failed" ? "error" : "info")) === level) &&
-      (instance === "all" ||
-        r.target === instance ||
-        r.context?.resources?.some((i: any) => i.id === instance)) &&
-      (!search ||
-        JSON.stringify({ ...r, label: actionLabel(r.action) })
-          .toLowerCase()
-          .includes(search.toLowerCase())),
+  const indexed = useMemo(
+    () =>
+      all.map((r: any) => ({
+        row: r,
+        text: JSON.stringify({ ...r, label: actionLabel(r.action) }).toLowerCase(),
+      })),
+    [all],
+  );
+  const query = search.trim().toLowerCase();
+  const rows = useMemo(
+    () =>
+      indexed
+        .filter(
+          ({ row: r, text }) =>
+            (view === "all" ||
+              (view === "checks"
+                ? r.category === "monitor"
+                : r.category !== "monitor")) &&
+            (level === "all" ||
+              (r.level || (r.status === "failed" ? "error" : "info")) ===
+                level) &&
+            (instance === "all" ||
+              r.target === instance ||
+              r.context?.resources?.some((i: any) => i.id === instance)) &&
+            (!query || text.includes(query)),
+        )
+        .map(({ row }) => row),
+    [indexed, view, level, instance, query],
   );
   const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
     activePage = Math.min(page, pages - 1);

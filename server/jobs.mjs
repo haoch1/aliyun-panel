@@ -136,15 +136,15 @@ export class Jobs {
       throw Object.assign(new Error("实例有未完成操作，请先核对"), {
         status: 409,
       });
+    const normalized = action === "resume" ? "start" : action;
+    const i = await this.service.refreshTarget(t, {
+      usage: normalized === "start" && this.store.rule(t).thresholdEnabled,
+    });
     if (action === "stop")
       this.store.saveRule(t, {
         hold: "manual",
         reason: "手动停机，禁止自动启动",
       });
-    const normalized = action === "resume" ? "start" : action;
-    const i = await this.service.refreshTarget(t, {
-      usage: normalized === "start" && this.store.rule(t).thresholdEnabled,
-    });
     if (normalized === "start") {
       const rule = this.store.rule(t),
         traffic = usageOver(rule, i.usage);
