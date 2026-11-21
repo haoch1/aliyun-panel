@@ -21,7 +21,7 @@
     "start": "node bin/aliyun-panel.mjs",
     "build": "vite build",
     "check": "tsc --noEmit",
-    "test": "node --test --test-force-exit --test-concurrency=1 --test-timeout=20000 tests/*.test.mjs"
+    "test": "node --test --test-force-exit --test-concurrency=4 --test-timeout=20000 tests/*.test.mjs"
   },
   "dependencies": {
     "@alicloud/bssopenapi20171214": "4.1.1",

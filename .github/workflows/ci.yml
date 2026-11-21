@@ -28,6 +28,12 @@ jobs:
         with:
           node-version: "24"
       - run: npm install --global pnpm@11.25.0
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-linux-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-linux-
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: pnpm test
@@ -57,7 +63,7 @@ jobs:
           docker compose -f compose.yaml -f compose.build.yaml config --quiet
       - name: Build image
         run: |
-          docker build --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+          docker build --provenance=false --label "org.opencontainers.image.revision=$GITHUB_SHA" \
             --tag "${IMAGE_NAME}:sha-${GITHUB_SHA}-${{ matrix.arch }}" .
       - name: Verify startup, authentication boundary and shutdown
         run: |
@@ -122,12 +128,28 @@ jobs:
             version="${GITHUB_REF_NAME#v}"
             tags+=(--tag "${IMAGE_NAME}:${GITHUB_REF_NAME}" --tag "${IMAGE_NAME}:${version}")
           fi
-          docker buildx imagetools create "${tags[@]}" \
-            --annotation "index:org.opencontainers.image.description=Self-hosted Alibaba Cloud ECS management with keep-alive, traffic protection, schedules, billing and Telegram notifications" \
-            "${IMAGE_NAME}:sha-${GITHUB_SHA}-amd64" \
-            "${IMAGE_NAME}:sha-${GITHUB_SHA}-arm64"
+          for attempt in 1 2 3; do
+            if docker buildx imagetools create "${tags[@]}" \
+              --annotation "index:org.opencontainers.image.description=Self-hosted Alibaba Cloud ECS management with keep-alive, traffic protection, schedules, billing and Telegram notifications" \
+              "${IMAGE_NAME}:sha-${GITHUB_SHA}-amd64" \
+              "${IMAGE_NAME}:sha-${GITHUB_SHA}-arm64"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep 5
+          done
           docker buildx imagetools inspect "${IMAGE_NAME}:sha-${GITHUB_SHA}" --raw > manifest.json
-          python3 -c 'import json; d=json.load(open("manifest.json")); assert {m["platform"]["architecture"] for m in d["manifests"]} == {"amd64", "arm64"}'
+          python3 -c '
+          import json
+          d = json.load(open("manifest.json"))
+          arches = {
+              m["platform"]["architecture"]
+              for m in d["manifests"]
+              if m.get("platform", {}).get("architecture") not in (None, "unknown")
+              and m.get("annotations", {}).get("vnd.docker.reference.type") != "attestation-manifest"
+          }
+          assert arches == {"amd64", "arm64"}, f"unexpected architectures: {arches}"
+          '
       - name: Verify published image with Compose
         env:
           PANEL_IMAGE: ghcr.io/haoch1/aliyun-panel:sha-${{ github.sha }}

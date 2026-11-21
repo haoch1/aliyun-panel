@@ -5,6 +5,12 @@ import {
 } from "../../shared/notification-preferences.ts";
 import { commonRegions } from "../../shared/regions.ts";
 import { defaultLogRetention } from "../../shared/log-retention.ts";
+const testFast =
+  typeof process !== "undefined" &&
+  Boolean(
+    (process as { env?: Record<string, string | undefined> }).env
+      ?.NODE_TEST_CONTEXT,
+  );
 import type {
   Account,
   Instance,
@@ -422,11 +428,14 @@ function enqueue(
   };
   const before = i.status;
   jobs.unshift(j);
-  setTimeout(() => {
-    j.status = "submitted";
-    j.updatedAt = now();
-    changed();
-  }, 300);
+  setTimeout(
+    () => {
+      j.status = "submitted";
+      j.updatedAt = now();
+      changed();
+    },
+    testFast ? 10 : 300,
+  );
   setTimeout(() => {
     try {
       apply?.();
@@ -466,7 +475,7 @@ function enqueue(
     }
     j.updatedAt = now();
     changed();
-  }, 1000);
+  }, testFast ? 30 : 1000);
   changed();
   return j;
 }
@@ -649,7 +658,7 @@ export function startDemoAutomation() {
       )
         reportDates.add(local.date);
     }
-  }, 1000);
+  }, testFast ? 25 : 1000);
   return () => clearInterval(timer);
 }
 function listInstances(q: URLSearchParams) {
@@ -735,7 +744,7 @@ export async function demoApi(
     p = u.pathname,
     q = u.searchParams,
     t = Object.fromEntries(q);
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  if (!testFast) await new Promise((resolve) => setTimeout(resolve, 100));
   let result: any;
   if (p === "/auth")
     result = {

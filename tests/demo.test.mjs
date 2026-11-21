@@ -6,7 +6,7 @@ import { defaultNotificationTypes } from "../shared/notification-preferences.ts"
 globalThis.window = new EventTarget();
 const request = (path, body, method = body === undefined ? "GET" : "POST") =>
   demoApi(path, body, method);
-const settle = () => new Promise((resolve) => setTimeout(resolve, 1100));
+const settle = () => new Promise((resolve) => setTimeout(resolve, 60));
 
 test("demo is usable without authentication and rejects real-only endpoints", async () => {
   const auth = await request("/auth");
