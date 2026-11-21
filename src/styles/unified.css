@@ -190,13 +190,11 @@ td[data-label*="价格"] {
   outline-offset: 1px;
 }
 
-/* --- Sticky Glass Topbar --- */
+/* --- Sticky Solid Topbar --- */
 .topbar {
   height: 60px;
   padding: 0 28px;
   background: var(--topbar-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
