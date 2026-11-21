@@ -130,7 +130,6 @@ jobs:
           fi
           for attempt in 1 2 3; do
             if docker buildx imagetools create "${tags[@]}" \
-              --annotation "index:org.opencontainers.image.description=Self-hosted Alibaba Cloud ECS management with keep-alive, traffic protection, schedules, billing and Telegram notifications" \
               "${IMAGE_NAME}:sha-${GITHUB_SHA}-amd64" \
               "${IMAGE_NAME}:sha-${GITHUB_SHA}-arm64"; then
               break
