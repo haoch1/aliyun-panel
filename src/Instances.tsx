@@ -11,7 +11,7 @@ import { SearchInput } from "./components/ui/SearchInput";
 import { ActionMenu } from "./components/ui/ActionMenu";
 import { InventoryTrafficHeading } from "./components/ui/InventoryTrafficHeading";
 import { CopyText } from "./components/ui/CopyText";
-import { Cloud, Plus, Pencil, ShieldCheck, Clock3, Trash2 } from "lucide-react";
+import { Server, Plus, Pencil, ShieldCheck, Clock3, Trash2 } from "lucide-react";
 import ConnectionDialog from "./Connections";
 import Billing, { money } from "./Billing";
 import { Traffic } from "./Resources";
@@ -122,8 +122,8 @@ export default function Instances() {
   return (
     <div className="instance-inventory">
       <PageHeader
-        title="Aliyun 实例"
-        icon={Cloud}
+        title="实例管理"
+        icon={Server}
         actions={
           <>
             <RefreshButton

@@ -17,6 +17,7 @@ import {
   Menu,
   ChevronRight,
   ScrollText,
+  Server,
   Settings as SettingsIcon,
   X,
 } from "lucide-react";
@@ -41,11 +42,11 @@ import Logs from "./Logs";
 import { Tooltip } from "./components/ui/Tooltip";
 import { DataRegion, PageLoading } from "./components/ui/DataRegion";
 const nav = [
-  ["instances", "Aliyun 实例", Cloud],
+  ["instances", "实例管理", Server],
   ["traffic", "流量统计", ArrowDownUp],
   ["billing", "账单与余额", ReceiptText],
-  ["audit", "日志", ScrollText],
-  ["settings", "设置", SettingsIcon],
+  ["audit", "运行日志", ScrollText],
+  ["settings", "系统设置", SettingsIcon],
 ] as const;
 const empty: Snapshot = { items: [], at: 0, errors: [], refreshing: false };
 const currentPage = () => {
@@ -239,6 +240,16 @@ export default function App() {
           </nav>
           <div className="sidebar-bottom">
             <ThemeControl compact />
+            {auth?.authenticated && !isDemo() && (
+              <button
+                type="button"
+                className="sidebar-logout"
+                onClick={logout}
+              >
+                <LogOut size={15} />
+                <span>退出登录</span>
+              </button>
+            )}
           </div>
         </Sidebar>
         <div className="workspace">
@@ -262,32 +273,19 @@ export default function App() {
                 {nav.find((n) => n[0] === page)?.[1]}
               </span>
             </div>
-            <div className="topbar-actions">
-              {isDemo() && (
-                <>
-                  <Tooltip content="所有数据和操作均为本地示例">
-                    <span className="demo-indicator" tabIndex={0}>
-                      演示模式
-                    </span>
-                  </Tooltip>
-                  <a className="demo-exit" href="/">
-                    退出演示
-                    <ArrowUpRight size={13} />
-                  </a>
-                </>
-              )}
-              {auth?.authenticated && (
-                <Tooltip content="退出登录">
-                  <button
-                    className="icon-button topbar-logout"
-                    aria-label="退出登录"
-                    onClick={logout}
-                  >
-                    <LogOut size={18} />
-                  </button>
+            {isDemo() && (
+              <div className="topbar-actions">
+                <Tooltip content="所有数据和操作均为本地示例">
+                  <span className="demo-indicator" tabIndex={0}>
+                    演示模式
+                  </span>
                 </Tooltip>
-              )}
-            </div>
+                <a className="demo-exit" href="/">
+                  退出演示
+                  <ArrowUpRight size={13} />
+                </a>
+              </div>
+            )}
           </header>
           <main>
             {auth?.testMode && !isDemo() && (

@@ -383,7 +383,7 @@ export default function Logs() {
   return (
     <>
       <PageHeader
-        title="日志"
+        title="运行日志"
         icon={ScrollText}
         actions={<Button onClick={() => setClearOpen(true)}>清空日志</Button>}
       />

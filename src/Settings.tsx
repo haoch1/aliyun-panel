@@ -104,7 +104,7 @@ export default function SettingsPage() {
     setS({ ...s, notifications: { ...n, [key]: value } });
   return (
     <div className="settings-page">
-      <PageHeader title="设置" icon={HeadingSettingsIcon} />
+      <PageHeader title="系统设置" icon={HeadingSettingsIcon} />
       <Form id="panel-settings" className="form-stack" onSubmit={save}>
         <div className="settings-overview">
           <Card
