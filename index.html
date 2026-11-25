@@ -11,8 +11,12 @@
     <title>Aliyun Panel</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script src="/theme.js"></script>
+    <script src="/asset-recovery.js"></script>
   </head>
   <body>
+    <p id="asset-recovery" role="alert" hidden>
+      页面资源加载失败，可能已有新版本。<button type="button">重新加载</button>
+    </p>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

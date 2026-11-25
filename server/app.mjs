@@ -503,8 +503,26 @@ export function createApp(
       .json({ error: message });
   });
   if (existsSync(resolve(dist, "index.html"))) {
-    app.use(express.static(dist));
-    app.use((req, res) => res.sendFile(resolve(dist, "index.html")));
+    app.use(
+      "/assets",
+      express.static(resolve(dist, "assets"), {
+        immutable: true,
+        maxAge: "1y",
+      }),
+      (_req, res) =>
+        res
+          .status(404)
+          .set("Cache-Control", "no-store")
+          .type("text")
+          .send("页面资源已更新，请刷新页面。"),
+    );
+    const entry = (_req, res) =>
+      res
+        .set("Cache-Control", "no-store")
+        .sendFile(resolve(dist, "index.html"));
+    app.get("/index.html", entry);
+    app.use(express.static(dist, { index: false }));
+    app.get("/{*path}", entry);
   }
   return app;
 }
