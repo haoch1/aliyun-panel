@@ -4,7 +4,15 @@ import { Form } from "./components/ui/Form";
 import { usePasswordManagerPolicy } from "./components/ui/usePasswordManagerPolicy";
 import { ThemeControl } from "./theme";
 import Select from "./components/ui/Select";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { eventGroups, type RefreshGroup } from "./resource-events";
 import { sortByName } from "../shared/resource-order";
 import {
   ArrowDownUp,
@@ -36,11 +44,19 @@ import {
 import Instances from "./Instances";
 import { Traffic } from "./Resources";
 import Billing from "./Billing";
-import SettingsPage from "./Settings";
 import { PendingButton } from "./components/ui/PendingButton";
 import Logs from "./Logs";
 import { Tooltip } from "./components/ui/Tooltip";
 import { DataRegion, PageLoading } from "./components/ui/DataRegion";
+const SettingsPage = lazy(() => import("./Settings"));
+
+interface SessionInfo {
+  initialized: boolean;
+  authenticated: boolean;
+  csrf?: string;
+  expires?: number;
+  testMode?: boolean;
+}
 const nav = [
   ["instances", "实例管理", Server],
   ["traffic", "流量统计", ArrowDownUp],
@@ -51,16 +67,42 @@ const nav = [
 const empty: Snapshot = { items: [], at: 0, errors: [], refreshing: false };
 const currentPage = () => {
   const page = location.pathname.slice(1);
-  return nav.some((n) => n[0] === page) ? page : "instances";
+  return nav.find((n) => n[0] === page)?.[0] || "instances";
 };
 const initialPage = currentPage();
+function initialAuth(): SessionInfo | undefined {
+  if (isDemo()) return;
+  const node = document.getElementById("panel-bootstrap");
+  if (!node) return;
+  node.remove();
+  try {
+    const auth: SessionInfo = JSON.parse(node.textContent || "");
+    if (
+      typeof auth.initialized === "boolean" &&
+      typeof auth.authenticated === "boolean" &&
+      (!auth.authenticated ||
+        (typeof auth.csrf === "string" && (auth.expires || 0) > Date.now()))
+    ) {
+      setCsrf(auth.csrf || "");
+      return auth;
+    }
+  } catch {
+    // Static hosting and older deployments can use the auth endpoint.
+  }
+}
+const bootstrap = initialAuth();
 if (location.pathname !== `/${initialPage}` || location.hash)
   history.replaceState(null, "", `/${initialPage}${location.search}`);
 export default function App() {
-  const [auth, setAuth] = useState<any>();
+  const [auth, setAuth] = useState(bootstrap);
   usePasswordManagerPolicy(auth?.authenticated === false);
   const [authError, setAuthError] = useState("");
   const [revision, setRevision] = useState(0);
+  const [groupRevisions, setGroupRevisions] = useState<
+    Partial<Record<RefreshGroup, number>>
+  >({});
+  const currentRevision = (group: RefreshGroup) =>
+    revision + (groupRevisions[group] || 0);
   const [page, setPage] = useState(initialPage);
   const [selected, setSelected] = useState("");
   const [mobile, setMobile] = useState(false);
@@ -82,7 +124,7 @@ export default function App() {
   }, []);
   const loadAuth = useCallback(() => {
     setAuthError("");
-    return api("/auth")
+    return api<SessionInfo>("/auth")
       .then((v) => {
         setCsrf(v.csrf || "");
         setAuth(v);
@@ -91,7 +133,7 @@ export default function App() {
       .catch((e) => setAuthError(e.message));
   }, []);
   useEffect(() => {
-    loadAuth();
+    if (!bootstrap) void loadAuth();
     window.addEventListener("auth-revoked", loadAuth);
     return () => window.removeEventListener("auth-revoked", loadAuth);
   }, [loadAuth]);
@@ -126,28 +168,72 @@ export default function App() {
     }
     const es = new EventSource("/api/events");
     let timer: ReturnType<typeof setTimeout> | undefined;
-    es.onmessage = () => {
-      clearTimeout(timer);
-      timer = setTimeout(refresh, 300);
+    let connected = false;
+    let lastReconcile = Date.now();
+    const reconcile = () => {
+      lastReconcile = Date.now();
+      refresh();
     };
-    const poll = setInterval(refresh, 30000);
+    const pending = new Set<RefreshGroup>();
+    es.onopen = () => {
+      if (connected && !document.hidden) reconcile();
+      connected = true;
+    };
+    es.onmessage = ({ data }) => {
+      if (document.hidden) return;
+      for (const group of eventGroups(data)) pending.add(group);
+      if (!pending.size || timer !== undefined) return;
+      timer = setTimeout(() => {
+        timer = undefined;
+        const batch = [...pending];
+        pending.clear();
+        setGroupRevisions((old) => {
+          const next = { ...old };
+          for (const group of batch) next[group] = (old[group] || 0) + 1;
+          return next;
+        });
+      }, 300);
+    };
+    const poll = setInterval(() => {
+      if (
+        !document.hidden &&
+        (es.readyState !== EventSource.OPEN ||
+          Date.now() - lastReconcile >= 120000)
+      )
+        reconcile();
+    }, 30000);
+    const resume = () => {
+      if (!document.hidden) reconcile();
+    };
+    document.addEventListener("visibilitychange", resume);
     return () => {
       es.close();
+      document.removeEventListener("visibilitychange", resume);
       clearInterval(poll);
       clearTimeout(timer);
     };
   }, [auth?.authenticated, refresh]);
   const accounts = useData<{ items: Account[] }>(
-    auth?.authenticated ? "/accounts" : null,
-    revision,
+    auth?.authenticated && (page === "instances" || page === "billing")
+      ? "/accounts"
+      : null,
+    currentRevision("accounts"),
   );
   const data = useData<Snapshot>(
-    auth?.authenticated ? "/instances" : null,
-    revision,
+    auth?.authenticated && page !== "settings"
+      ? page === "instances"
+        ? "/instances"
+        : "/instances?summary=1"
+      : null,
+    page === "instances"
+      ? currentRevision("instances")
+      : revision + (groupRevisions.traffic || 0),
   );
   const settings = useData<Settings>(
-    auth?.authenticated ? "/settings" : null,
-    revision,
+    auth?.authenticated && (page === "settings" || page === "billing")
+      ? "/settings"
+      : null,
+    currentRevision("settings"),
   );
   const snapshot = useMemo(
     () =>
@@ -160,13 +246,18 @@ export default function App() {
   );
   const initialLoading =
     (!auth && !authError) ||
-    data.initialLoading ||
-    accounts.initialLoading ||
-    settings.initialLoading;
+    (page === "instances" &&
+      (data.initialLoading ||
+        (accounts.initialLoading && !snapshot.items.length))) ||
+    (page === "traffic" && data.initialLoading) ||
+    (page === "settings" && settings.initialLoading);
   const select = (p: string, i?: Instance) => {
+    const next = nav.find(([route]) => route === p)?.[0];
+    if (!next) return;
     if (i) setSelected(key(i));
-    if (page !== p) history.pushState(null, "", `/${p}${location.search}`);
-    setPage(p);
+    if (page !== next)
+      history.pushState(null, "", `/${next}${location.search}`);
+    setPage(next);
     setMobile(false);
   };
   const logout = async () => {
@@ -178,7 +269,19 @@ export default function App() {
     }
   };
   if (auth && !auth.authenticated)
-    return <Auth initialized={auth.initialized} onDone={loadAuth} />;
+    return (
+      <Auth
+        initialized={auth.initialized}
+        onDone={(session) =>
+          setAuth({
+            ...auth,
+            ...session,
+            initialized: true,
+            authenticated: true,
+          })
+        }
+      />
+    );
   return (
     <PanelContext.Provider
       value={{
@@ -187,7 +290,10 @@ export default function App() {
         loading: data.loading,
         initialLoading,
         settings: settings.data,
-        revision,
+        revision:
+          page === "instances"
+            ? currentRevision("traffic") + (groupRevisions.billing || 0)
+            : currentRevision(page),
         refresh,
         notice,
         select,
@@ -239,11 +345,7 @@ export default function App() {
           <div className="sidebar-bottom">
             <ThemeControl compact />
             {auth?.authenticated && !isDemo() && (
-              <button
-                type="button"
-                className="sidebar-logout"
-                onClick={logout}
-              >
+              <button type="button" className="sidebar-logout" onClick={logout}>
                 <LogOut size={15} />
                 <span>退出登录</span>
               </button>
@@ -313,7 +415,9 @@ export default function App() {
                 ) : page === "billing" ? (
                   <Billing />
                 ) : page === "settings" ? (
-                  <SettingsPage />
+                  <Suspense fallback={<PageLoading page="settings" />}>
+                    <SettingsPage />
+                  </Suspense>
                 ) : (
                   <Logs />
                 ))}
@@ -324,7 +428,11 @@ export default function App() {
           {notices.map((n) => (
             <div key={n.id} className={"notice " + (n.error ? "error" : "")}>
               {n.error ? (
-                <CircleAlert className="notice-icon" size={17} aria-hidden="true" />
+                <CircleAlert
+                  className="notice-icon"
+                  size={17}
+                  aria-hidden="true"
+                />
               ) : (
                 <CircleCheck
                   className="notice-icon"
@@ -354,7 +462,7 @@ function Auth({
   onDone,
 }: {
   initialized: boolean;
-  onDone: () => void;
+  onDone: (session: { csrf: string; expires: number }) => void;
 }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -370,12 +478,15 @@ function Auth({
     }
     setBusy(true);
     try {
-      const v = await api(initialized ? "/login" : "/setup", {
-        password,
-        sessionHours: hours,
-      });
+      const v = await api<{ csrf: string; expires: number }>(
+        initialized ? "/login" : "/setup",
+        {
+          password,
+          sessionHours: hours,
+        },
+      );
       setCsrf(v.csrf);
-      onDone();
+      onDone(v);
     } catch (e) {
       setError((e as Error).message);
     } finally {

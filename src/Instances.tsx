@@ -617,20 +617,31 @@ function MonthlyTraffic({
   revision: number;
   onClick: () => void;
 }) {
-  const d = useTraffic(instance, "month", revision);
-  const used = singleDirectionTraffic(d.data?.items || []);
-  const error = d.error || d.data?.errors.join("；");
+  const cached = instance.traffic;
+  const month = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 7);
+  const currentMonth =
+    cached?.start !== undefined &&
+    new Date(cached.start + 8 * 3600000).toISOString().slice(0, 7) === month;
+  const recent =
+    currentMonth &&
+    cached.items.length > 0 &&
+    (instance.publicNetwork === "eip" ||
+      (cached.checkedAt || 0) > Date.now() - 3600000);
+  const request = useTraffic(recent ? undefined : instance, "month", revision);
+  const data = recent ? cached : request.data;
+  const used = singleDirectionTraffic(data?.items || []);
+  const error = request.error || data?.errors.join("；");
   return (
     <button
       className="usage-trigger"
       aria-label={instance.name + " 流量详情"}
       title={[
         "本月实例累计流量：合并各 EIP 在绑定期间的数据，入站与出站累计值取较大值",
-        trafficRange(d.data?.start, d.data?.end),
-        "刷新时间 " + date(d.data?.checkedAt),
+        trafficRange(data?.start, data?.end),
+        "刷新时间 " + date(data?.checkedAt),
         "额度为账号共享额度；流量保护按账号流量池用量判断",
         error,
-        ...(d.data?.warnings || []),
+        ...(data?.warnings || []),
       ]
         .filter(Boolean)
         .join("\n")}
@@ -639,7 +650,7 @@ function MonthlyTraffic({
       <InventoryTrafficHeading />
       <Usage
         instance={instance}
-        monitor={{ used, pending: d.initialLoading, error }}
+        monitor={{ used, pending: request.initialLoading, error }}
       />
     </button>
   );

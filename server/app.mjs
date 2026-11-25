@@ -1,7 +1,8 @@
 import express from "express";
 import helmet from "helmet";
+import { compressedAssets } from "./compressed-assets.mjs";
 import { randomUUID } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { z } from "zod";
 import * as V from "./validation.mjs";
@@ -91,16 +92,17 @@ export function createApp(
       heartbeat: store.get("health", "engine")?.at,
     }),
   );
-  app.get("/api/auth", (req, res) => {
+  const sessionInfo = (req) => {
     const s = store.session(token(req));
-    res.json({
+    return {
       initialized: !!store.config("admin"),
       authenticated: !!s,
       csrf: s?.csrf,
       expires: s?.expires,
       testMode,
-    });
-  });
+    };
+  };
+  app.get("/api/auth", (req, res) => res.json(sessionInfo(req)));
   for (const path of ["setup", "login"])
     route("post", "/api/" + path, (req, res) => {
       const key = req.socket.remoteAddress || "local",
@@ -187,10 +189,11 @@ export function createApp(
     req.on("close", cleanup);
     event("connected");
   });
-  route("get", "/api/accounts", (_req, res) =>
+  route("get", "/api/accounts", (_req, res) => {
+    const scopesByAccount = Map.groupBy(store.list("scope"), (scope) => scope.accountId);
     res.json({
       items: store.accounts().map((a) => {
-        const scopes = store.list("scope").filter((s) => s.accountId === a.id);
+        const scopes = scopesByAccount.get(a.id) || [];
         return {
           ...a,
           accessStatus: scopes.some((s) => s.error)
@@ -204,15 +207,15 @@ export function createApp(
             .join("；"),
         };
       }),
-    }),
-  );
+    });
+  });
   route("get", "/api/regions", async (req, res) =>
     res.json({
       items: await gateway.regions(z.string().parse(req.query.accountId)),
     }),
   );
   route("get", "/api/instances", (req, res) =>
-    res.json(service.instances(req.query, { traffic: true })),
+    res.json(service.instances(req.query, { traffic: req.query.summary !== "1" })),
   );
   route("post", "/api/refresh", async (req, res) => {
     const { check, ...filter } = z
@@ -505,6 +508,7 @@ export function createApp(
   if (existsSync(resolve(dist, "index.html"))) {
     app.use(
       "/assets",
+      compressedAssets(resolve(dist, "assets")),
       express.static(resolve(dist, "assets"), {
         immutable: true,
         maxAge: "1y",
@@ -516,10 +520,14 @@ export function createApp(
           .type("text")
           .send("页面资源已更新，请刷新页面。"),
     );
-    const entry = (_req, res) =>
-      res
-        .set("Cache-Control", "no-store")
-        .sendFile(resolve(dist, "index.html"));
+    const template = readFileSync(resolve(dist, "index.html"), "utf8");
+    const entry = (req, res) => {
+      const json = JSON.stringify(sessionInfo(req)).replace(/</g, "\\u003c");
+      const html = template.replace("<!--panel-bootstrap-->", () =>
+        `<script id="panel-bootstrap" type="application/json">${json}</script>`,
+      );
+      res.set("Cache-Control", "no-store").type("html").send(html);
+    };
     app.get("/index.html", entry);
     app.use(express.static(dist, { index: false }));
     app.get("/{*path}", entry);

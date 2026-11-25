@@ -19,7 +19,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "start": "node bin/aliyun-panel.mjs",
-    "build": "vite build",
+    "build": "vite build && node scripts/compress-assets.mjs",
     "check": "tsc --noEmit",
     "test": "node --test --test-force-exit --test-concurrency=4 --test-timeout=20000 tests/*.test.mjs"
   },

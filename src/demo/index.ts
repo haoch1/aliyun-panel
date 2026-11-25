@@ -737,6 +737,30 @@ function billing(cycle: string, accountId = "all") {
       }),
   };
 }
+function trafficSnapshot(instance: Instance, range: string) {
+  const nowAt = now();
+  const days =
+    range === "month"
+      ? Number(zoned(new Date(nowAt), "Asia/Shanghai").date.slice(-2))
+      : Number(range);
+  return {
+    items: Array.from({ length: days }, (_, n) => ({
+      date: new Date(nowAt - n * 86400000).toISOString().slice(0, 10),
+      outBytes: (1.8 + Math.sin(n) * 0.6) * GiB,
+      inBytes: (0.8 + Math.cos(n) * 0.2) * GiB,
+      flowBytes: (2.6 + Math.sin(n) * 0.6 + Math.cos(n) * 0.2) * GiB,
+      inPoints: 24,
+      outPoints: 24,
+    })),
+    errors: [],
+    usage: instance.usage,
+    start: nowAt - days * 86400000,
+    end: nowAt,
+    timezone: "Asia/Shanghai",
+    checkedAt: nowAt,
+  };
+}
+
 export async function demoApi(
   path: string,
   body: any,
@@ -891,7 +915,11 @@ export async function demoApi(
     };
   else if (p === "/instances")
     result = {
-      items: listInstances(q),
+      items: listInstances(q).map((i) =>
+        q.get("summary") === "1"
+          ? i
+          : { ...i, traffic: trafficSnapshot(i, "month") },
+      ),
       at: refreshAt,
       errors: [],
       refreshing: false,
@@ -967,26 +995,7 @@ export async function demoApi(
   } else if (p === "/traffic") {
     const trafficInstance = find(t);
     trafficInstance.usage!.at = now();
-    const days =
-      q.get("days") === "month"
-        ? Number(zoned(new Date(), "Asia/Shanghai").date.slice(-2))
-        : Number(q.get("days") || 7);
-    result = {
-      items: Array.from({ length: days }, (_, n) => ({
-        date: new Date(now() - n * 86400000).toISOString().slice(0, 10),
-        outBytes: (1.8 + Math.sin(n) * 0.6) * GiB,
-        inBytes: (0.8 + Math.cos(n) * 0.2) * GiB,
-        flowBytes: (2.6 + Math.sin(n) * 0.6 + Math.cos(n) * 0.2) * GiB,
-        inPoints: 24,
-        outPoints: 24,
-      })),
-      errors: [],
-      usage: trafficInstance.usage,
-      start: now() - days * 86400000,
-      end: now(),
-      timezone: "Asia/Shanghai",
-      checkedAt: now(),
-    };
+    result = trafficSnapshot(trafficInstance, q.get("days") || "7");
   } else if (p === "/jobs" && method === "GET") result = { items: jobs };
   else if (/^\/jobs\/[^/]+\/recheck$/.test(p)) {
     const j = jobs.find((j) => j.id === p.split("/")[2]);
