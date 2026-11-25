@@ -239,6 +239,12 @@
 .inventory-card-fields [data-field="网络"] dt {
   display: none;
 }
+.inventory-card-fields [data-field="公网 IP"] .data-region-inline {
+  display: block;
+}
+.inventory-card-fields [data-field="公网 IP"] .ipv4-address .copy-text span {
+  white-space: nowrap;
+}
 .inventory-card-fields .instance-addresses {
   min-width: 0;
 }

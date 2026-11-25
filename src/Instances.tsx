@@ -351,7 +351,12 @@ export default function Instances() {
                     >
                       {i.ip.length
                         ? i.ip.map((ip) => (
-                            <div key={ip}>
+                            <div
+                              key={ip}
+                              className={
+                                ip.includes(":") ? undefined : "ipv4-address"
+                              }
+                            >
                               <CopyText
                                 text={ip}
                                 toast={(message, type) =>
