@@ -7,20 +7,21 @@ import Select from "./components/ui/Select";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { sortByName } from "../shared/resource-order";
 import {
-  ArrowUpRight,
   ArrowDownUp,
-  Cloud,
+  ArrowUpRight,
+  ChevronRight,
+  CircleAlert,
   CircleCheck,
-  CircleX,
-  FlaskConical,
+  CreditCard,
+  Eye,
+  FileText,
   LogOut,
   Menu,
-  ChevronRight,
-  ScrollText,
   Server,
-  Settings as SettingsIcon,
+  SlidersHorizontal,
   X,
 } from "lucide-react";
+import { BrandMark } from "./components/ui/BrandMark";
 import type { Account, Settings, Snapshot, Instance } from "../shared/types";
 import {
   api,
@@ -35,7 +36,6 @@ import {
 import Instances from "./Instances";
 import { Traffic } from "./Resources";
 import Billing from "./Billing";
-import { ReceiptText } from "lucide-react";
 import SettingsPage from "./Settings";
 import { PendingButton } from "./components/ui/PendingButton";
 import Logs from "./Logs";
@@ -44,9 +44,9 @@ import { DataRegion, PageLoading } from "./components/ui/DataRegion";
 const nav = [
   ["instances", "实例管理", Server],
   ["traffic", "流量统计", ArrowDownUp],
-  ["billing", "账单与余额", ReceiptText],
-  ["audit", "运行日志", ScrollText],
-  ["settings", "系统设置", SettingsIcon],
+  ["billing", "账单与余额", CreditCard],
+  ["audit", "运行日志", FileText],
+  ["settings", "系统设置", SlidersHorizontal],
 ] as const;
 const empty: Snapshot = { items: [], at: 0, errors: [], refreshing: false };
 const currentPage = () => {
@@ -211,9 +211,7 @@ export default function App() {
               select("instances");
             }}
           >
-            <span className="brand-mark" aria-hidden="true">
-              <Cloud size={18} />
-            </span>
+            <BrandMark variant="aliyun" />
             <span className="brand-text">
               <strong>Aliyun Panel</strong>
             </span>
@@ -233,7 +231,7 @@ export default function App() {
                 aria-current={page === p ? "page" : undefined}
                 onClick={() => select(p)}
               >
-                <Icon size={18} />
+                <Icon size={16} />
                 {label}
               </button>
             ))}
@@ -326,11 +324,11 @@ export default function App() {
           {notices.map((n) => (
             <div key={n.id} className={"notice " + (n.error ? "error" : "")}>
               {n.error ? (
-                <CircleX className="notice-icon" size={19} aria-hidden="true" />
+                <CircleAlert className="notice-icon" size={17} aria-hidden="true" />
               ) : (
                 <CircleCheck
                   className="notice-icon"
-                  size={19}
+                  size={17}
                   aria-hidden="true"
                 />
               )}
@@ -388,7 +386,7 @@ function Auth({
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <Cloud size={27} />
+          <BrandMark variant="aliyun" size={34} />
           <strong>Aliyun Panel</strong>
         </div>
         <h1>{initialized ? "登录" : "初始化"}</h1>
@@ -454,7 +452,7 @@ function Auth({
           </PendingButton>
         </Form>
         <a className="demo-entry" href="/instances?demo=1">
-          <FlaskConical size={15} />
+          <Eye size={15} />
           先预览演示面板
           <ArrowUpRight size={14} />
         </a>

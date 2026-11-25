@@ -10,7 +10,7 @@ import {
   notificationIcon,
   notificationExamples,
 } from "../shared/notifications";
-import { Settings as HeadingSettingsIcon } from "lucide-react";
+import { SlidersHorizontal as HeadingSettingsIcon } from "lucide-react";
 import Select from "./components/ui/Select";
 import TimePicker from "./components/ui/TimePicker";
 import TimezoneSelect from "./components/ui/TimezoneSelect";

@@ -1,32 +1,84 @@
 /* ==========================================================================
-   Unified Design System — Shared across LightSail Panel & Aliyun Panel
-   Modern cloud console aesthetic: crisp slate depth, brand focus accents,
-   translucent glass topbar, 1-click theme switcher, shimmering skeletons,
-   and first-class mobile ergonomics.
+   Unified Apple / iOS Minimalist Design System
+   Shared across LightSail Panel & Aliyun Panel (keep 100% identical).
+   Crisp grouped neutral surfaces, hairline dividers, SF-style optical icons,
+   authentic iOS controls, sleek scrollbars, tactile micro-interactions,
+   zero focus-ring conflicts, and solid opaque topbars.
    ========================================================================== */
 
-/* --- Base & Typography --- */
+/* --- Base, Typography, Optical Icons & macOS-Style Scrollbars --- */
 body {
   background: var(--canvas);
   color: var(--text);
 }
 
+svg.lucide {
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .mono,
 .amount,
+.amount-cell,
 .traffic-stat strong,
 .metric-value,
+.log-line-meta,
 td[data-label*="流量"],
 td[data-label*="费用"],
-td[data-label*="价格"] {
+td[data-label*="价格"],
+td[data-label*="余额"],
+td[data-label*="金额"] {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Sidebar Navigation --- */
+/* Sleek macOS / iOS thin scrollbars without legacy Windows arrow buttons */
+html,
+body,
+.select-options,
+.context-menu,
+.modal-body,
+.table-wrap,
+.time-popover,
+.month-menu,
+.sidebar nav,
+.checkbox-list,
+.log-resource-preview,
+.daily-chart-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+/* --- Sidebar Navigation (macOS Minimalist) --- */
 .sidebar {
   width: 232px;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
-  padding: 18px 12px 14px;
+  padding: 16px 12px 14px;
   transition: transform var(--motion-slow) var(--ease-out);
 }
 
@@ -38,6 +90,7 @@ td[data-label*="价格"] {
   display: flex;
   align-items: center;
   gap: 10px;
+  height: auto;
   padding: 6px 8px 14px;
   margin-bottom: 6px;
   text-decoration: none;
@@ -55,7 +108,21 @@ td[data-label*="价格"] {
   flex-shrink: 0;
   background: var(--brand-mark-bg);
   color: var(--brand-mark-fg);
-  box-shadow: var(--shadow-card);
+  box-shadow:
+    var(--shadow-card),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.brand-mark-icon {
+  background: transparent;
+  box-shadow: none;
+}
+
+.brand-mark-svg {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 8px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
 }
 
 .brand-text {
@@ -66,17 +133,18 @@ td[data-label*="价格"] {
 
 .brand strong {
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+  line-height: 1.25;
 }
 
 .sidebar nav,
 .sidebar .side-nav {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-top: 6px;
+  gap: 2px;
+  padding: 8px 0;
+  margin-top: 2px;
 }
 
 .sidebar nav button,
@@ -86,9 +154,9 @@ td[data-label*="价格"] {
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 38px;
-  padding: 8px 11px;
-  border-radius: 9px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border-radius: 10px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--muted);
@@ -97,23 +165,24 @@ td[data-label*="价格"] {
   text-decoration: none;
   cursor: pointer;
   transition:
-    background var(--motion-fast) ease,
-    color var(--motion-fast) ease,
-    border-color var(--motion-fast) ease;
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
 }
 
 .sidebar nav button svg,
 .sidebar .side-nav .nav-item svg {
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
-  opacity: 0.78;
+  opacity: 0.72;
   transition:
-    color var(--motion-fast) ease,
-    opacity var(--motion-fast) ease;
+    color var(--motion-fast) var(--ease-out),
+    opacity var(--motion-fast) var(--ease-out);
 }
 
 .sidebar nav button:hover,
 .sidebar .side-nav .nav-item:hover {
-  background: var(--subtle);
+  background: var(--surface-hover);
   color: var(--text);
 }
 
@@ -127,7 +196,7 @@ td[data-label*="价格"] {
   background: var(--brand-soft);
   color: var(--brand);
   font-weight: 600;
-  border-color: var(--brand-border);
+  border-color: transparent;
 }
 
 .sidebar nav button.active svg,
@@ -139,7 +208,7 @@ td[data-label*="价格"] {
 .sidebar-bottom,
 .side-appearance {
   margin-top: auto;
-  padding-top: 12px;
+  padding: 12px 0 0;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -150,11 +219,11 @@ td[data-label*="价格"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   width: 100%;
-  min-height: 36px;
+  min-height: 34px;
   padding: 0 10px;
-  border-radius: 9px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--muted);
@@ -162,9 +231,9 @@ td[data-label*="价格"] {
   font-weight: 500;
   cursor: pointer;
   transition:
-    background var(--motion-fast) ease,
-    color var(--motion-fast) ease,
-    border-color var(--motion-fast) ease;
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out);
 }
 
 .sidebar-logout:hover:not(:disabled) {
@@ -174,19 +243,19 @@ td[data-label*="价格"] {
 }
 
 .sidebar-logout:disabled {
-  opacity: 0.5;
+  opacity: 0.48;
   cursor: not-allowed;
 }
 
-/* --- 1-Click Segmented Theme Switcher --- */
+/* --- iOS Segmented Theme Switcher --- */
 .theme-switcher {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 3px;
+  gap: 2px;
   padding: 3px;
   border-radius: 10px;
-  background: var(--subtle);
-  border: 1px solid var(--border);
+  background: var(--segment-track);
+  border: 0;
 }
 
 .theme-switcher-btn {
@@ -194,19 +263,19 @@ td[data-label*="价格"] {
   align-items: center;
   justify-content: center;
   gap: 5px;
-  min-height: 30px;
+  min-height: 28px;
   padding: 0 6px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 7.5px;
   background: transparent;
   color: var(--muted);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition:
-    background var(--motion-fast) ease,
-    color var(--motion-fast) ease,
-    box-shadow var(--motion-fast) ease;
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .theme-switcher-btn:hover {
@@ -214,20 +283,20 @@ td[data-label*="价格"] {
 }
 
 .theme-switcher-btn.active {
-  background: var(--surface);
+  background: var(--segment-thumb);
   color: var(--text);
   font-weight: 600;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-thumb);
 }
 
 .theme-switcher-btn:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: 0 0 0 2.5px var(--focus-soft);
 }
 
-/* --- Sticky Solid Topbar --- */
+/* --- Sticky Solid Opaque Topbar --- */
 .topbar {
-  height: 60px;
+  height: 58px;
   padding: 0 28px;
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--border);
@@ -252,7 +321,7 @@ td[data-label*="价格"] {
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -298,8 +367,8 @@ td[data-label*="价格"] {
   align-items: center;
   gap: 4px;
   height: 30px;
-  padding: 0 10px;
-  border-radius: var(--radius-control);
+  padding: 0 11px;
+  border-radius: 999px;
   border: 1px solid var(--control-border);
   background: var(--surface);
   color: var(--text);
@@ -308,8 +377,8 @@ td[data-label*="价格"] {
   text-decoration: none;
   white-space: nowrap;
   transition:
-    background var(--motion-fast) ease,
-    border-color var(--motion-fast) ease;
+    background var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out);
 }
 
 .demo-exit:hover {
@@ -328,14 +397,33 @@ td[data-label*="价格"] {
 }
 
 .page-header h1,
-.page-head h1 {
-  letter-spacing: -0.025em;
-  font-weight: 700;
+.page-head h1,
+.page-heading h1 {
+  letter-spacing: -0.028em;
+  font-weight: 600;
 }
 
-/* --- Cards, Panels & Tables --- */
+.page-heading h1 > svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.75;
+  opacity: 0.84;
+  flex-shrink: 0;
+}
+
+.section-heading h2 > svg,
+.panel h2 > svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.75;
+  opacity: 0.78;
+}
+
+/* --- Grouped Apple Cards, Panels & Tables --- */
 .card,
 .panel,
+.form-panel,
+.table-panel,
 .table-wrap,
 .log-feed,
 .daily-chart,
@@ -348,9 +436,52 @@ td[data-label*="价格"] {
   box-shadow: var(--shadow-card);
 }
 
+.table-panel,
+.log-feed,
+.traffic-overview {
+  overflow: hidden;
+}
+
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Eliminate nested double card borders/shadows inside panels, cards & modals */
+.table-panel > .table-wrap {
+  background: transparent;
+  border: 0;
+  border-radius: 0 0 var(--radius-panel) var(--radius-panel);
+  box-shadow: none;
+}
+
+.table-panel > .table-wrap:first-child {
+  border-radius: var(--radius-panel);
+}
+
+.card .table-wrap,
+.form-panel .table-wrap,
+.modal .table-wrap {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-menu);
+  box-shadow: none;
+}
+
+.log-feed .table-wrap {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.table-toolbar {
+  padding: 16px 20px;
+}
+
+.card-footer {
+  background: color-mix(in srgb, var(--subtle) 42%, var(--surface));
+  border-radius: 0 0 var(--radius-panel) var(--radius-panel);
 }
 
 @media (min-width: 901px) {
@@ -360,6 +491,69 @@ td[data-label*="价格"] {
   .instance-table,
   .instance-table table {
     min-width: 920px !important;
+  }
+
+  /* Balanced Aliyun instances columns so 1280px desktop fits cleanly with unclipped Action button */
+  .instances-table th:first-child,
+  .instances-table td:first-child {
+    width: 38px;
+    padding-left: 14px;
+    padding-right: 0;
+  }
+
+  .instances-table th:nth-child(2) {
+    width: 13%;
+  }
+
+  .instances-table th:nth-child(3) {
+    width: 8.5%;
+  }
+
+  .instances-table th:nth-child(4) {
+    width: 13%;
+  }
+
+  .instances-table th:nth-child(5) {
+    width: 15.5%;
+  }
+
+  .instances-table th:nth-child(6) {
+    width: 9%;
+  }
+
+  .instances-table th:nth-child(7) {
+    width: 11.5%;
+  }
+
+  .instances-table th:nth-child(8) {
+    width: 9.5%;
+  }
+
+  .instances-table th:nth-child(9) {
+    width: 8.5%;
+  }
+
+  .instances-table th:last-child,
+  .instances-table td:last-child {
+    width: 96px;
+    min-width: 96px;
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    padding-left: 10px;
+    padding-right: 14px;
+  }
+
+  .instances-table th:last-child {
+    background: var(--subtle);
+  }
+
+  .instances-table td:last-child {
+    background: var(--surface);
+  }
+
+  .instances-table tbody tr[data-selected] td:last-child {
+    background: color-mix(in srgb, var(--surface) 94%, var(--text));
   }
 }
 
@@ -373,14 +567,24 @@ td[data-label*="价格"] {
 }
 
 .table-wrap table tbody tr {
-  transition: background var(--motion-fast) ease;
+  transition: background var(--motion-fast) var(--ease-out);
 }
 
 .table-wrap table tbody tr:hover {
-  background: var(--subtle);
+  background: var(--surface-hover);
 }
 
-/* --- Scannable Overview / Summary Chips --- */
+.table-wrap .instance-table tbody tr:hover,
+.table-wrap .instances-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.table-wrap .instance-table tbody tr:hover td:last-child,
+.table-wrap .instances-table tbody tr:hover td:last-child {
+  background: color-mix(in srgb, var(--surface) 95.5%, var(--text));
+}
+
+/* --- Scannable Overview / Summary Pills --- */
 .instance-counts,
 .summary {
   font-family: inherit !important;
@@ -395,7 +599,7 @@ td[data-label*="价格"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 11px;
+  padding: 5px 12px;
   border-radius: 999px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -405,24 +609,63 @@ td[data-label*="价格"] {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Interactive Controls --- */
+/* --- Unified Interactive Controls (Apple / iOS Height, Depth & Tactile Motion) --- */
 .button,
 button.primary,
 .select-trigger,
+.month-trigger,
+.time-trigger,
+.search,
+.rule-chip,
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {
   border-radius: var(--radius-control);
   transition:
-    background var(--motion-fast) ease,
-    border-color var(--motion-fast) ease,
-    box-shadow var(--motion-fast) ease,
-    color var(--motion-fast) ease,
-    transform 80ms ease;
+    background var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+/* Harmonized 38px toolbar baseline across buttons, inputs, search & selects */
+.button:not(.small):not(.icon-button),
+.select-trigger,
+.month-trigger,
+.time-trigger,
+input:not([type="checkbox"]):not([type="radio"]),
+select {
+  min-height: var(--control-height);
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 20px;
+}
+
+.search {
+  height: var(--control-height);
+  min-height: var(--control-height);
+}
+
+.button:not(.ghost):not(.icon-button):not(.primary):not(.danger) {
+  box-shadow:
+    0 0.5px 1px rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.025);
+}
+
+:root[data-theme="dark"]
+  .button:not(.ghost):not(.icon-button):not(.primary):not(.danger) {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+}
+
+.button:hover:enabled:not(.ghost):not(.primary):not(.danger):not(.danger-text) {
+  border-color: var(--border-strong);
 }
 
 .button:active:not(:disabled) {
-  transform: translateY(0.5px);
+  transform: scale(0.985);
 }
 
 .button.primary {
@@ -430,6 +673,9 @@ select {
   color: var(--accent-text);
   border-color: var(--accent);
   font-weight: 600;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.14);
 }
 
 .button.primary:hover:not(:disabled) {
@@ -442,6 +688,9 @@ select {
   border-color: var(--danger-button);
   color: #ffffff;
   font-weight: 600;
+  box-shadow:
+    0 1px 2px rgba(196, 43, 37, 0.18),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.14);
 }
 
 .button.danger:hover:not(:disabled) {
@@ -449,12 +698,28 @@ select {
   border-color: var(--danger-button-hover);
 }
 
+.button.danger-text {
+  color: var(--danger);
+}
+
+.button.danger-text:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+.button.small {
+  min-height: var(--control-compact);
+  border-radius: var(--radius-item);
+}
+
 .icon-button {
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-item);
   transition:
-    background var(--motion-fast) ease,
-    color var(--motion-fast) ease,
-    border-color var(--motion-fast) ease;
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out);
 }
 
 .icon-button:hover:not(:disabled) {
@@ -462,10 +727,55 @@ select {
   color: var(--text);
 }
 
+/* Interactive copy pill micro-feedback */
+.copy-text {
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 6px;
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+}
+
+.copy-text:hover {
+  background: var(--surface-hover);
+}
+
+/* Tactile rule chips (Aliyun traffic protection & schedule) */
+.rule-chip {
+  background: var(--subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-item);
+  padding: 4px 9px;
+  font-weight: 500;
+}
+
+.rule-chip:hover {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-card);
+}
+
+/* Full-pill Apple progress tracks */
+.progress,
+.traffic-progress-track {
+  border-radius: 999px;
+  background: var(--segment-track);
+}
+
+.progress > span,
+.traffic-progress-fill {
+  border-radius: 999px;
+  transition: width var(--motion-normal) var(--ease-out);
+}
+
+/* Unified Focus Rings — strictly exclude embedded inputs inside .search / .select-search */
 input:not([type="checkbox"]):not([type="radio"]):focus,
 textarea:focus,
 select:focus,
 .select-trigger:focus-visible,
+.month-trigger:focus-visible,
+.time-trigger:focus-visible,
 .button:focus-visible,
 .icon-button:focus-visible {
   outline: none;
@@ -473,48 +783,270 @@ select:focus,
   box-shadow: 0 0 0 3px var(--focus-soft);
 }
 
-/* Segmented Controls */
-.segmented {
-  background: var(--subtle);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 3px;
-}
-
-.segmented button,
-.segmented [role="radio"] {
-  border-radius: 6px;
-  font-weight: 500;
-  transition:
-    background var(--motion-fast) ease,
-    color var(--motion-fast) ease,
-    box-shadow var(--motion-fast) ease;
-}
-
-.segmented button[aria-pressed="true"],
-.segmented [data-state="on"] {
+/* Toolbar Search Bar — single crisp outer focus ring, zero inner box */
+.search {
+  border-color: var(--control-border);
   background: var(--surface);
+}
+
+.search:hover {
+  border-color: var(--border-strong);
+}
+
+.search:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-soft);
+}
+
+.search input:not([type="checkbox"]):not([type="radio"]),
+.search input:not([type="checkbox"]):not([type="radio"]):hover,
+.search input:not([type="checkbox"]):not([type="radio"]):focus,
+.search input:not([type="checkbox"]):not([type="radio"]):focus-visible {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-height: 28px !important;
+}
+
+/* Searchable Select Popover — clean borderless top search header, zero double focus */
+.select-trigger:hover:enabled,
+.month-trigger:hover:enabled {
+  border-color: var(--border-strong);
+}
+
+.select-trigger[aria-expanded="true"],
+.month-trigger[aria-expanded="true"] {
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+
+.select-trigger[aria-expanded="true"]:focus-visible,
+.month-trigger[aria-expanded="true"]:focus-visible {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-soft);
+}
+
+.select-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 10px;
+  margin: 0 0 6px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.select-search > svg {
+  flex-shrink: 0;
+  opacity: 0.68;
+}
+
+.select-search input:not([type="checkbox"]):not([type="radio"]),
+.select-search input:not([type="checkbox"]):not([type="radio"]):hover,
+.select-search input:not([type="checkbox"]):not([type="radio"]):focus,
+.select-search input:not([type="checkbox"]):not([type="radio"]):focus-visible {
+  flex: 1;
+  min-width: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 2px 0 !important;
+  min-height: 28px !important;
+  font-size: var(--font-sm);
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.select-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+}
+
+.select-search-clear:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.select-options {
+  padding-right: 2px;
+}
+
+.select-option {
+  border-radius: var(--radius-item);
+  padding: 8px 10px;
+  transition: background var(--motion-fast) var(--ease-out);
+}
+
+/* --- Authentic Apple iOS Toggle Switch --- */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 42px;
+  height: 28px;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+.switch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-soft);
+}
+
+.switch::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 24px;
+  border: 0;
+  background: var(--switch-track);
+  border-radius: 999px;
+  transition: background var(--motion-normal) var(--ease-out);
+}
+
+.switch span {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: var(--shadow-thumb);
+  transition: transform var(--motion-normal) var(--ease-out);
+}
+
+.switch.checked::before {
+  background: var(--switch-on);
+  border-color: transparent;
+}
+
+.switch.checked span {
+  transform: translate(18px, -50%);
+  background: #ffffff;
+}
+
+/* --- Crisp Apple Rounded Checkbox --- */
+input[type="checkbox"],
+.square-choice {
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  min-height: 17px;
+  max-width: 17px;
+  max-height: 17px;
+  border-radius: 5.5px;
+  border: 1.5px solid var(--check-border);
+  background: var(--surface);
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+input[type="checkbox"]:hover:not(:disabled),
+.square-choice:hover:not(:disabled) {
+  border-color: var(--focus);
+}
+
+input[type="checkbox"]:focus-visible,
+.square-choice:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-soft);
+}
+
+input[type="checkbox"]:checked::after,
+.square-choice:checked::after {
+  width: 4.5px;
+  height: 8.5px;
+  left: 4.75px;
+  top: 1.75px;
+  border-left: 0;
+  border-top: 0;
+  border-right: 2px solid var(--accent-text);
+  border-bottom: 2px solid var(--accent-text);
+  transform: rotate(42deg);
+}
+
+input[type="checkbox"]:indeterminate::after {
+  width: 9px;
+  height: 2px;
+  left: 2.5px;
+  top: 6px;
+  border-radius: 999px;
+  background: var(--accent-text);
+}
+
+/* --- iOS Segmented Control (Real Class: .segmented-control) --- */
+.segmented-control {
+  background: var(--segment-track);
+  border: 0;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.segmented-control > button {
+  min-height: 32px;
+  border-radius: 7.5px;
+  font-weight: 500;
+  padding: 5px 13px;
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.segmented-control > button[data-state="on"] {
+  background: var(--segment-thumb);
   color: var(--text);
   font-weight: 600;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-thumb);
 }
 
-/* Status Badges */
+/* --- Status Pills & Badges --- */
 .state,
+.status,
 .badge {
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 12px;
 }
 
-.state.green {
+.state i,
+.status::before {
+  width: 5.5px;
+  height: 5.5px;
+}
+
+.state.green,
+.status.running {
   background: var(--success-soft);
   color: var(--success);
   border: 1px solid var(--success-border);
 }
 
 .state.yellow,
-.state.amber {
+.state.amber,
+.status.starting,
+.status.stopping {
   background: var(--warning-soft);
   color: var(--warning);
   border: 1px solid var(--warning-border);
@@ -526,11 +1058,200 @@ select:focus,
   border: 1px solid var(--danger-border);
 }
 
-/* --- Modals & Menus --- */
+.info-box,
+.notice {
+  border-radius: var(--radius-control);
+}
+
+.error-box {
+  border-radius: var(--radius-control);
+}
+
+/* --- Apple Inset Settings & Notification Preview Polish --- */
+.notification-example {
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.session-settings-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.session-settings-row > .field {
+  flex: 0 1 280px;
+  min-width: 180px;
+  max-width: 320px;
+  margin-bottom: 0;
+}
+
+.session-settings-row > .button {
+  flex: 0 0 auto;
+  min-width: 84px;
+}
+
+/* --- Aliyun Log Stream & Detection Card Craft --- */
+.log-feed .table-toolbar {
+  padding: 16px 20px;
+}
+
+.log-feed-head {
+  padding: 12px 20px;
+  background: color-mix(in srgb, var(--subtle) 42%, var(--surface));
+}
+
+.log-feed-head > .muted {
+  font-size: var(--font-xs);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.log-stream-row {
+  grid-template-columns: 8px minmax(0, 1fr) 32px;
+  gap: 14px;
+  padding: 18px 20px;
+  transition: background var(--motion-fast) var(--ease-out);
+}
+
+.log-stream-row:hover {
+  background: color-mix(in srgb, var(--subtle) 45%, transparent);
+}
+
+.log-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 8px;
+  background: var(--muted);
+  opacity: 0.52;
+}
+
+.log-dot.warning {
+  background: var(--warning);
+  opacity: 1;
+  box-shadow: 0 0 0 3px var(--warning-soft);
+}
+
+.log-dot.error {
+  background: var(--danger);
+  opacity: 1;
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.log-stream-copy > p {
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.log-object {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.log-line-meta {
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.log-severity {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--subtle);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.log-severity.warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.log-severity.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.log-resource-preview {
+  margin: 12px 0 4px;
+  padding: 4px 14px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.log-resource-table thead th {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 9px 10px 7px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+.log-resource-table tbody th,
+.log-resource-table tbody td {
+  padding: 9px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.log-resource-table th:first-child,
+.log-resource-table td:first-child {
+  padding-left: 0;
+}
+
+.log-resource-table th:last-child,
+.log-resource-table td:last-child {
+  padding-right: 0;
+}
+
+.log-resource-table tbody tr:hover {
+  background: transparent;
+}
+
+.log-resource-status::before {
+  width: 5.5px;
+  height: 5.5px;
+}
+
+.log-stream-row > .icon-button {
+  border-radius: 999px;
+  opacity: 0.72;
+}
+
+.log-stream-row:hover > .icon-button {
+  opacity: 1;
+  color: var(--text);
+}
+
+.log-stream-row > .icon-button:hover {
+  transform: translateX(2px);
+}
+
+.log-feed .pagination,
+.table-panel .pagination {
+  padding: 14px 20px;
+}
+
+.log-instance-detail {
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+/* --- Apple Popovers, Context Menus & Modals --- */
 .navigation-backdrop {
   z-index: 80 !important;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
 }
 
 .sidebar.mobile-open,
@@ -539,8 +1260,21 @@ select:focus,
 }
 
 .modal-backdrop {
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+}
+
+.modal,
+[role="dialog"] {
+  outline: none !important;
+}
+
+.modal:focus,
+.modal:focus-visible,
+[role="dialog"]:focus,
+[role="dialog"]:focus-visible {
+  outline: none !important;
 }
 
 .modal {
@@ -548,20 +1282,76 @@ select:focus,
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   box-shadow: var(--modal-shadow);
+  animation: apple-modal-in 160ms var(--ease-out);
+}
+
+.modal-head .icon-button {
+  border-radius: 999px;
+}
+
+@keyframes apple-modal-in {
+  from {
+    opacity: 0.96;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .select-menu,
-.action-menu,
-.popover-content,
-.tooltip-content {
+.context-menu,
+.time-popover,
+.month-menu {
   border-radius: var(--radius-menu);
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
 }
 
-/* --- Toasts (Always above Modals & Menus) --- */
-.toasts {
+.context-menu {
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.context-menu button {
+  border-radius: var(--radius-item);
+  transition: background var(--motion-fast) var(--ease-out);
+}
+
+.context-menu .menu-power-actions button {
+  border-radius: var(--radius-item);
+  background: var(--subtle);
+  border: 1px solid var(--border);
+}
+
+.context-menu .menu-power-actions button:hover:enabled {
+  background: var(--surface-hover);
+}
+
+.context-menu hr {
+  margin: 5px 4px;
+}
+
+.tooltip {
+  border-radius: 9px;
+  font-weight: 500;
+}
+
+.month-grid button {
+  border-radius: var(--radius-item);
+}
+
+.month-grid button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* --- Toasts & Notices (Unified Apple Floating Pill across Both Panels) --- */
+.toasts,
+.notices {
   position: fixed;
   right: 20px;
   bottom: 20px;
@@ -569,17 +1359,19 @@ select:focus,
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: min(420px, calc(100vw - 32px));
+  max-width: min(400px, calc(100vw - 32px));
   pointer-events: none;
 }
 
-.toast {
+.toast,
+.notices .notice {
   pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 10px;
+  margin: 0;
   padding: 11px 12px 11px 14px;
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-menu);
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -590,23 +1382,26 @@ select:focus,
   animation: toast-slide-in var(--motion-normal) var(--ease-out);
 }
 
-.toast.error {
+.toast.error,
+.notices .notice.error {
   border-color: var(--danger-border);
 }
 
-.toast > svg {
+.toast > svg,
+.notices .notice-icon {
   flex-shrink: 0;
   color: var(--success);
 }
 
-.toast.error > svg {
+.toast.error > svg,
+.notices .notice.error .notice-icon {
   color: var(--danger);
 }
 
 @keyframes toast-slide-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(10px) scale(0.97);
   }
   to {
     opacity: 1;
@@ -649,7 +1444,7 @@ select:focus,
 
 /* --- Daily Traffic Chart Polish --- */
 .daily-chart {
-  padding: 18px 20px 16px;
+  padding: 20px 22px 18px;
 }
 
 .daily-bars {
@@ -663,31 +1458,38 @@ select:focus,
   background-position: 0 0;
 }
 
+.daily-bar-track {
+  background: color-mix(in srgb, var(--subtle) 55%, transparent);
+  border-radius: 6px;
+}
+
 .daily-bar-fill {
   background: linear-gradient(
     180deg,
     var(--chart-bar-top) 0%,
     var(--chart-bar-bottom) 100%
   ) !important;
-  border-radius: 5px 5px 2px 2px !important;
+  border-radius: 6px 6px 2px 2px !important;
   transition:
-    filter var(--motion-fast) ease,
-    transform var(--motion-fast) ease;
+    filter var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out);
 }
 
 .daily-bar:hover .daily-bar-fill,
 .daily-bar:focus-visible .daily-bar-fill,
-.daily-bar.active .daily-bar-fill {
+.daily-bar.active .daily-bar-fill,
+.daily-bar[data-active] .daily-bar-fill {
   filter: brightness(1.12);
 }
 
 .daily-bar:hover .daily-bar-track,
 .daily-bar:focus-visible .daily-bar-track {
   background: var(--brand-soft);
-  border-radius: 6px;
+  border-radius: 7px;
 }
 
 .daily-tooltip,
+.daily-chart-tooltip,
 .chart-tooltip {
   border-radius: var(--radius-menu);
   background: var(--surface-elevated);
@@ -696,21 +1498,11 @@ select:focus,
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Auth Page Polish --- */
+/* --- Auth Page (Minimalist Apple Sign-In Card) --- */
 .auth-page,
+.auth-wrap,
 .auth-shell {
-  background:
-    radial-gradient(
-      circle at 20% 15%,
-      var(--brand-soft) 0%,
-      transparent 45%
-    ),
-    radial-gradient(
-      circle at 80% 85%,
-      var(--brand-soft) 0%,
-      transparent 45%
-    ),
-    var(--canvas);
+  background: var(--canvas);
 }
 
 .auth-card {
@@ -718,7 +1510,7 @@ select:focus,
   box-shadow: var(--modal-shadow);
 }
 
-/* --- Inventory Mobile Cards Consistency --- */
+/* --- Inventory Mobile Cards --- */
 .inventory-card {
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
@@ -733,7 +1525,7 @@ select:focus,
   }
 
   .sidebar {
-    width: 272px;
+    width: 276px;
     padding: max(16px, env(safe-area-inset-top)) 14px
       max(16px, env(safe-area-inset-bottom));
     box-shadow: var(--modal-shadow);
@@ -748,12 +1540,13 @@ select:focus,
   .topbar {
     display: flex !important;
     flex-wrap: nowrap !important;
-    height: 56px !important;
-    min-height: 56px;
+    height: 54px !important;
+    min-height: 54px;
     padding: 0 12px !important;
     padding-left: max(12px, env(safe-area-inset-left)) !important;
     padding-right: max(12px, env(safe-area-inset-right)) !important;
     gap: 8px;
+    background: var(--topbar-bg) !important;
   }
 
   .topbar-left {
@@ -791,8 +1584,8 @@ select:focus,
   .top-right .demo-exit,
   .topbar-actions .demo-exit {
     display: inline-flex !important;
-    height: 32px;
-    padding: 0 8px;
+    height: 30px;
+    padding: 0 10px;
     font-size: 12px;
   }
 
@@ -806,27 +1599,62 @@ select:focus,
     padding: 18px 14px max(36px, env(safe-area-inset-bottom));
   }
 
-  .toasts {
+  .instance-inventory .table-panel,
+  .instance-inventory .table-wrap {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .toasts,
+  .notices {
     left: 12px;
     right: 12px;
     bottom: max(12px, env(safe-area-inset-bottom));
     max-width: none;
   }
-
-  .session-settings-row {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .session-settings-row > * {
-    flex: 1 1 180px;
-  }
 }
 
-/* --- Small Mobile (<= 600px) --- */
+/* --- Small Mobile (<= 600px, iOS Sheet Polish) --- */
 @media (max-width: 600px) {
   .demo-indicator {
     display: none;
+  }
+
+  .modal-backdrop:not(.ssh-fullscreen-backdrop) {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal:not(.fullscreen) {
+    width: 100%;
+    max-height: 90dvh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+    padding: 20px 18px max(20px, env(safe-area-inset-bottom));
+    animation: apple-sheet-up 180ms var(--ease-out);
+  }
+
+  @keyframes apple-sheet-up {
+    from {
+      opacity: 0.98;
+      transform: translateY(22px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .session-settings-row > .field {
+    flex: 1 1 180px;
+    max-width: none;
+    min-width: 160px;
+  }
+
+  .session-settings-row > .button {
+    flex: 0 0 auto;
   }
 
   .billing-toolbar {
@@ -843,8 +1671,31 @@ select:focus,
     white-space: normal !important;
   }
 
+  .log-feed .table-toolbar,
+  .log-feed-head,
+  .log-feed .pagination,
+  .table-panel .pagination {
+    padding: 12px 14px;
+  }
+
   .log-stream-row {
-    grid-template-columns: minmax(0, 1fr) auto 40px !important;
+    grid-template-columns: 7px minmax(0, 1fr) 32px !important;
+    gap: 10px;
+    padding: 16px 14px;
+  }
+
+  .log-resource-preview {
+    padding: 2px 12px;
+    border-radius: 10px;
+  }
+
+  .log-resource-table tr {
+    gap: 10px 8px;
+  }
+
+  .log-resource-table td.numeric {
+    white-space: nowrap;
+    font-size: 12.5px;
   }
 
   .traffic-daily-table th,
@@ -876,8 +1727,9 @@ select:focus,
 /* --- Touch Device Ergonomics --- */
 @media (pointer: coarse) {
   .switch {
-    min-width: 44px;
-    min-height: 36px;
+    width: 42px;
+    min-width: 42px;
+    height: 36px;
   }
 
   .inventory-card-actions .selection-box,
@@ -891,6 +1743,6 @@ select:focus,
   }
 
   .theme-switcher-btn {
-    min-height: 36px;
+    min-height: 34px;
   }
 }

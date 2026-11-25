@@ -2,10 +2,10 @@ import type { ReactNode } from "react";
 import { TableLoading } from "./TableLoading";
 import {
   ArrowDownUp,
-  Cloud,
-  Receipt,
-  ScrollText,
-  Settings,
+  CreditCard,
+  FileText,
+  Server,
+  SlidersHorizontal,
 } from "lucide-react";
 import { PageHeader } from "./PageHeader";
 import { TablePanel } from "./Table";
@@ -129,8 +129,8 @@ export function PageLoading({ page }: { page: string }) {
     return (
       <div className="page-loading instances-loading">
         <PageHeader
-          title="Aliyun 实例"
-          icon={Cloud}
+          title="实例管理"
+          icon={Server}
           actions={
             <div className="row loading-actions">
               <Skeleton />
@@ -182,19 +182,19 @@ export function PageLoading({ page }: { page: string }) {
           page === "traffic"
             ? "流量统计"
             : page === "audit"
-              ? "日志"
+              ? "运行日志"
               : page === "settings"
-                ? "设置"
+                ? "系统设置"
                 : "账单与余额"
         }
         icon={
           page === "traffic"
             ? ArrowDownUp
             : page === "audit"
-              ? ScrollText
+              ? FileText
               : page === "settings"
-                ? Settings
-                : Receipt
+                ? SlidersHorizontal
+                : CreditCard
         }
       />
       {page !== "settings" && (

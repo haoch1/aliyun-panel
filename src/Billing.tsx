@@ -1,7 +1,7 @@
 import { groupDataTimes } from "../shared/presentation";
 import { sortByName } from "../shared/resource-order";
 import { regionName } from "../shared/regions";
-import { ReceiptText } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { useState } from "react";
 import type { Instance } from "../shared/types";
 import Select from "./components/ui/Select";
@@ -112,7 +112,7 @@ export default function Billing({
   };
   return (
     <div className={"billing-view " + (instance ? "embedded-view" : "")}>
-      {!instance && <PageHeader title="账单与余额" icon={ReceiptText} />}
+      {!instance && <PageHeader title="账单与余额" icon={CreditCard} />}
       <div className="toolbar billing-toolbar">
         <div className="billing-filter">
           <span className="muted">账期</span>

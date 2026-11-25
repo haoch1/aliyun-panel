@@ -9,7 +9,7 @@ import {
 } from "../shared/log-presentation";
 import { Modal } from "./components/ui/Modal";
 import { Fragment, useMemo, useState } from "react";
-import { ChevronRight, ScrollText } from "lucide-react";
+import { ChevronRight, FileText, Trash2 } from "lucide-react";
 import Select from "./components/ui/Select";
 import { SearchInput } from "./components/ui/SearchInput";
 import { actionLabel } from "../shared/actions";
@@ -384,8 +384,17 @@ export default function Logs() {
     <>
       <PageHeader
         title="运行日志"
-        icon={ScrollText}
-        actions={<Button onClick={() => setClearOpen(true)}>清空日志</Button>}
+        icon={FileText}
+        actions={
+          <Button
+            className="danger-text"
+            disabled={!rows.length}
+            onClick={() => setClearOpen(true)}
+          >
+            <Trash2 size={15} />
+            清空日志
+          </Button>
+        }
       />
       <ErrorBox error={d.error} />
       <section className="log-feed" aria-label="运行日志">

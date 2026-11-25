@@ -1,14 +1,14 @@
 :root {
   font-family:
-    Inter,
     -apple-system,
     BlinkMacSystemFont,
-    "Segoe UI",
+    "SF Pro Text",
+    "SF Pro Display",
     "PingFang SC",
     "Hiragino Sans GB",
+    "Segoe UI",
     "Microsoft YaHei UI",
     "Microsoft YaHei",
-    Arial,
     sans-serif;
   color: var(--text);
   background: var(--canvas);
@@ -16,150 +16,174 @@
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   line-height: 1.5;
+  letter-spacing: -0.008em;
   scrollbar-gutter: stable;
 
-  /* Surface & Canvas (Pure Monochrome Light) */
-  --canvas: #fafafa;
+  /* Apple / iOS Grouped Light Surfaces */
+  --canvas: #f5f5f7;
   --surface: #ffffff;
   --surface-elevated: #ffffff;
-  --subtle: #f4f4f5;
-  --surface-hover: #ececee;
-  --sidebar-bg: #ffffff;
+  --subtle: #f2f2f7;
+  --surface-hover: rgba(0, 0, 0, 0.045);
+  --sidebar-bg: #fbfbfd;
   --topbar-bg: #ffffff;
 
   /* Typography */
-  --text: #111111;
-  --muted: #666666;
+  --text: #1d1d1f;
+  --muted: #6e6e73;
 
-  /* Borders */
-  --border: #e5e5e7;
-  --border-strong: #d1d1d6;
-  --control-border: #d4d4d8;
-  --check-border: #8e8e93;
+  /* Hairline Borders */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --control-border: rgba(0, 0, 0, 0.13);
+  --check-border: rgba(0, 0, 0, 0.28);
 
-  /* Monochrome Brand & Accent */
-  --brand: #18181b;
-  --brand-hover: #09090b;
-  --brand-soft: #f0f0f2;
-  --brand-border: #e0e0e4;
-  --brand-mark-bg: #18181b;
+  /* Minimalist Apple Obsidian Brand & Accent */
+  --brand: #1d1d1f;
+  --brand-hover: #000000;
+  --brand-soft: rgba(0, 0, 0, 0.055);
+  --brand-border: rgba(0, 0, 0, 0.06);
+  --brand-mark-bg: #1d1d1f;
   --brand-mark-fg: #ffffff;
-  --accent: #18181b;
-  --accent-hover: #27272a;
+  --accent: #1d1d1f;
+  --accent-hover: #333336;
   --accent-text: #ffffff;
-  --accent-soft: #ededef;
-  --focus: #27272a;
-  --focus-soft: rgba(24, 24, 27, 0.1);
-  --control-hover: #a1a1aa;
+  --accent-soft: rgba(0, 0, 0, 0.055);
+  --focus: rgba(0, 0, 0, 0.34);
+  --focus-soft: rgba(0, 0, 0, 0.08);
+  --control-hover: rgba(0, 0, 0, 0.22);
 
-  /* Semantic (Status & Alerts Only) */
-  --success: #15803d;
-  --success-soft: rgba(21, 128, 61, 0.08);
-  --success-border: rgba(21, 128, 61, 0.2);
-  --warning: #a16207;
-  --warning-soft: #fefce8;
-  --warning-border: #fef08a;
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
-  --danger-border: #fecaca;
+  /* iOS Segmented & Switch Tokens */
+  --segment-track: rgba(118, 118, 128, 0.12);
+  --segment-thumb: #ffffff;
+  --switch-track: rgba(120, 120, 128, 0.24);
+  --switch-on: #34c759;
+
+  /* Apple System Semantic Colors (Status, Switches & Alerts Only) */
+  --success: #248a3d;
+  --success-soft: rgba(52, 199, 89, 0.12);
+  --success-border: rgba(52, 199, 89, 0.24);
+  --warning: #b25000;
+  --warning-soft: rgba(255, 149, 0, 0.11);
+  --warning-border: rgba(255, 149, 0, 0.24);
+  --danger: #c42b25;
+  --danger-soft: rgba(196, 43, 37, 0.08);
+  --danger-border: rgba(196, 43, 37, 0.2);
   --red: var(--danger);
-  --danger-button: #dc2626;
-  --danger-button-hover: #b91c1c;
+  --danger-button: #c42b25;
+  --danger-button-hover: #a8231e;
 
   /* Charts (Monochrome Graphite) */
-  --chart-color: #27272a;
-  --chart-fill: rgba(24, 24, 27, 0.08);
-  --chart-secondary: #27272a;
-  --chart-bar-top: #3f3f46;
-  --chart-bar-bottom: #18181b;
-  --chart-grid: rgba(0, 0, 0, 0.06);
+  --chart-color: #2c2c2e;
+  --chart-fill: rgba(29, 29, 31, 0.08);
+  --chart-secondary: #2c2c2e;
+  --chart-bar-top: #48484a;
+  --chart-bar-bottom: #1d1d1f;
+  --chart-grid: rgba(0, 0, 0, 0.055);
 
-  /* Elevation */
+  /* Diffused Apple Elevation */
   --shadow-card:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 1px 3px rgba(0, 0, 0, 0.02);
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 2px 8px rgba(0, 0, 0, 0.025);
+  --shadow-thumb:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 1px rgba(0, 0, 0, 0.05);
   --shadow:
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    0 12px 28px rgba(0, 0, 0, 0.1);
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.08);
   --modal-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.08),
-    0 24px 64px rgba(0, 0, 0, 0.18);
+    0 12px 36px rgba(0, 0, 0, 0.12),
+    0 28px 64px rgba(0, 0, 0, 0.14);
 
   /* Misc */
   --mono:
-    "JetBrains Mono", "Cascadia Code", ui-monospace, SFMono-Regular, Menlo,
-    Consolas, monospace;
-  --scroll-thumb: #c4c4c8;
-  --shimmer-base: #f0f0f2;
-  --shimmer-highlight: #fafafa;
+    "SF Mono", ui-monospace, SFMono-Regular, Menlo, "JetBrains Mono",
+    "Cascadia Code", Consolas, monospace;
+  --scroll-thumb: rgba(0, 0, 0, 0.18);
+  --scroll-thumb-hover: rgba(0, 0, 0, 0.32);
+  --shimmer-base: #ececef;
+  --shimmer-highlight: #f8f8fa;
   --stat-size: 26px;
 }
 
 :root[data-theme="dark"] {
-  --canvas: #0a0a0b;
-  --surface: #141416;
-  --surface-elevated: #18181b;
-  --subtle: #1e1e22;
-  --surface-hover: #27272a;
-  --sidebar-bg: #111113;
-  --topbar-bg: #111113;
+  /* Apple / iOS OLED Dark Surfaces */
+  --canvas: #000000;
+  --surface: #1c1c1e;
+  --surface-elevated: #242426;
+  --subtle: #2c2c2e;
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-bg: #161618;
+  --topbar-bg: #161618;
 
-  --text: #fafafa;
-  --muted: #a1a1aa;
+  --text: #f5f5f7;
+  --muted: #98989d;
 
-  --border: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.095);
   --border-strong: rgba(255, 255, 255, 0.18);
   --control-border: rgba(255, 255, 255, 0.14);
   --check-border: rgba(255, 255, 255, 0.34);
 
-  --brand: #fafafa;
+  --brand: #f5f5f7;
   --brand-hover: #ffffff;
-  --brand-soft: rgba(255, 255, 255, 0.08);
-  --brand-border: rgba(255, 255, 255, 0.14);
-  --brand-mark-bg: #fafafa;
-  --brand-mark-fg: #09090b;
-  --accent: #fafafa;
+  --brand-soft: rgba(255, 255, 255, 0.09);
+  --brand-border: rgba(255, 255, 255, 0.08);
+  --brand-mark-bg: #f5f5f7;
+  --brand-mark-fg: #1d1d1f;
+  --accent: #f5f5f7;
   --accent-hover: #ffffff;
-  --accent-text: #09090b;
-  --accent-soft: #232327;
-  --focus: #e4e4e7;
-  --focus-soft: rgba(255, 255, 255, 0.14);
-  --control-hover: rgba(255, 255, 255, 0.28);
+  --accent-text: #1d1d1f;
+  --accent-soft: rgba(255, 255, 255, 0.09);
+  --focus: rgba(255, 255, 255, 0.42);
+  --focus-soft: rgba(255, 255, 255, 0.13);
+  --control-hover: rgba(255, 255, 255, 0.26);
 
-  --success: #4ade80;
-  --success-soft: rgba(74, 222, 128, 0.12);
-  --success-border: rgba(74, 222, 128, 0.24);
-  --warning: #facc15;
-  --warning-soft: rgba(250, 204, 21, 0.1);
-  --warning-border: rgba(250, 204, 21, 0.24);
-  --danger: #f87171;
-  --danger-soft: rgba(248, 113, 113, 0.12);
-  --danger-border: rgba(248, 113, 113, 0.26);
-  --danger-button: #dc2626;
-  --danger-button-hover: #ef4444;
+  --segment-track: rgba(118, 118, 128, 0.24);
+  --segment-thumb: #3a3a3c;
+  --switch-track: rgba(120, 120, 128, 0.36);
+  --switch-on: #30d158;
 
-  --chart-color: #d4d4d8;
+  --success: #30d158;
+  --success-soft: rgba(48, 209, 88, 0.14);
+  --success-border: rgba(48, 209, 88, 0.24);
+  --warning: #ff9f0a;
+  --warning-soft: rgba(255, 159, 10, 0.14);
+  --warning-border: rgba(255, 159, 10, 0.24);
+  --danger: #ef645c;
+  --danger-soft: rgba(239, 100, 92, 0.13);
+  --danger-border: rgba(239, 100, 92, 0.24);
+  --danger-button: #cf3a33;
+  --danger-button-hover: #dc4a43;
+
+  --chart-color: #d1d1d6;
   --chart-fill: rgba(255, 255, 255, 0.08);
-  --chart-secondary: #d4d4d8;
-  --chart-bar-top: #e4e4e7;
-  --chart-bar-bottom: #a1a1aa;
-  --chart-grid: rgba(255, 255, 255, 0.12);
+  --chart-secondary: #d1d1d6;
+  --chart-bar-top: #f2f2f7;
+  --chart-bar-bottom: #aeaeb2;
+  --chart-grid: rgba(255, 255, 255, 0.1);
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.05);
+  --shadow-thumb:
+    0 1px 3px rgba(0, 0, 0, 0.38),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
   --shadow:
-    0 2px 8px rgba(0, 0, 0, 0.4),
-    0 12px 28px rgba(0, 0, 0, 0.55);
+    0 6px 20px rgba(0, 0, 0, 0.45),
+    0 16px 40px rgba(0, 0, 0, 0.52);
   --modal-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.5),
-    0 24px 64px rgba(0, 0, 0, 0.7);
+    0 14px 40px rgba(0, 0, 0, 0.58),
+    0 28px 72px rgba(0, 0, 0, 0.72);
 
-  --scroll-thumb: #3f3f46;
-  --shimmer-base: #1e1e22;
-  --shimmer-highlight: #2a2a30;
+  --scroll-thumb: rgba(255, 255, 255, 0.22);
+  --scroll-thumb-hover: rgba(255, 255, 255, 0.36);
+  --shimmer-base: #242426;
+  --shimmer-highlight: #323236;
 }
 
-/* Shared panel scale. Keep these tokens identical in both applications. */
+/* Shared Apple/iOS panel scale — identical across both applications. */
 :root {
   --font-2xs: 11px;
   --font-xs: 12px;
@@ -168,7 +192,7 @@
   --font-body: 14px;
   --font-label: 15px;
   --font-section: 16px;
-  --font-dialog: 18px;
+  --font-dialog: 17px;
   --font-title: 24px;
   --font-stat: 26px;
 
@@ -177,18 +201,19 @@
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  --radius-control: 8px;
-  --radius-menu: 10px;
-  --radius-panel: 12px;
-  --radius-dialog: 14px;
+  --radius-item: 8px;
+  --radius-control: 10px;
+  --radius-menu: 14px;
+  --radius-panel: 16px;
+  --radius-dialog: 20px;
 
-  --control-height: 40px;
-  --control-compact: 34px;
+  --control-height: 38px;
+  --control-compact: 32px;
 
-  --motion-fast: 120ms;
-  --motion-normal: 160ms;
-  --motion-slow: 220ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-fast: 130ms;
+  --motion-normal: 180ms;
+  --motion-slow: 260ms;
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
   --layer-menu: 110;
 }
 

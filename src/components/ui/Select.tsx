@@ -1,7 +1,7 @@
 import * as Primitive from "@radix-ui/react-select";
 import * as Popover from "@radix-ui/react-popover";
 import { Command } from "cmdk";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
 import {
   Children,
   Fragment,
@@ -236,9 +236,23 @@ export default function Select({
                   <Command.Input asChild value={query} onValueChange={setQuery}>
                     <Input
                       ref={queryInput}
+                      placeholder="搜索选项…"
                       aria-label={"搜索" + (props["aria-label"] || "选项")}
                     />
                   </Command.Input>
+                  {query && (
+                    <button
+                      type="button"
+                      className="select-search-clear"
+                      aria-label="清除搜索"
+                      onClick={() => {
+                        setQuery("");
+                        queryInput.current?.focus({ preventScroll: true });
+                      }}
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
                 </div>
                 <Command.List className="select-options">
                   <Command.Empty className="select-empty">
