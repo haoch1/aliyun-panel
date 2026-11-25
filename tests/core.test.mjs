@@ -246,6 +246,31 @@ test("网络未知结果保留任务，不重复提交写请求", async (t) => {
   assert.equal(writes, 1);
   assert.ok(r.jobs.busy(target));
 });
+test("写入前查询中断可重试，写入后超时只能核对状态", async (t) => {
+  const r = setup(t);
+  await r.service.refresh();
+  const first = await r.jobs.manual(target, "start");
+  const refresh = r.service.refreshTarget.bind(r.service);
+  r.service.refreshTarget = async () => {
+    throw Object.assign(new Error("连接中断"), { code: "ECONNRESET" });
+  };
+  await r.jobs.run(r.store.get("job", first.id));
+  assert.equal(r.store.get("job", first.id).status, "failed");
+  assert.ok(!r.jobs.busy(target));
+  assert.ok(!r.calls.some((c) => c.action === "StartInstance"));
+  r.service.refreshTarget = refresh;
+  const next = await r.jobs.manual(target, "start");
+  let writes = 0;
+  r.gateway.control = async () => {
+    writes++;
+    throw Object.assign(new Error("连接超时"), { code: "ETIMEDOUT" });
+  };
+  await r.jobs.run(r.store.get("job", next.id));
+  assert.equal(r.store.get("job", next.id).status, "attention");
+  await assert.rejects(r.jobs.manual(target, "start"), { status: 409 });
+  assert.equal(writes, 1);
+});
+
 test("账号删除期间的旧查询不能恢复资源", async (t) => {
   const r = setup(t);
   let release;

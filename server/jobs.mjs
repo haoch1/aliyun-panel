@@ -76,6 +76,8 @@ export class Jobs {
     return this.public(job);
   }
   finish(j, status, detail, result) {
+    // A late preflight must not restore a removed job or overwrite a newer claim.
+    if (this.store.get("job", j.id)?.status !== j.status) return;
     j = {
       ...j,
       status,
@@ -211,72 +213,63 @@ export class Jobs {
       return this.finish(j, "failed", "此功能已移除，未执行云端操作");
     const payload = this.store.decrypt(j.secretPayload);
     if (j.status === "queued") {
-      if (["start", "stop"].includes(j.action) && j.source !== "manual") {
-        const i = await this.service.refreshTarget(t, {
-            usage: this.store.rule(t).thresholdEnabled,
-          }),
-          rule = this.store.rule(t);
-        const d = decide(i, rule, this.store.settings());
-        if (payload.revision !== rule.revision || d.action !== j.action)
-          return this.finish(j, "failed", "规则已改变，取消未提交动作");
-      }
-      j = {
-        ...j,
-        status: "submitted",
-        updatedAt: Date.now(),
-        submittedAt: Date.now(),
-      };
-      if (
-        !this.store.db
-          .prepare(
-            "UPDATE entities SET body=? WHERE kind='job' AND id=? AND json_extract(body,'$.status')='queued'",
-          )
-          .run(JSON.stringify(j), j.id).changes
-      )
-        return;
+      let writeAttempted = false;
       try {
-        let b;
-        if (["start", "stop"].includes(j.action)) {
-          const i = await this.service.refreshTarget(t, {
-            usage: j.action === "start" && this.store.rule(t).thresholdEnabled,
+        if (j.source !== "manual") {
+          const first = await this.service.refreshTarget(t, {
+            usage: this.store.rule(t).thresholdEnabled,
           });
+          const rule = this.store.rule(t);
           if (
-            j.action === "start" &&
-            j.source === "manual" &&
-            !payload.override
-          ) {
-            const rule = this.store.rule(t),
-              traffic = usageOver(rule, i.usage);
-            if (
-              !traffic.valid ||
-              traffic.over ||
-              !schedule(rule, new Date()).allowed ||
-              (rule.hold === "traffic" && !payload.resume)
+            payload.revision !== rule.revision ||
+            decide(first, rule, this.store.settings()).action !== j.action
+          )
+            return this.finish(j, "failed", "规则已改变，取消未提交动作");
+        }
+        const i = await this.service.refreshTarget(t, {
+          usage: j.action === "start" && this.store.rule(t).thresholdEnabled,
+        });
+        const rule = this.store.rule(t);
+        if (
+          j.source === "manual" &&
+          j.action === "start" &&
+          !payload.override
+        ) {
+          const traffic = usageOver(rule, i.usage);
+          if (
+            !traffic.valid ||
+            traffic.over ||
+            !schedule(rule, new Date()).allowed ||
+            (rule.hold === "traffic" && !payload.resume)
+          )
+            return this.finish(j, "failed", "当前保护规则禁止启动，请重新确认");
+        }
+        if (
+          j.source !== "manual" &&
+          (payload.revision !== rule.revision ||
+            decide(i, rule, this.store.settings()).action !== j.action)
+        )
+          return this.finish(j, "failed", "提交前规则已改变，取消动作");
+
+        // Persist the claim immediately before dispatch. A restarted worker only reconciles a claimed job.
+        const now = Date.now();
+        j = { ...j, status: "submitted", submittedAt: now, updatedAt: now };
+        if (
+          !this.store.db
+            .prepare(
+              "UPDATE entities SET body=? WHERE kind='job' AND id=? AND json_extract(body,'$.status')='queued'",
             )
-              return this.finish(
-                j,
-                "failed",
-                "当前保护规则禁止启动，请重新确认",
-              );
-          }
-          const same =
-            (j.action === "start" && i.status === "Running") ||
-            (j.action === "stop" && i.status === "Stopped");
-          if (j.source !== "manual") {
-            const latest = this.store.rule(t),
-              decision = decide(i, latest, this.store.settings());
-            if (
-              payload.revision !== latest.revision ||
-              decision.action !== j.action
-            )
-              return this.finish(j, "failed", "提交前规则已改变，取消动作");
-          }
-          b = same
-            ? {}
-            : await this.gateway.control(t, j.action, j.clientToken, {
-                stoppedMode: payload.stoppedMode || "KeepCharging",
-              });
-        } else throw new Error("此功能已移除");
+            .run(JSON.stringify(j), j.id).changes
+        )
+          return;
+        const expected = j.action === "start" ? "Running" : "Stopped";
+        let b;
+        if (i.status !== expected) {
+          writeAttempted = true;
+          b = await this.gateway.control(t, j.action, j.clientToken, {
+            stoppedMode: payload.stoppedMode || "KeepCharging",
+          });
+        }
         j.requestId = b?.requestId;
         this.store.put("job", j.id, j);
         this.store.updateAudit(j.auditId, {
@@ -306,14 +299,22 @@ export class Jobs {
             reason: "云端权限或安全限制，5 分钟后按当前规则重试",
           });
         }
-        const known =
-          !!e.code &&
-          !/timeout|network|reset|unavailable|internal|throttl/i.test(e.code);
+        const rejected =
+          /^(?:Forbidden|AccessDenied|Unauthorized|NoPermission|Invalid|Incorrect|Missing|OperationDenied|Insufficient|Unsupported|SignatureDoesNotMatch|LockedForSecurity)/i.test(
+            e.code || "",
+          );
+        const uncertain = writeAttempted && !rejected;
         return this.finish(
           j,
-          known ? "failed" : "attention",
+          uncertain ? "attention" : "failed",
           errorText(e) +
-            (backoff ? "；5 分钟后按当前规则重试" : "；请核对云端状态"),
+            (backoff
+              ? "；5 分钟后按当前规则重试"
+              : uncertain
+                ? "；请核对云端状态"
+                : !writeAttempted
+                  ? "；未提交开关机请求，可重试"
+                  : ""),
         );
       }
     }
