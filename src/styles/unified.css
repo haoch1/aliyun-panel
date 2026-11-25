@@ -1449,13 +1449,6 @@ input[type="checkbox"]:indeterminate::after {
 
 .daily-bars {
   position: relative;
-  background-image: linear-gradient(
-    to bottom,
-    var(--chart-grid) 1px,
-    transparent 1px
-  );
-  background-size: 100% 33.333%;
-  background-position: 0 0;
 }
 
 .daily-bar-track {

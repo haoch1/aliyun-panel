@@ -81,7 +81,6 @@
   --chart-secondary: #2c2c2e;
   --chart-bar-top: #48484a;
   --chart-bar-bottom: #1d1d1f;
-  --chart-grid: rgba(0, 0, 0, 0.055);
 
   /* Diffused Apple Elevation */
   --shadow-card:
@@ -162,7 +161,6 @@
   --chart-secondary: #d1d1d6;
   --chart-bar-top: #f2f2f7;
   --chart-bar-bottom: #aeaeb2;
-  --chart-grid: rgba(255, 255, 255, 0.1);
 
   --shadow-card:
     0 1px 2px rgba(0, 0, 0, 0.35),
