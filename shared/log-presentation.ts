@@ -1,3 +1,4 @@
+import { sortByName } from "./resource-order.ts";
 import { actionLabel } from "./actions.ts";
 import { displayTrafficUnits } from "./presentation.ts";
 
@@ -95,6 +96,47 @@ export function monitorLogTitle(resources: any[]) {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+export function logPreview(row: any, instance: string) {
+  const c = row.context || {};
+  const resources = sortByName<any>(
+    (c.resources || []).filter(
+      (r: any) => instance === "all" || r.id === instance,
+    ),
+  );
+  return {
+    id: row.id,
+    at: row.at,
+    action: row.action,
+    severity: row.level || (row.status === "failed" ? "error" : "info"),
+    name:
+      row.action === "monitor-cycle"
+        ? undefined
+        : c.instanceName || (c.accountName ? undefined : row.target),
+    title:
+      row.action === "monitor-cycle" && resources.length
+        ? monitorLogTitle(resources)
+        : logErrorText(row.detail || actionLabel(row.action)),
+    source: c.source,
+    resourceCount: resources.length,
+    resources: resources.slice(0, 3).map((r) => {
+      const { status, traffic, keepAlive, cost, action, error } =
+        resourceLogSummary(r);
+      return {
+        key: JSON.stringify([r.accountId, r.region, r.id]),
+        name: r.name,
+        running: r.status === "Running",
+        status,
+        traffic,
+        keepAlive,
+        cost,
+        action,
+        error,
+      };
+    }),
+    eventSummary: resources.length ? "" : eventLogSummary(c),
+    hasDetails: !!row.detail || Object.keys(c).length > 0,
+  };
 }
 export function eventLogSummary(c: any) {
   const parts: string[] = [];

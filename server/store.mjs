@@ -3,6 +3,8 @@ import {
   notificationSelection,
 } from "../shared/notification-preferences.ts";
 import { randomUUID } from "node:crypto";
+import { logPreview } from "../shared/log-presentation.ts";
+import { actionLabel } from "../shared/actions.ts";
 import { Store as BaseStore } from "./base-store.mjs";
 import { sortByName } from "../shared/resource-order.ts";
 import { defaultLogRetention } from "../shared/log-retention.ts";
@@ -49,6 +51,7 @@ export class Store extends BaseStore {
   constructor(dir) {
     super(dir);
     this.dir = dir;
+    this.db.function("action_label", { deterministic: true }, actionLabel);
     this.db.exec(`PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS entities(kind TEXT NOT NULL,id TEXT NOT NULL,body TEXT NOT NULL,PRIMARY KEY(kind,id));
       CREATE INDEX IF NOT EXISTS entity_kind ON entities(kind);
@@ -257,6 +260,62 @@ export class Store extends BaseStore {
         ...r,
         ...(detail_body ? JSON.parse(detail_body) : null),
       }));
+  }
+  logPage({ page, size, view, level, instance, search }) {
+    const filters = [],
+      values = [];
+    if (view !== "all") {
+      const category = "coalesce(json_extract(e.body,'$.category'), '')";
+      filters.push(
+        view === "checks"
+          ? category + " = 'monitor'"
+          : category + " != 'monitor'",
+      );
+    }
+    if (level !== "all") {
+      filters.push(
+        "coalesce(json_extract(e.body,'$.level'), CASE WHEN a.status='failed' THEN 'error' ELSE 'info' END) = ?",
+      );
+      values.push(level);
+    }
+    if (instance !== "all") {
+      filters.push(
+        "(a.target = ? OR EXISTS (SELECT 1 FROM json_each(e.body,'$.context.resources') r WHERE json_extract(r.value,'$.id') = ?))",
+      );
+      values.push(instance, instance);
+    }
+    if (search) {
+      filters.push(
+        "instr(lower(json_array(a.id,a.at,a.account,a.action,action_label(a.action),a.target,a.status,a.detail) || coalesce(e.body,'')), ?) > 0",
+      );
+      values.push(search.toLowerCase());
+    }
+    const join =
+      " FROM audit a LEFT JOIN entities e ON e.kind='log-detail' AND e.id=a.id";
+    const where = filters.length ? " WHERE " + filters.join(" AND ") : "";
+    const total = this.db
+      .prepare(
+        "SELECT count(*) AS n" +
+          (filters.length ? join + where : " FROM audit"),
+      )
+      .get(...values).n;
+    const active = Math.min(page, Math.max(0, Math.ceil(total / size) - 1));
+    const items = this.db
+      .prepare(
+        "SELECT a.*, e.body AS detail_body" +
+          join +
+          where +
+          " ORDER BY a.at DESC, a.rowid DESC LIMIT ? OFFSET ?",
+      )
+      .all(...values, size, active * size)
+      .map(({ detail_body, ...row }) =>
+        logPreview({ ...row, ...JSON.parse(detail_body || "{}") }, instance),
+      );
+    return { items, total, page: active };
+  }
+  logDetail(id) {
+    const row = this.db.prepare("SELECT * FROM audit WHERE id=?").get(id);
+    return row ? { ...row, ...this.get("log-detail", id) } : null;
   }
   clearLogs() {
     this.db.exec("DELETE FROM entities WHERE kind='log-detail'");

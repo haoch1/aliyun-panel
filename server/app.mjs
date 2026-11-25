@@ -447,6 +447,28 @@ export function createApp(
   route("get", "/api/audit", (_req, res) =>
     res.json({ items: store.logs(), at: Date.now() }),
   );
+  const logQuery = z.object({
+    page: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(Number.MAX_SAFE_INTEGER)
+      .default(0),
+    size: z.coerce.number().int().min(1).max(100).default(20),
+    view: z.enum(["all", "events", "checks"]).default("all"),
+    level: z.enum(["all", "info", "warning", "error"]).default("all"),
+    instance: z.string().default("all"),
+    search: z.string().trim().default(""),
+  });
+  route("get", "/api/audit/page", (req, res) =>
+    res.json(store.logPage(logQuery.parse(req.query))),
+  );
+  route("get", "/api/audit/entry/:id", (req, res) => {
+    const entry = store.logDetail(req.params.id);
+    return entry
+      ? res.json(entry)
+      : res.status(404).json({ error: "日志已清理" });
+  });
   route("delete", "/api/audit", (_req, res) =>
     res.json({ deleted: store.clearLogs() }),
   );

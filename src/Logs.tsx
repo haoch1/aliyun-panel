@@ -1,14 +1,9 @@
 import { notificationChoices } from "../shared/notification-preferences";
 import { sortByName } from "../shared/resource-order";
 import { displayTrafficUnits, groupDataTimes } from "../shared/presentation";
-import {
-  resourceLogSummary,
-  monitorLogTitle,
-  eventLogSummary,
-  logErrorText,
-} from "../shared/log-presentation";
+import { logErrorText, type logPreview } from "../shared/log-presentation";
 import { Modal } from "./components/ui/Modal";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ChevronRight, FileText, Trash2 } from "lucide-react";
 import Select from "./components/ui/Select";
 import { SearchInput } from "./components/ui/SearchInput";
@@ -329,53 +324,47 @@ function savedPageSize() {
   return 20;
 }
 export default function Logs() {
-  const p = usePanel(),
-    d = useData<{ items: any[]; at: number }>("/audit", p.revision);
+  const p = usePanel();
   const [view, setView] = useState("all"),
     [level, setLevel] = useState("all"),
     [instance, setInstance] = useState("all"),
     [search, setSearch] = useState(""),
     [page, setPage] = useState(0),
     [pageSize, setPageSize] = useState(savedPageSize),
-    [detail, setDetail] = useState<any>();
+    [detail, setDetail] = useState<ReturnType<typeof logPreview>>();
   const [clearOpen, setClearOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
-  const all = d.data?.items || [];
-  const indexed = useMemo(
-    () =>
-      all.map((r: any) => ({
-        row: r,
-        text: JSON.stringify({ ...r, label: actionLabel(r.action) }).toLowerCase(),
-      })),
-    [all],
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    if (search.trim() === query) return;
+    const timer = setTimeout(() => {
+      setQuery(search.trim());
+      setPage(0);
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [search, query]);
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(pageSize),
+    view,
+    level,
+    instance,
+    search: query,
+  });
+  const d = useData<{
+    items: ReturnType<typeof logPreview>[];
+    total: number;
+    page: number;
+  }>("/audit/page?" + params, p.revision);
+  const full = useData<any>(
+    detail ? "/audit/entry/" + encodeURIComponent(detail.id) : null,
+    0,
+    false,
   );
-  const query = search.trim().toLowerCase();
-  const rows = useMemo(
-    () =>
-      indexed
-        .filter(
-          ({ row: r, text }) =>
-            (view === "all" ||
-              (view === "checks"
-                ? r.category === "monitor"
-                : r.category !== "monitor")) &&
-            (level === "all" ||
-              (r.level || (r.status === "failed" ? "error" : "info")) ===
-                level) &&
-            (instance === "all" ||
-              r.target === instance ||
-              r.context?.resources?.some((i: any) => i.id === instance)) &&
-            (!query || text.includes(query)),
-        )
-        .map(({ row }) => row),
-    [indexed, view, level, instance, query],
-  );
-  const pages = Math.max(1, Math.ceil(rows.length / pageSize)),
-    activePage = Math.min(page, pages - 1);
-  const visibleRows = rows.slice(
-    activePage * pageSize,
-    (activePage + 1) * pageSize,
-  );
+  const visibleRows = d.data?.items || [],
+    total = d.data?.total || 0;
+  const pages = Math.max(1, Math.ceil(total / pageSize)),
+    activePage = d.data?.page ?? 0;
   const scopeName =
     instance === "all"
       ? "系统日志"
@@ -388,7 +377,7 @@ export default function Logs() {
         actions={
           <Button
             className="danger-text"
-            disabled={!rows.length}
+            disabled={!total}
             onClick={() => setClearOpen(true)}
           >
             <Trash2 size={15} />
@@ -431,10 +420,7 @@ export default function Logs() {
           </Select>
           <SearchInput
             value={search}
-            onChange={(v) => {
-              setSearch(v);
-              setPage(0);
-            }}
+            onChange={setSearch}
             placeholder="搜索实例、原因或请求 ID…"
           />
         </div>
@@ -452,28 +438,12 @@ export default function Logs() {
               ["checks", "检测"],
             ]}
           />
-          <span className="muted">
-            {rows.length.toLocaleString("zh-CN")} 条
-          </span>
+          <span className="muted">{total.toLocaleString("zh-CN")} 条</span>
         </div>
         <DataRegion pending={d.initialLoading} placeholder={<LoadingLogs />}>
           <ol className="log-stream">
             {visibleRows.map((r) => {
-              const severity =
-                r.level || (r.status === "failed" ? "error" : "info");
-              const name =
-                r.action === "monitor-cycle"
-                  ? undefined
-                  : r.context?.instanceName ||
-                    (r.context?.accountName ? undefined : r.target);
-              const resources = sortByName<any>(
-                (r.context?.resources || []).filter(
-                  (i: any) => instance === "all" || i.id === instance,
-                ),
-              );
-              const eventSummary = eventLogSummary(r.context || {});
-              const hasDetails =
-                !!r.detail || (r.context && Object.keys(r.context).length > 0);
+              const { severity, name, resources, eventSummary, hasDetails } = r;
               return (
                 <li className={"log-stream-row " + severity} key={r.id}>
                   <span
@@ -482,12 +452,10 @@ export default function Logs() {
                   />
                   <div className="log-stream-copy">
                     <p>
-                      {name && !r.detail?.includes(name) && (
+                      {name && !r.title.includes(name) && (
                         <span className="log-object">{name} · </span>
                       )}
-                      {r.action === "monitor-cycle" && resources.length
-                        ? monitorLogTitle(resources)
-                        : logErrorText(r.detail || actionLabel(r.action))}
+                      {r.title}
                     </p>
                     {resources.length > 0 && (
                       <div className="log-resource-preview">
@@ -512,13 +480,12 @@ export default function Logs() {
                             </tr>
                           </thead>
                           <tbody>
-                            {resources.slice(0, 3).map((i: any) => {
-                              const summary = resourceLogSummary(i);
+                            {resources.map((summary) => {
                               return (
-                                <Fragment key={i.accountId + i.region + i.id}>
+                                <Fragment key={summary.key}>
                                   <tr>
                                     <th scope="row">
-                                      {i.name}
+                                      {summary.name}
                                       {summary.action && (
                                         <span className="log-resource-action">
                                           {summary.action}
@@ -529,9 +496,7 @@ export default function Logs() {
                                       <span
                                         className={
                                           "log-resource-status " +
-                                          (i.status === "Running"
-                                            ? "running"
-                                            : "")
+                                          (summary.running ? "running" : "")
                                         }
                                       >
                                         {summary.status}
@@ -556,7 +521,7 @@ export default function Logs() {
                                   {summary.error && (
                                     <tr className="log-resource-error">
                                       <td colSpan={5} className="danger-text">
-                                        {i.name} · {summary.error}
+                                        {summary.name} · {summary.error}
                                       </td>
                                     </tr>
                                   )}
@@ -565,9 +530,9 @@ export default function Logs() {
                             })}
                           </tbody>
                         </table>
-                        {resources.length > 3 && (
+                        {r.resourceCount > 3 && (
                           <div className="log-resource-more">
-                            其余 {resources.length - 3} 台见详情
+                            其余 {r.resourceCount - 3} 台见详情
                           </div>
                         )}
                       </div>
@@ -581,7 +546,7 @@ export default function Logs() {
                       </time>
                       <span>
                         {r.action === "monitor-cycle"
-                          ? r.context?.source === "manual"
+                          ? r.source === "manual"
                             ? "手动检测"
                             : "后台检测"
                           : actionLabel(r.action)}
@@ -607,7 +572,7 @@ export default function Logs() {
               );
             })}
           </ol>
-          {!rows.length && (
+          {!total && (
             <Empty>
               {view === "events"
                 ? "暂无事件日志"
@@ -620,7 +585,7 @@ export default function Logs() {
             page={activePage}
             pages={pages}
             onChange={setPage}
-            total={rows.length}
+            total={total}
           >
             <Select
               aria-label="每页日志条数"
@@ -692,14 +657,22 @@ export default function Logs() {
           description={date(detail.at) + " · " + scopeName}
           onClose={() => setDetail(undefined)}
           className="log-detail-modal"
-          wide={!!detail.context?.resources?.length}
+          wide={detail.resourceCount > 0}
         >
-          <p className="log-detail-summary">{logErrorText(detail.detail)}</p>
-          <OriginalLogError value={detail.detail} />
-          <LogDetails
-            context={detail.context || {}}
-            selectedInstance={instance}
-          />
+          {full.initialLoading && <p role="status">正在读取日志详情…</p>}
+          <ErrorBox error={full.error} />
+          {full.data && (
+            <>
+              <p className="log-detail-summary">
+                {logErrorText(full.data.detail)}
+              </p>
+              <OriginalLogError value={full.data.detail} />
+              <LogDetails
+                context={full.data.context || {}}
+                selectedInstance={instance}
+              />
+            </>
+          )}
         </Modal>
       )}
     </>

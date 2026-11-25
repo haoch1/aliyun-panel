@@ -1,3 +1,5 @@
+import { logPreview } from "../../shared/log-presentation.ts";
+import { actionLabel } from "../../shared/actions.ts";
 import {
   defaultNotificationTypes,
   notificationSelection,
@@ -1058,6 +1060,43 @@ export async function demoApi(
       body.accountId || "all",
     );
     changed();
+  } else if (p === "/audit/page") {
+    const instance = q.get("instance") || "all",
+      view = q.get("view") || "all",
+      level = q.get("level") || "all",
+      search = (q.get("search") || "").trim().toLowerCase();
+    const filtered = logs.filter(
+      (row) =>
+        (view === "all" ||
+          (view === "checks") === (row.category === "monitor")) &&
+        (level === "all" ||
+          (row.level || (row.status === "failed" ? "error" : "info")) ===
+            level) &&
+        (instance === "all" ||
+          row.target === instance ||
+          row.context?.resources?.some((r: any) => r.id === instance)) &&
+        (!search ||
+          JSON.stringify({ ...row, label: actionLabel(row.action) })
+            .toLowerCase()
+            .includes(search)),
+    );
+    const size = Math.min(100, Math.max(1, Number(q.get("size") || 20)));
+    const page = Math.min(
+      Number(q.get("page") || 0),
+      Math.max(0, Math.ceil(filtered.length / size) - 1),
+    );
+    result = {
+      total: filtered.length,
+      page,
+      items: filtered
+        .slice(page * size, (page + 1) * size)
+        .map((r) => logPreview(r, instance)),
+    };
+  } else if (p.startsWith("/audit/entry/")) {
+    result = logs.find(
+      (r) => r.id === decodeURIComponent(p.slice("/audit/entry/".length)),
+    );
+    if (!result) throw new Error("日志已清理");
   } else if (p === "/audit") {
     if (method === "DELETE") logs = [];
     result = { items: logs, at: now() };
