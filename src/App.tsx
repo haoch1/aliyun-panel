@@ -48,6 +48,7 @@ import { PendingButton } from "./components/ui/PendingButton";
 import Logs from "./Logs";
 import { Tooltip } from "./components/ui/Tooltip";
 import { DataRegion, PageLoading } from "./components/ui/DataRegion";
+import { LoadingRegion } from "./components/ui/Skeleton";
 const SettingsPage = lazy(() => import("./Settings"));
 
 interface SessionInfo {
@@ -415,7 +416,13 @@ export default function App() {
                 ) : page === "billing" ? (
                   <Billing />
                 ) : page === "settings" ? (
-                  <Suspense fallback={<PageLoading page="settings" />}>
+                  <Suspense
+                    fallback={
+                      <LoadingRegion label="正在加载系统设置">
+                        <PageLoading page="settings" />
+                      </LoadingRegion>
+                    }
+                  >
                     <SettingsPage />
                   </Suspense>
                 ) : (

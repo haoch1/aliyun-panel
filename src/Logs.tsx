@@ -10,6 +10,7 @@ import { SearchInput } from "./components/ui/SearchInput";
 import { actionLabel } from "../shared/actions";
 import { api, bytes, date, Empty, ErrorBox, useData, usePanel } from "./lib";
 import { DataRegion, LoadingLogs } from "./components/ui/DataRegion";
+import { LoadingRegion, Skeleton } from "./components/ui/Skeleton";
 import { PendingButton } from "./components/ui/PendingButton";
 import { PageHeader } from "./components/ui/PageHeader";
 import { SegmentedControl } from "./components/ui/SegmentedControl";
@@ -659,7 +660,16 @@ export default function Logs() {
           className="log-detail-modal"
           wide={detail.resourceCount > 0}
         >
-          {full.initialLoading && <p role="status">正在读取日志详情…</p>}
+          {full.initialLoading && (
+            <LoadingRegion
+              label="正在读取日志详情"
+              className="loading-log-detail"
+            >
+              <Skeleton className="skeleton-title" />
+              <Skeleton />
+              <Skeleton />
+            </LoadingRegion>
+          )}
           <ErrorBox error={full.error} />
           {full.data && (
             <>

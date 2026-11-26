@@ -10,6 +10,7 @@ import "./styles/controls.css";
 import "./styles/layout.css";
 import "./styles/views.css";
 import "./styles/traffic.css";
+import "./styles/skeleton.css";
 import "./styles/loading.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

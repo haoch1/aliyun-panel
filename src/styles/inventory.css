@@ -265,8 +265,3 @@
   display: inline;
   white-space: normal;
 }
-.inventory-card-placeholder {
-  min-height: 260px;
-  background: var(--subtle);
-  border-radius: var(--radius-control);
-}

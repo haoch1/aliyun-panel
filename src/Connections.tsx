@@ -13,7 +13,12 @@ import { api, ErrorBox, Field, isDemo, target, usePanel } from "./lib";
 import Select from "./components/ui/Select";
 import { Modal } from "./components/ui/Modal";
 import { PendingButton } from "./components/ui/PendingButton";
-import { DataRegion, LoadingForm } from "./components/ui/DataRegion";
+import {
+  DataRegion,
+  LoadingForm,
+  LoadingTable,
+} from "./components/ui/DataRegion";
+import { LoadingRegion } from "./components/ui/Skeleton";
 interface Candidate {
   id: string;
   name: string;
@@ -51,6 +56,7 @@ export default function ConnectionDialog({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const [ready, setReady] = useState(!account);
+  const [discovering, setDiscovering] = useState(false);
   useEffect(() => {
     if (!account) return;
     let active = true;
@@ -92,6 +98,7 @@ export default function ConnectionDialog({
     e.preventDefault();
     if (busy) return;
     setBusy(true);
+    setDiscovering(!account);
     setError("");
     try {
       if (account) {
@@ -127,6 +134,7 @@ export default function ConnectionDialog({
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      setDiscovering(false);
       setBusy(false);
     }
   };
@@ -164,7 +172,7 @@ export default function ConnectionDialog({
       title={account ? "编辑实例" : "添加实例"}
       onClose={onClose}
       busy={busy}
-      wide={!!scan}
+      wide={!!scan || discovering}
     >
       <DataRegion pending={!ready && !error} placeholder={<LoadingForm />}>
         {!ready ? (
@@ -265,6 +273,13 @@ export default function ConnectionDialog({
                   {account ? "保存" : "查询实例"}
                 </PendingButton>
               </div>
+            )}
+            {discovering && !scan && (
+              <LoadingRegion label="正在查询实例">
+                <LoadingTable
+                  columns={["", "实例", "地域", "状态", "公网 IP"]}
+                />
+              </LoadingRegion>
             )}
             {scan && (
               <>

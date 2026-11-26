@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ChartSkeleton, InventorySkeleton, Skeleton } from "./Skeleton";
 import { TableLoading } from "./TableLoading";
 import {
   ArrowDownUp,
@@ -11,9 +12,7 @@ import { PageHeader } from "./PageHeader";
 import { TablePanel } from "./Table";
 import { Card } from "./Card";
 
-export function Skeleton({ className = "" }: { className?: string }) {
-  return <span className={"skeleton " + className} aria-hidden="true" />;
-}
+export { Skeleton } from "./Skeleton";
 
 /** Keep the loading and content layers in one place; cached refreshes never hide content. */
 export function DataRegion({
@@ -37,9 +36,11 @@ export function DataRegion({
       }
       aria-busy={pending}
     >
-      <Layer className="data-region-placeholder" aria-hidden="true">
-        {placeholder}
-      </Layer>
+      {pending && (
+        <Layer className="data-region-placeholder" aria-hidden="true">
+          {placeholder}
+        </Layer>
+      )}
       {pending && (
         <span className="sr-only" role="status">
           正在读取数据…
@@ -157,8 +158,9 @@ export function PageLoading({ page }: { page: string }) {
             <Skeleton className="skeleton-filter" />
           </div>
           <LoadingTable
-            className="instances-table"
-            rows={1}
+            className="loading-desktop-inventory"
+            tableClassName="instances-table"
+            rows={3}
             columns={[
               "",
               "实例",
@@ -172,6 +174,10 @@ export function PageLoading({ page }: { page: string }) {
               "操作",
             ]}
           />
+          <div className="loading-mobile-inventory">
+            <InventorySkeleton />
+            <InventorySkeleton />
+          </div>
         </TablePanel>
       </div>
     );
@@ -218,11 +224,7 @@ export function PageLoading({ page }: { page: string }) {
           </div>
           <div className="daily-chart">
             <Skeleton className="skeleton-title" />
-            <div className="chart-placeholder">
-              {Array.from({ length: 15 }, (_, i) => (
-                <Skeleton key={i} />
-              ))}
-            </div>
+            <ChartSkeleton />
           </div>
         </>
       ) : page === "audit" ? (

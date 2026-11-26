@@ -5,6 +5,8 @@
       document.addEventListener("DOMContentLoaded", show, { once: true });
       return;
     }
+    const skeleton = document.getElementById("startup-skeleton");
+    if (skeleton) skeleton.hidden = true;
     notice.hidden = false;
     notice.querySelector("button").onclick = () => location.reload();
   }

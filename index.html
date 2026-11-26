@@ -11,6 +11,7 @@
     <title>Aliyun Panel</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script src="/theme.js"></script>
+    <link rel="stylesheet" href="/startup.css" />
     <script src="/asset-recovery.js"></script>
   </head>
   <body>
@@ -18,7 +19,44 @@
       页面资源加载失败，可能已有新版本。<button type="button">重新加载</button>
     </p>
     <!--panel-bootstrap-->
-    <div id="root"></div>
+    <div id="root">
+      <div id="startup-skeleton" role="status" aria-label="正在加载面板">
+        <aside class="startup-sidebar" aria-hidden="true">
+          <span class="startup-block startup-brand"></span>
+          <span class="startup-block"></span>
+          <span class="startup-block"></span>
+          <span class="startup-block"></span>
+        </aside>
+        <div class="startup-workspace" aria-hidden="true">
+          <div class="startup-topbar"><span class="startup-block"></span></div>
+          <div class="startup-content">
+            <span class="startup-block startup-title"></span>
+            <div class="startup-controls">
+              <span class="startup-block"></span
+              ><span class="startup-block"></span>
+            </div>
+            <div class="startup-panel">
+              <div class="startup-row">
+                <span class="startup-block"></span
+                ><span class="startup-block"></span
+                ><span class="startup-block"></span>
+              </div>
+              <div class="startup-row">
+                <span class="startup-block"></span
+                ><span class="startup-block"></span
+                ><span class="startup-block"></span>
+              </div>
+              <div class="startup-row">
+                <span class="startup-block"></span
+                ><span class="startup-block"></span
+                ><span class="startup-block"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <noscript><p>浏览器需要启用 JavaScript 才能使用面板。</p></noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

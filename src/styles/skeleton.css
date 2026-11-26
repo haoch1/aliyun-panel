@@ -1,0 +1,78 @@
+.skeleton {
+  display: inline-block;
+  width: 7em;
+  max-width: 100%;
+  height: 0.95em;
+  border-radius: 5px;
+  background-color: var(--shimmer-base);
+  vertical-align: middle;
+}
+.skeleton-title {
+  width: 40%;
+  height: 16px;
+}
+.skeleton-meta {
+  width: 28%;
+  height: 12px;
+}
+.skeleton-badge {
+  width: 60px;
+  height: 20px;
+  border-radius: 999px;
+}
+.skeleton-track {
+  width: 100%;
+  height: 9px;
+}
+.skeleton-button {
+  width: 80px;
+  height: var(--control-height);
+}
+.skeleton-control {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+.skeleton-control .skeleton,
+.skeleton-input {
+  width: 100%;
+  height: var(--control-height);
+  border-radius: var(--radius-control);
+}
+.inventory-card-skeleton {
+  display: grid;
+  gap: 17px;
+  padding: 4px 0;
+}
+.inventory-card-skeleton-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.inventory-card-skeleton-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+  margin: 3px 0;
+}
+.inventory-card-skeleton .skeleton-button {
+  justify-self: end;
+}
+.loading-mobile-inventory {
+  display: none;
+}
+@media (max-width: 900px) {
+  .loading-desktop-inventory {
+    display: none;
+  }
+  .loading-mobile-inventory {
+    display: grid;
+    gap: 12px;
+  }
+  .loading-mobile-inventory > .inventory-card-skeleton {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    background: var(--surface);
+  }
+}

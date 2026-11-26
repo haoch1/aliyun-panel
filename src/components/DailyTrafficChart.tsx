@@ -13,7 +13,8 @@ import {
   type TrafficDay,
 } from "../../shared/traffic-presentation";
 import { bytes } from "../lib";
-import { DataRegion, Skeleton } from "./ui/DataRegion";
+import { DataRegion } from "./ui/DataRegion";
+import { ChartSkeleton } from "./ui/Skeleton";
 
 export default function DailyTrafficChart({
   rows,
@@ -101,13 +102,7 @@ export default function DailyTrafficChart({
       </div>
       <DataRegion
         pending={loading}
-        placeholder={
-          <div className="chart-placeholder">
-            {Array.from({ length: 15 }, (_, i) => (
-              <Skeleton key={i} />
-            ))}
-          </div>
-        }
+        placeholder={<ChartSkeleton />}
       >
         {bars.length ? (
           <div className="daily-chart-scroll">

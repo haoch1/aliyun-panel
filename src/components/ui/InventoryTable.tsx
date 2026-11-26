@@ -17,6 +17,8 @@ import {
   CardFooter,
 } from "./ShadcnCard";
 
+import { InventorySkeleton, LoadingRegion } from "./Skeleton";
+
 const query = "(max-width: 900px)";
 const subscribe = (notify: () => void) => {
   const media = matchMedia(query);
@@ -57,11 +59,9 @@ export function InventoryTable({
           return (
             <Card key={index} size="sm">
               <CardContent>
-                <div
-                  className="inventory-card-placeholder"
-                  aria-label="正在加载实例"
-                  aria-busy="true"
-                />
+                <LoadingRegion label="正在加载实例">
+                  <InventorySkeleton />
+                </LoadingRegion>
               </CardContent>
             </Card>
           );

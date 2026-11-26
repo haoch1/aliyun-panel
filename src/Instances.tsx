@@ -43,6 +43,7 @@ import { Modal } from "./components/ui/Modal";
 import { PendingButton } from "./components/ui/PendingButton";
 import { RefreshButton } from "./components/ui/RefreshButton";
 import { DataRegion, Skeleton } from "./components/ui/DataRegion";
+import { TableLoading } from "./components/ui/TableLoading";
 import { useTraffic } from "./traffic-data";
 import {
   singleDirectionTraffic,
@@ -96,6 +97,8 @@ export default function Instances() {
   const running = items.filter((i) => i.status === "Running").length,
     stopped = items.filter((i) => i.status === "Stopped").length,
     alive = items.filter((i) => i.effectiveKeepAlive).length;
+  const loadingInventory =
+    !p.snapshot.items.length && (p.loading || p.snapshot.refreshing);
   const countsPending =
     p.snapshot.refreshing && items.some((i) => i.status === "Unknown");
   const refresh = async () => {
@@ -287,6 +290,22 @@ export default function Instances() {
               </tr>
             </thead>
             <tbody>
+              {loadingInventory && (
+                <TableLoading
+                  columns={[
+                    "",
+                    "实例",
+                    "状态",
+                    "公网 IP",
+                    "本月流量",
+                    "保活",
+                    "流量保护",
+                    "定时关机",
+                    "本月费用",
+                    "操作",
+                  ]}
+                />
+              )}
               {items.map((i) => (
                 <tr
                   key={key(i)}
@@ -506,7 +525,7 @@ export default function Instances() {
               ))}
             </tbody>
           </InventoryTable>
-          {!items.length && (
+          {!items.length && !loadingInventory && (
             <Empty>
               {!p.accounts.length ? (
                 <>
@@ -516,8 +535,6 @@ export default function Instances() {
                     添加实例
                   </button>
                 </>
-              ) : p.snapshot.refreshing ? (
-                "正在发现各地域实例…"
               ) : (
                 "没有匹配的实例，可调整筛选条件或立即检测"
               )}
